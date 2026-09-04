@@ -17,7 +17,8 @@ Implementation notes (where the design landed):
 - Move pages: `/spaces/[slug]/guides/[guideSlug]/move` and
   `/spaces/[slug]/categories/[categorySlug]/move` (`general` = the
   uncategorized guides). Entry points: "Move guide" in the split-button menu
-  and the folder-arrow icon beside each category title, admins only.
+  (owners and admins; only admins may pick another department) and the
+  folder-arrow icon beside each category title (admins only).
 - The full sync now prunes audience links to deleted groups and records a
   note on the run (`sync_run.note`, migration `0007_sync-run-note.sql`),
   shown in the dashboard's sync table.
@@ -298,6 +299,11 @@ re-filing inside a space is the guide form's category picker.
    different category), or force a department change and leave in-space
    re-filing to the guide form?
    answer: no, force department change (future features will enable editing categories within a department that is accessible to owners & admins)
+   **Revised after testing (2026-09-04):** allow same-department moves after
+   all, and show "Move guide" to space owners too. Admins may pick any
+   department including the current one; owners see only their own
+   department (locked) and change just the category — the guide form's
+   picker, one step faster. Category moves stay admin-only.
 10. **Space owners**: the request says admin-only, so owners never see
     either control. Confirm that owners should not be able to move
     content out of their *own* space (e.g. handing a guide to another

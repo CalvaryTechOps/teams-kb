@@ -623,10 +623,11 @@ export async function requestGuideDeletion(input: GuideRef) {
 }
 
 // ---------------------------------------------------------------------------
-// Moving content between departments. Admin-only (plan Q10): owners re-file
-// inside their own space through the guide form; handing content to another
-// department is an admin decision. The target must be a *different* space
-// (plan Q9). Primitives live in src/lib/moves.ts.
+// Moving content. Space owners (and admins) may re-file a guide into another
+// category of its own space — the same thing the guide form's category picker
+// does, in one step. Handing content to a *different* department is an admin
+// decision (plan Q9/Q10, revised after testing). Category moves are
+// admin-only. Primitives live in src/lib/moves.ts.
 // ---------------------------------------------------------------------------
 
 async function targetSpaceOrNull(spaceId: string) {
@@ -646,8 +647,9 @@ async function categoryInSpaceOrNull(categoryId: string, spaceId: string) {
 }
 
 export async function moveGuide(input: GuideRef, formData: FormData) {
-  await requireAdmin();
+  const access = await requireAccess();
   const s = await spaceBySlugOr404(input.spaceSlug);
+  if (!spacePermissions(access, s.groupId).canApprove) redirect(`/spaces/${s.slug}`);
   const [g] = await db
     .select()
     .from(guide)
@@ -656,15 +658,19 @@ export async function moveGuide(input: GuideRef, formData: FormData) {
   const back = guidePath(s.slug, g.slug);
 
   const target = await targetSpaceOrNull(String(formData.get("spaceId") ?? ""));
-  if (!target || target.id === s.id) redirect(back);
+  if (!target) redirect(back);
+  // Only admins may move a guide out of its department.
+  if (target.id !== s.id && !access.isAdmin) redirect(back);
   const requestedCategory = String(formData.get("categoryId") ?? "");
   const cat = await categoryInSpaceOrNull(requestedCategory, target.id);
   // An id that isn't one of the target's categories is a stale or tampered
   // form — don't silently file the guide under General.
   if (requestedCategory && !cat) redirect(back);
+  const categoryId = cat?.id ?? null;
+  if (target.id === s.id && categoryId === g.categoryId) redirect(back);
 
   const moved = await db.transaction((tx) =>
-    moveGuideInTx(tx, g, { spaceId: target.id, categoryId: cat?.id ?? null }),
+    moveGuideInTx(tx, g, { spaceId: target.id, categoryId }),
   );
 
   const dest = guidePath(target.slug, moved.newSlug);

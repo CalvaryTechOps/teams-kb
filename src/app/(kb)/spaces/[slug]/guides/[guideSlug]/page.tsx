@@ -323,7 +323,7 @@ export default async function GuidePage({
                   : undefined
               }
               moveHref={
-                access.isAdmin
+                perms.canApprove
                   ? `/spaces/${s.slug}/guides/${g.slug}/move`
                   : undefined
               }

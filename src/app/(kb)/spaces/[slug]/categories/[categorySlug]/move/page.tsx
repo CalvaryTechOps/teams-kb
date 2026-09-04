@@ -58,7 +58,7 @@ export default async function MoveCategoryPage({
 
   const name = isGeneral ? GENERAL_CATEGORY_NAME : cat!.name;
   const back = `/spaces/${s.slug}#${categorySlug}`;
-  const targets = await moveTargets(s.id);
+  const targets = (await moveTargets()).filter((t) => t.id !== s.id);
 
   return (
     <>

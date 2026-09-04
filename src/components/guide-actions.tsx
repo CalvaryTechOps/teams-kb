@@ -28,7 +28,7 @@ import {
 // Split button at the end of a guide's metadata row: "Copy link" as the main
 // action, a chevron opening Download PDF / DOCX / Markdown and — for people
 // who may edit — "Edit guide", the same target and permission as the header
-// button, plus "Move guide" for admins. Hand-rolled menu (no menu primitive exists in the app yet) with the
+// button, plus "Move guide" for owners and admins. Hand-rolled menu (no menu primitive exists in the app yet) with the
 // usual keyboard contract: arrows move, Home/End jump, Escape closes and
 // returns focus, clicking or tabbing away closes.
 //
@@ -62,7 +62,7 @@ export function GuideActions({
   author: string;
   /** Present only when the viewer may edit (same gate as the header button). */
   editHref?: string;
-  /** Present only for admins: the move-to-another-department page. */
+  /** Present for owners/admins: the re-file / move-to-another-department page. */
   moveHref?: string;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);

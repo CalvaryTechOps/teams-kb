@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { APP_TITLE } from "@/lib/branding";
@@ -7,19 +7,24 @@ import { Badge } from "@/components/ui";
 import { TopBar } from "@/components/shell/top-bar";
 import { GuideContent } from "@/components/guide-content";
 import { MoveForm } from "@/components/move-form";
-import { getSession, requireAdmin } from "@/lib/permissions";
+import {
+  getSession,
+  requireAccess,
+  resolveGuidePermissions,
+} from "@/lib/permissions";
 import { guidePath } from "@/lib/moves";
 import { moveTargets } from "@/lib/move-targets";
 import { moveGuide } from "../../../../actions";
 
-// Admin-only: re-file one guide into another department (and a category
-// there). The mover row sits above a read-only preview of the guide so the
-// admin sees exactly what is about to move.
+// Re-file one guide. Space owners pick another category within their own
+// department (what the guide form's picker does, without the scrolling);
+// admins may also choose a different department. The mover row sits above
+// a read-only preview so the person sees exactly what is about to move.
 export default async function MoveGuidePage({
   params,
 }: PageProps<"/spaces/[slug]/guides/[guideSlug]/move">) {
   const { slug, guideSlug } = await params;
-  await requireAdmin();
+  const access = await requireAccess();
   const session = await getSession();
 
   const [row] = await db
@@ -31,6 +36,15 @@ export default async function MoveGuidePage({
   // A guide awaiting deletion has no page; it can't be moved either.
   if (!row || row.g.status === "deleted") notFound();
   const { g, s } = row;
+  const back = guidePath(s.slug, g.slug);
+
+  const perms = resolveGuidePermissions(access, {
+    spaceGroupId: s.groupId,
+    status: g.status,
+    audience: g.audience,
+    createdBy: g.createdBy,
+  });
+  if (!perms.canApprove) redirect(back);
 
   // Preview what readers see: the published revision, else (never-published
   // guides) the newest revision of any status. Admins may see everything.
@@ -47,8 +61,10 @@ export default async function MoveGuidePage({
         .limit(1);
   if (!revision) notFound();
 
-  const targets = await moveTargets(s.id);
-  const back = guidePath(s.slug, g.slug);
+  // Owners see only their own department; admins see every space.
+  const targets = (await moveTargets()).filter(
+    (t) => access.isAdmin || t.id === s.id,
+  );
 
   return (
     <>
@@ -66,20 +82,23 @@ export default async function MoveGuidePage({
           Move guide
         </h1>
         <p className="mb-6 text-sm text-grey-500">
-          Choose the department this guide should live in, then a category
-          there. Its history, tags and audience come along unchanged.
+          {access.isAdmin
+            ? "Choose the department this guide should live in, then a category there. Its history, tags and audience come along unchanged."
+            : "Choose the category this guide should live in. Its history, tags and audience come along unchanged."}
         </p>
         <MoveForm
           action={moveGuide.bind(null, { spaceSlug: s.slug, guideId: g.id })}
           spaces={targets}
           withCategory
+          current={{ spaceId: s.id, categoryId: g.categoryId }}
+          lockSpace={!access.isAdmin}
           cancelHref={back}
         />
-        {g.audience === "department" && (
+        {access.isAdmin && g.audience === "department" && (
           <p className="mt-3 text-xs text-grey-500">
-            This guide is visible to its department. After the move, members of
-            the new department can read it and members of {s.name} no longer
-            can.
+            This guide is visible to its department. Moving it to another
+            department means that department&apos;s members can read it and
+            members of {s.name} no longer can.
           </p>
         )}
 

@@ -6,11 +6,12 @@ import type { MoveTargetSpace } from "@/components/move-form";
 import { SPACE_HEALTH_LABELS, isOrphaned, spaceHealth } from "@/lib/space-health";
 
 /**
- * Every space other than the current one, with its categories, for the
- * department picker on the move pages. Orphaned spaces are kept (an admin may
- * want to move content *out* of one, or park it there) but labelled.
+ * Every space with its categories, for the department picker on the move
+ * pages; callers narrow the list (drop the current space, or keep only it).
+ * Orphaned spaces are kept (an admin may want to move content *out* of one,
+ * or park it there) but labelled.
  */
-export async function moveTargets(currentSpaceId: string): Promise<MoveTargetSpace[]> {
+export async function moveTargets(): Promise<MoveTargetSpace[]> {
   const [spaces, categories] = await Promise.all([
     db
       .select({
@@ -27,17 +28,15 @@ export async function moveTargets(currentSpaceId: string): Promise<MoveTargetSpa
       .from(category)
       .orderBy(asc(category.sortOrder), asc(category.name)),
   ]);
-  return spaces
-    .filter((sp) => sp.id !== currentSpaceId)
-    .map((sp) => {
-      const health = spaceHealth(sp);
-      return {
-        id: sp.id,
-        name: sp.name,
-        note: isOrphaned(health) ? SPACE_HEALTH_LABELS[health] : undefined,
-        categories: categories
-          .filter((c) => c.spaceId === sp.id)
-          .map((c) => ({ id: c.id, name: c.name })),
-      };
-    });
+  return spaces.map((sp) => {
+    const health = spaceHealth(sp);
+    return {
+      id: sp.id,
+      name: sp.name,
+      note: isOrphaned(health) ? SPACE_HEALTH_LABELS[health] : undefined,
+      categories: categories
+        .filter((c) => c.spaceId === sp.id)
+        .map((c) => ({ id: c.id, name: c.name })),
+    };
+  });
 }
