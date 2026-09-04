@@ -1,0 +1,290 @@
+@import "tailwindcss";
+
+/* ── Design system tokens ──
+   Two-color core: cyan #00bae5 + ink #001519 on a cool grey ramp. Cyan is the
+   single accent; no gradients, no extra hues. Single light theme by design. */
+
+@theme {
+  /* Brand */
+  --color-cyan-50: #eefafe;
+  --color-cyan-100: #d6f3fb;
+  --color-cyan-400: #00bae5;
+  --color-cyan-600: #0098bd;
+  --color-cyan-700: #017a99;
+  --color-ink: #001519;
+  --color-ink-800: #0a2229;
+  --color-ink-700: #153039;
+
+  /* Neutrals — cool grey ramp derived from the ink */
+  --color-grey-0: #ffffff;
+  --color-grey-50: #f6f8f9;
+  --color-grey-100: #eceff1;
+  --color-grey-200: #dde3e6;
+  --color-grey-300: #c4ced2;
+  --color-grey-400: #94a3aa;
+  --color-grey-500: #697c84;
+  --color-grey-600: #4c5d64;
+  --color-grey-700: #33434a;
+  --color-grey-800: #1e2c31;
+
+  /* Status (badges and alerts only, never décor) */
+  --color-success: #1f9d55;
+  --color-success-100: #dcf3e6;
+  --color-warning: #d98315;
+  --color-warning-100: #fbeed6;
+  --color-danger: #d64545;
+  --color-danger-100: #f8dede;
+
+  /* Metropolis via next/font (see layout.tsx) */
+  --font-sans: var(--font-metropolis), "Helvetica Neue", Arial, system-ui,
+    sans-serif;
+
+  /* Soft, cool-tinted shadows — never harsh */
+  --shadow-xs: 0 1px 2px rgba(0, 21, 25, 0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 21, 25, 0.08), 0 1px 2px rgba(0, 21, 25, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 21, 25, 0.08), 0 2px 4px rgba(0, 21, 25, 0.04);
+  --shadow-lg: 0 12px 28px rgba(0, 21, 25, 0.12), 0 4px 8px rgba(0, 21, 25, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(0, 186, 229, 0.35);
+}
+
+body {
+  background: var(--color-grey-50);
+  color: var(--color-grey-800);
+}
+
+/* ── Guide article body (BlockNote document, server-rendered by
+   src/components/guide-content.tsx) ── */
+.prose-guide {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--color-grey-800);
+}
+.prose-guide > :first-child {
+  margin-top: 0;
+}
+.prose-guide p {
+  margin: 0 0 20px;
+}
+.prose-guide h1 {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  color: var(--color-ink);
+  margin: 36px 0 14px;
+}
+.prose-guide h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+  margin: 32px 0 12px;
+}
+.prose-guide h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin: 24px 0 10px;
+}
+.prose-guide a {
+  color: var(--color-cyan-700);
+  font-weight: 500;
+}
+.prose-guide a:hover {
+  color: var(--color-cyan-600);
+}
+.prose-guide ul,
+.prose-guide ol {
+  margin: 0 0 24px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.prose-guide ul {
+  list-style: disc;
+}
+.prose-guide ol {
+  list-style: decimal;
+}
+.prose-guide blockquote {
+  border-left: 3px solid var(--color-grey-200);
+  padding-left: 16px;
+  color: var(--color-grey-500);
+  margin: 0 0 20px;
+}
+.prose-guide code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 14px;
+  background: var(--color-grey-100);
+  border: 1px solid var(--color-grey-200);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.prose-guide pre {
+  background: var(--color-ink);
+  color: var(--color-grey-100);
+  border-radius: 8px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 0 0 24px;
+}
+.prose-guide pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+.prose-guide img {
+  max-width: 100%;
+  border: 1px solid var(--color-grey-200);
+  border-radius: 8px;
+  margin: 18px 0;
+}
+.prose-guide hr {
+  border: none;
+  border-top: 1px solid var(--color-grey-200);
+  margin: 28px 0;
+}
+.prose-guide table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+.prose-guide th,
+.prose-guide td {
+  border: 1px solid var(--color-grey-200);
+  padding: 8px 12px;
+  text-align: left;
+}
+.prose-guide th {
+  background: var(--color-grey-50);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* Block structures BlockNote can produce beyond plain markdown. */
+.prose-guide li > ul,
+.prose-guide li > ol {
+  margin: 6px 0 0;
+}
+.prose-guide ul.checklist {
+  list-style: none;
+  padding-left: 2px;
+}
+.prose-guide ul.checklist li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: baseline;
+}
+.prose-guide ul.checklist li > ul,
+.prose-guide ul.checklist li > ol {
+  grid-column: 1 / -1;
+}
+.prose-guide ul.checklist input[type="checkbox"] {
+  accent-color: var(--color-cyan-400);
+  position: relative;
+  top: 2px;
+  margin: 0;
+}
+.prose-guide ul.checklist .checked {
+  color: var(--color-grey-500);
+  text-decoration: line-through;
+}
+.prose-guide details.toggle {
+  margin: 0 0 16px;
+}
+.prose-guide details.toggle > summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+.prose-guide details.toggle > summary > h1,
+.prose-guide details.toggle > summary > h2,
+.prose-guide details.toggle > summary > h3 {
+  display: inline;
+  margin: 0;
+}
+.prose-guide details.toggle[open] > summary {
+  margin-bottom: 8px;
+}
+.prose-guide .prose-nested {
+  padding-left: 24px;
+}
+.prose-guide figure {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 18px 0 24px;
+}
+.prose-guide figure img,
+.prose-guide figure video {
+  max-width: 100%;
+  margin: 0;
+  border: 1px solid var(--color-grey-200);
+  border-radius: 8px;
+}
+.prose-guide figure audio {
+  width: 100%;
+  max-width: 480px;
+}
+.prose-guide figcaption {
+  font-size: 13px;
+  color: var(--color-grey-500);
+}
+.prose-guide .guide-diagram {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  margin: 0 0 24px;
+}
+.prose-guide .guide-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+.prose-guide .guide-diagram-source figcaption {
+  color: var(--color-danger);
+}
+
+/* ── BlockNote guide editor ──
+   BlockNote brings its own block styling (the Mantine theme CSS is imported by
+   the editor component only, so read pages never load it). These variables map
+   its theme to the brand tokens and line editor typography up with
+   .prose-guide, so authors see what readers get. */
+.guide-editor .bn-root {
+  --bn-colors-editor-text: var(--color-grey-800);
+  --bn-colors-editor-background: var(--color-grey-0);
+  --bn-colors-menu-text: var(--color-grey-800);
+  --bn-colors-menu-background: var(--color-grey-0);
+  --bn-colors-tooltip-text: var(--color-grey-0);
+  --bn-colors-tooltip-background: var(--color-ink);
+  --bn-colors-hovered-text: var(--color-ink);
+  --bn-colors-hovered-background: var(--color-cyan-50);
+  --bn-colors-selected-text: var(--color-cyan-700);
+  --bn-colors-selected-background: var(--color-cyan-100);
+  --bn-colors-disabled-text: var(--color-grey-400);
+  --bn-colors-disabled-background: var(--color-grey-100);
+  --bn-colors-shadow: rgba(0, 21, 25, 0.12);
+  --bn-colors-border: var(--color-grey-200);
+  --bn-colors-side-menu: var(--color-grey-400);
+  --bn-border-radius: 8px;
+  --bn-font-family: var(--font-sans);
+}
+.guide-editor .bn-editor {
+  min-height: 480px;
+  padding-block: 20px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.guide-editor [data-content-type="heading"][data-level="1"] {
+  --level: 28px;
+}
+.guide-editor [data-content-type="heading"][data-level="2"] {
+  --level: 22px;
+}
+.guide-editor [data-content-type="heading"][data-level="3"] {
+  --level: 18px;
+}
+.guide-editor .bn-inline-content a {
+  color: var(--color-cyan-700);
+}
