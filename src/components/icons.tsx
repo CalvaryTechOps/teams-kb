@@ -139,3 +139,23 @@ export function FileTextIcon({ size, className }: IconProps) {
     </svg>
   );
 }
+
+export function ArrowRightIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <path d="M5 12h14" />
+      <path d="M12 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+/** Folder with an arrow going in — "move to another department". */
+export function FolderMoveIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <path d="M2 9V5a2 2 0 012-2h3.9a2 2 0 011.69.9l.81 1.2a2 2 0 001.67.9H20a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2v-1" />
+      <path d="M2 13h10" />
+      <path d="M9 16l3-3-3-3" />
+    </svg>
+  );
+}

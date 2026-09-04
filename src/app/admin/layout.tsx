@@ -18,6 +18,9 @@ export default async function AdminLayout({
           <Link href="/admin/groups" className="hover:underline">
             Groups
           </Link>
+          <Link href="/admin/spaces" className="hover:underline">
+            Spaces
+          </Link>
           <Link href="/admin/all-staff-requests" className="hover:underline">
             All-staff requests
           </Link>

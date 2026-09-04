@@ -155,6 +155,38 @@ describe("GuideActions", () => {
     );
   });
 
+  it("adds Move guide for admins, after Edit guide", () => {
+    mount({ moveHref: "/spaces/mp/guides/correct-an-email/move" });
+    click(chevron());
+    expect(items()).toEqual([
+      "Download PDF",
+      "Download DOCX",
+      "Download Markdown",
+      "Move guide",
+    ]);
+    expect(byText("Move guide")?.getAttribute("href")).toBe(
+      "/spaces/mp/guides/correct-an-email/move",
+    );
+
+    mount({
+      editHref: "/spaces/mp/guides/correct-an-email/edit",
+      moveHref: "/spaces/mp/guides/correct-an-email/move",
+    });
+    expect(items()).toEqual([
+      "Download PDF",
+      "Download DOCX",
+      "Download Markdown",
+      "Edit guide",
+      "Move guide",
+    ]);
+    // One separator between the downloads and the links, not one per link.
+    expect(container.querySelectorAll('[role="separator"]')).toHaveLength(1);
+
+    const m = menu()!;
+    key(m, "End");
+    expect(document.activeElement?.textContent?.trim()).toBe("Move guide");
+  });
+
   it("closes on Escape (returning focus) and on an outside click", () => {
     mount();
     click(chevron());

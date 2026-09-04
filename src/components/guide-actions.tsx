@@ -10,6 +10,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import {
+  ArrowRightIcon,
   CheckIcon,
   ChevronDownIcon,
   DownloadIcon,
@@ -27,7 +28,7 @@ import {
 // Split button at the end of a guide's metadata row: "Copy link" as the main
 // action, a chevron opening Download PDF / DOCX / Markdown and — for people
 // who may edit — "Edit guide", the same target and permission as the header
-// button. Hand-rolled menu (no menu primitive exists in the app yet) with the
+// button, plus "Move guide" for admins. Hand-rolled menu (no menu primitive exists in the app yet) with the
 // usual keyboard contract: arrows move, Home/End jump, Escape closes and
 // returns focus, clicking or tabbing away closes.
 //
@@ -49,6 +50,7 @@ export function GuideActions({
   updatedAt,
   author,
   editHref,
+  moveHref,
 }: {
   /** Canonical guide path (no query string) — what "Copy link" copies. */
   path: string;
@@ -60,6 +62,8 @@ export function GuideActions({
   author: string;
   /** Present only when the viewer may edit (same gate as the header button). */
   editHref?: string;
+  /** Present only for admins: the move-to-another-department page. */
+  moveHref?: string;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const chevronRef = useRef<HTMLButtonElement>(null);
@@ -238,19 +242,30 @@ export function GuideActions({
                 : `Download ${EXPORT_FORMATS[format].label}`}
             </button>
           ))}
+          {(editHref || moveHref) && (
+            <div role="separator" className="my-1.5 border-t border-grey-200" />
+          )}
           {editHref && (
-            <>
-              <div role="separator" className="my-1.5 border-t border-grey-200" />
-              <Link
-                href={editHref}
-                role="menuitem"
-                onClick={() => closeMenu()}
-                className={menuItem}
-              >
-                <PencilIcon size={15} className="text-grey-500" />
-                Edit guide
-              </Link>
-            </>
+            <Link
+              href={editHref}
+              role="menuitem"
+              onClick={() => closeMenu()}
+              className={menuItem}
+            >
+              <PencilIcon size={15} className="text-grey-500" />
+              Edit guide
+            </Link>
+          )}
+          {moveHref && (
+            <Link
+              href={moveHref}
+              role="menuitem"
+              onClick={() => closeMenu()}
+              className={menuItem}
+            >
+              <ArrowRightIcon size={15} className="text-grey-500" />
+              Move guide
+            </Link>
           )}
         </div>
       )}

@@ -50,6 +50,13 @@
       "when": 1788390000002,
       "tag": "0006_app-settings",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788564673449,
+      "tag": "0007_sync-run-note",
+      "breakpoints": true
     }
   ]
 }
