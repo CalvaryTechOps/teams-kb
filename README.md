@@ -29,6 +29,10 @@ identity providers are not supported yet.
 Stack: Next.js (App Router) · Tailwind · Drizzle + Neon Postgres · better-auth
 (SAML SSO) · Microsoft Graph · BlockNote editor (JSON blocks) · Vercel.
 
+## Donations
+Find this project helpful?
+Please consider a tax deductible donation to Calvary Tech Ops: https://pushpay.com/g/calvarytechops
+
 ## Roles
 
 | Who | Can |
