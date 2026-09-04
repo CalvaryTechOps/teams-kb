@@ -3,7 +3,8 @@
 A staff knowledge base for organizations on Microsoft 365. Each Teams-enabled
 group becomes a department with its own space of guides; group members draft,
 group owners approve and publish, and an admin group runs the whole thing.
-Guides can be shared with specific groups or with everyone who can sign in.
+Guides can be shared with specific groups or with everyone who can sign in,
+and any guide can be copied as a link or downloaded as PDF, DOCX or Markdown.
 
 ## Assumptions
 
@@ -162,6 +163,12 @@ Admins can edit these without a deploy. Blank means "use the default".
 - **Site text** (`app_setting`) is read once per request with defaults from
   `src/lib/site-settings.ts`; a database outage falls back to the defaults so
   the sign-in page always renders.
+- **Exports** run in the browser (`src/components/guide-export.tsx`, loaded
+  only when a download is chosen): `@blocknote/xl-pdf-exporter` and
+  `@blocknote/xl-docx-exporter` with the diagram block's own mappings, and
+  BlockNote's lossy Markdown conversion. Media is fetched directly from Blob
+  rather than through BlockNote's default CORS proxy. PDFs use the exporter's
+  bundled Inter, since react-pdf can't load the site's WOFF2 Metropolis.
 - **Typeface**: Metropolis (public domain, `src/fonts/LICENSE-Metropolis.txt`).
 
 ## Known tradeoffs
@@ -182,4 +189,6 @@ place to start a larger change.
 ## License
 
 GPL-3.0-only. See [LICENSE](LICENSE). Metropolis is released under The
-Unlicense (`src/fonts/LICENSE-Metropolis.txt`).
+Unlicense (`src/fonts/LICENSE-Metropolis.txt`). The `@blocknote/xl-*` export
+packages are dual-licensed `GPL-3.0 OR PROPRIETARY` and are used here under
+GPL-3.0, so no commercial BlockNote licence is required.

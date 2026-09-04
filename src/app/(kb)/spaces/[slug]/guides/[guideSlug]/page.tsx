@@ -19,6 +19,7 @@ import { Badge, Button, ButtonLink, MicroLabel } from "@/components/ui";
 import { PencilIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { GuideContent } from "@/components/guide-content";
+import { GuideActions } from "@/components/guide-actions";
 import { readingMinutes } from "@/lib/guide-content";
 import {
   getSession,
@@ -293,21 +294,33 @@ export default async function GuidePage({
           <h1 className="text-4xl font-black leading-[1.15] tracking-tight text-ink">
             {revision.title}
           </h1>
-          <div className="mt-3.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 border-b border-grey-200 pb-5 text-[13px] text-grey-500">
-            <span>
-              Updated{" "}
-              {revision.createdAt.toLocaleDateString("en-US", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </span>
-            <span aria-hidden>·</span>
-            <span>
-              {author?.name ?? "Unknown"}, {s.name}
-            </span>
-            <span aria-hidden>·</span>
-            <span>{readingMinutes(revision.content)} min read</span>
+          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-grey-200 pb-5">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-grey-500">
+              <span>
+                Updated{" "}
+                {revision.createdAt.toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+              <span aria-hidden>·</span>
+              <span>
+                {author?.name ?? "Unknown"}, {s.name}
+              </span>
+              <span aria-hidden>·</span>
+              <span>{readingMinutes(revision.content)} min read</span>
+            </div>
+            <GuideActions
+              path={`/spaces/${s.slug}/guides/${g.slug}`}
+              title={revision.title}
+              blocks={revision.content}
+              editHref={
+                perms.canEdit
+                  ? `/spaces/${s.slug}/guides/${g.slug}/edit`
+                  : undefined
+              }
+            />
           </div>
 
           <div className="prose-guide pt-6">
