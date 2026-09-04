@@ -1,5 +1,14 @@
 @AGENTS.md
 
+## Public repository
+
+This repo is public. Nothing sensitive goes into committed files, including
+`plans/`: no credentials, tokens, connection strings, internal hostnames,
+real member or staff data, or private conversation details. Naming Chris
+(the repo owner) is fine. Any sample data in plans, tests, docs, or fixtures
+must be generic and sanitized (placeholder names, emails like
+`user@example.com`, made-up IDs).
+
 ## Implementation plans
 
 Deferred/pending implementation plans live in `plans/` — one markdown file per
@@ -11,6 +20,10 @@ lint, typecheck, build) and a commit on the feature branch. It never
 includes pushing — not the feature branch, not staging, not a PR. Chris
 tests locally and iterates first, then asks for a push explicitly. Plans
 must not list a push or deploy as a step.
+
+`plans/completed/` is history, not a queue: plans move there once their PR
+merges, kept for design rationale and answered questions. Never execute or
+resume a plan from that folder, and prefer the code over it where they differ.
 
 ## Branch & deploy workflow
 
