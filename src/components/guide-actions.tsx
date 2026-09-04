@@ -36,7 +36,7 @@ import {
 
 const COPIED_FOR_MS = 2000;
 
-const segment = buttonClasses({ variant: "secondary", size: "md" });
+const segment = buttonClasses({ variant: "secondary", size: "sm" });
 const menuItem =
   "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-grey-800 " +
   "hover:bg-grey-50 focus-visible:bg-grey-50 focus-visible:outline-none " +
@@ -192,7 +192,7 @@ export function GuideActions({
           onClick={copyLink}
           className={`${segment} rounded-r-none`}
         >
-          {copied ? <CheckIcon size={15} /> : <LinkIcon size={15} />}
+          {copied ? <CheckIcon size={13} /> : <LinkIcon size={13} />}
           <span aria-live="polite">{copied ? "Copied" : "Copy link"}</span>
         </button>
         <button
@@ -205,7 +205,7 @@ export function GuideActions({
           onKeyDown={onChevronKeyDown}
           className={`${segment} -ml-px rounded-l-none px-2.5`}
         >
-          <ChevronDownIcon size={14} />
+          <ChevronDownIcon size={13} />
         </button>
       </div>
 
