@@ -36,6 +36,8 @@ const BLOCKS: GuideBlock[] = [
   },
 ];
 
+const UPDATED = new Date("2026-09-03T12:00:00Z");
+
 let root: Root;
 let container: HTMLDivElement;
 
@@ -46,6 +48,8 @@ function mount(props: Partial<React.ComponentProps<typeof GuideActions>> = {}) {
         path="/spaces/mp/guides/correct-an-email"
         title="How to correct an email address"
         blocks={BLOCKS}
+        updatedAt={UPDATED}
+        author="Chris Adams"
         {...props}
       />,
     );
@@ -189,6 +193,8 @@ describe("GuideActions", () => {
     expect(exportGuide).toHaveBeenCalledWith("docx", {
       title: "How to correct an email address",
       blocks: BLOCKS,
+      updatedAt: UPDATED,
+      author: "Chris Adams",
     });
     expect(menu()).toBeNull();
     expect(container.querySelector('[role="alert"]')).toBeNull();

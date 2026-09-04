@@ -46,6 +46,8 @@ export function GuideActions({
   path,
   title,
   blocks,
+  updatedAt,
+  author,
   editHref,
 }: {
   /** Canonical guide path (no query string) — what "Copy link" copies. */
@@ -53,6 +55,9 @@ export function GuideActions({
   title: string;
   /** The revision being viewed; exports use exactly what's on screen. */
   blocks: GuideBlock[];
+  /** That revision's date and author, for the byline in exports. */
+  updatedAt: Date;
+  author: string;
   /** Present only when the viewer may edit (same gate as the header button). */
   editHref?: string;
 }) {
@@ -128,7 +133,7 @@ export function GuideActions({
     setError(null);
     try {
       const { exportGuide } = await import("./guide-export");
-      await exportGuide(format, { title, blocks });
+      await exportGuide(format, { title, blocks, updatedAt, author });
     } catch (err) {
       setError(
         `Couldn't prepare the ${EXPORT_FORMATS[format].label}: ${

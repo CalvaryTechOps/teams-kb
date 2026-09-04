@@ -315,6 +315,8 @@ export default async function GuidePage({
               path={`/spaces/${s.slug}/guides/${g.slug}`}
               title={revision.title}
               blocks={revision.content}
+              updatedAt={revision.createdAt}
+              author={author?.name ?? "Unknown"}
               editHref={
                 perms.canEdit
                   ? `/spaces/${s.slug}/guides/${g.slug}/edit`

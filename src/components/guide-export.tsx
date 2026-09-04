@@ -16,7 +16,27 @@ import { guideSchema, type GuideSchema } from "@/components/editor/schema";
 // The @blocknote/xl-* exporters are dual-licensed GPL-3.0 OR PROPRIETARY and
 // used here under GPL-3.0, matching this project's licence.
 
-export type ExportableGuide = { title: string; blocks: GuideBlock[] };
+export type ExportableGuide = {
+  title: string;
+  blocks: GuideBlock[];
+  /** When the exported revision was written and by whom. */
+  updatedAt: Date | string;
+  author: string;
+};
+
+/** Grey used for the byline in PDF/DOCX (the page's text-grey-500). */
+const META_COLOR = "6b7b81";
+const META_ID = "guide-meta";
+const RULE_ID = "guide-title-rule";
+
+export function metaLine({ updatedAt, author }: Pick<ExportableGuide, "updatedAt" | "author">) {
+  const date = new Date(updatedAt).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return `Last edited ${date} by ${author}`;
+}
 
 type SchemaBlock = Block<
   GuideSchema["blockSchema"],
@@ -26,12 +46,13 @@ type SchemaBlock = Block<
 
 /**
  * The body never contains the guide's title, so every export opens with it
- * as a level-1 heading followed by a rule — the hairline under the title on
- * the page. Stored GuideBlocks are structurally BlockNote Blocks for our
- * schema (guide-content.ts is the source of truth for that shape), hence the
- * single cast here.
+ * as a level-1 heading, a small byline (last edit date and author), then a
+ * rule — the hairline under the title on the page. Stored GuideBlocks are
+ * structurally BlockNote Blocks for our schema (guide-content.ts is the
+ * source of truth for that shape), hence the single cast here.
  */
-function documentFor({ title, blocks }: ExportableGuide): SchemaBlock[] {
+function documentFor(guide: ExportableGuide): SchemaBlock[] {
+  const { title, blocks } = guide;
   const heading = {
     id: "guide-title",
     type: "heading",
@@ -45,8 +66,18 @@ function documentFor({ title, blocks }: ExportableGuide): SchemaBlock[] {
     content: [{ type: "text", text: title, styles: {} }],
     children: [],
   };
-  const rule = { id: "guide-title-rule", type: "divider", props: {}, children: [] };
-  return [heading, rule, ...blocks] as unknown as SchemaBlock[];
+  // A plain paragraph; PDF and DOCX swap in a 10pt grey rendering for this
+  // block by id (see the paragraph mapping overrides), Markdown has no sizes
+  // so it stays italic text.
+  const meta = {
+    id: META_ID,
+    type: "paragraph",
+    props: { textColor: "default", backgroundColor: "default", textAlignment: "left" },
+    content: [{ type: "text", text: metaLine(guide), styles: { italic: true } }],
+    children: [],
+  };
+  const rule = { id: RULE_ID, type: "divider", props: {}, children: [] };
+  return [heading, meta, rule, ...blocks] as unknown as SchemaBlock[];
 }
 
 /**
@@ -56,25 +87,35 @@ function documentFor({ title, blocks }: ExportableGuide): SchemaBlock[] {
  */
 const resolveFileUrl = async (url: string) => url;
 
-async function toPdf(doc: SchemaBlock[], title: string): Promise<Blob> {
+async function toPdf(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {
   const [{ PDFExporter, pdfDefaultSchemaMappings }, { diagramBlockMapping }, reactPdf] =
     await Promise.all([
       import("@blocknote/xl-pdf-exporter"),
       import("@blocknote/diagram-block/pdf-exporter"),
       import("@react-pdf/renderer"),
     ]);
+  const { Text } = reactPdf;
+  const { paragraph } = pdfDefaultSchemaMappings.blockMapping;
   const exporter = new PDFExporter(
     guideSchema,
     {
       ...pdfDefaultSchemaMappings,
       blockMapping: {
         ...pdfDefaultSchemaMappings.blockMapping,
+        paragraph: (block, ...rest) =>
+          block.id === META_ID ? (
+            <Text style={{ fontSize: 10, color: `#${META_COLOR}` }}>
+              {metaLine(guide)}
+            </Text>
+          ) : (
+            paragraph(block, ...rest)
+          ),
         diagram: diagramBlockMapping,
       },
     },
     { resolveFileUrl },
   );
-  const { Text } = reactPdf;
+  const { title } = guide;
   const footer = (
     <Text
       style={{ fontSize: 9, color: "#6b7b81", textAlign: "center" }}
@@ -87,18 +128,29 @@ async function toPdf(doc: SchemaBlock[], title: string): Promise<Blob> {
   return reactPdf.pdf(pdfDocument).toBlob();
 }
 
-async function toDocx(doc: SchemaBlock[]): Promise<Blob> {
-  const [{ DOCXExporter, docxDefaultSchemaMappings }, { diagramBlockMapping }] =
+async function toDocx(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {
+  const [{ DOCXExporter, docxDefaultSchemaMappings }, { diagramBlockMapping }, { Paragraph, TextRun }] =
     await Promise.all([
       import("@blocknote/xl-docx-exporter"),
       import("@blocknote/diagram-block/docx-exporter"),
+      import("docx"),
     ]);
+  const { paragraph } = docxDefaultSchemaMappings.blockMapping;
   const exporter = new DOCXExporter(
     guideSchema,
     {
       ...docxDefaultSchemaMappings,
       blockMapping: {
         ...docxDefaultSchemaMappings.blockMapping,
+        paragraph: (block, ...rest) =>
+          block.id === META_ID
+            ? new Paragraph({
+                children: [
+                  // docx sizes are half-points: 20 = 10pt.
+                  new TextRun({ text: metaLine(guide), size: 20, color: META_COLOR }),
+                ],
+              })
+            : paragraph(block, ...rest),
         diagram: diagramBlockMapping,
       },
     },
@@ -123,9 +175,9 @@ export async function guideToBlob(
   const doc = documentFor(guide);
   switch (format) {
     case "pdf":
-      return toPdf(doc, guide.title);
+      return toPdf(doc, guide);
     case "docx":
-      return toDocx(doc);
+      return toDocx(doc, guide);
     case "md":
       return toMarkdown(doc);
   }

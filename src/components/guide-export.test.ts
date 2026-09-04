@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import { parseGuideContent } from "@/lib/guide-content";
-import { exportFilename, guideToBlob } from "./guide-export";
+import { exportFilename, guideToBlob, metaLine } from "./guide-export";
 
 // Conversion contract for the downloads. Markdown and DOCX run headless here;
 // PDF rendering needs a real browser (fonts, layout) and is covered by the
@@ -59,6 +59,28 @@ const MEDIA = [
 
 const parse = (blocks: unknown[]) => parseGuideContent(JSON.stringify(blocks));
 
+/** word/document.xml out of a .docx, via the zip's stored/deflated entries. */
+async function documentXml(blob: Blob): Promise<string> {
+  const { inflateRawSync } = await import("node:zlib");
+  const buf = Buffer.from(await blob.arrayBuffer());
+  let offset = 0;
+  while (buf.readUInt32LE(offset) === 0x04034b50) {
+    const method = buf.readUInt16LE(offset + 8);
+    const compressed = buf.readUInt32LE(offset + 18);
+    const nameLength = buf.readUInt16LE(offset + 26);
+    const extraLength = buf.readUInt16LE(offset + 28);
+    const name = buf.toString("utf8", offset + 30, offset + 30 + nameLength);
+    const start = offset + 30 + nameLength + extraLength;
+    const data = buf.subarray(start, start + compressed);
+    if (name === "word/document.xml") {
+      return (method === 8 ? inflateRawSync(data) : data).toString("utf8");
+    }
+    offset = start + compressed;
+  }
+  throw new Error("word/document.xml not found");
+}
+const META = { updatedAt: new Date("2026-09-03T12:00:00Z"), author: "Chris Adams" };
+
 describe("guide export", () => {
   it("names the file after the title", () => {
     expect(exportFilename("How to correct an email address", "pdf")).toBe(
@@ -67,14 +89,21 @@ describe("guide export", () => {
     expect(exportFilename("???", "md")).toBe("untitled.md");
   });
 
-  it("writes Markdown that opens with the title, a rule, then every block", async () => {
+  it("formats the byline", () => {
+    expect(metaLine(META)).toBe("Last edited Sep 3, 2026 by Chris Adams");
+  });
+
+  it("writes Markdown that opens with the title, byline, a rule, then every block", async () => {
     const blob = await guideToBlob("md", {
       title: "Fix an email",
       blocks: parse([...TEXT_BLOCKS, DIAGRAM, ...MEDIA]),
+      ...META,
     });
     expect(blob.type).toContain("text/markdown");
     const md = await blob.text();
-    expect(md.startsWith("# Fix an email\n\n***\n\n## Steps")).toBe(true);
+    expect(
+      md.startsWith("# Fix an email\n\n*Last edited Sep 3, 2026 by Chris Adams*\n\n***\n\n## Steps"),
+    ).toBe(true);
     expect(md).toContain("## Steps");
     expect(md).toContain("**Contacts**");
     expect(md).toContain("[in MP](https://example.org/mp)");
@@ -95,10 +124,16 @@ describe("guide export", () => {
     const blob = await guideToBlob("docx", {
       title: "Fix an email",
       blocks: parse(TEXT_BLOCKS),
+      ...META,
     });
     expect(blob.size).toBeGreaterThan(1000);
     // A .docx is a zip: "PK" signature.
     const head = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
     expect(Array.from(head)).toEqual([0x50, 0x4b]);
+    // Byline present, at 10pt (docx sizes are half-points) in grey.
+    const xml = await documentXml(blob);
+    expect(xml).toContain("Last edited Sep 3, 2026 by Chris Adams");
+    expect(xml).toMatch(/<w:sz w:val="20"\/>/);
+    expect(xml).toMatch(/<w:color w:val="6b7b81"\/>/i);
   });
 });
