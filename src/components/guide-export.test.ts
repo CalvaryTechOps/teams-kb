@@ -67,14 +67,14 @@ describe("guide export", () => {
     expect(exportFilename("???", "md")).toBe("untitled.md");
   });
 
-  it("writes Markdown that opens with the title and keeps every block", async () => {
+  it("writes Markdown that opens with the title, a rule, then every block", async () => {
     const blob = await guideToBlob("md", {
       title: "Fix an email",
       blocks: parse([...TEXT_BLOCKS, DIAGRAM, ...MEDIA]),
     });
     expect(blob.type).toContain("text/markdown");
     const md = await blob.text();
-    expect(md.startsWith("# Fix an email")).toBe(true);
+    expect(md.startsWith("# Fix an email\n\n***\n\n## Steps")).toBe(true);
     expect(md).toContain("## Steps");
     expect(md).toContain("**Contacts**");
     expect(md).toContain("[in MP](https://example.org/mp)");

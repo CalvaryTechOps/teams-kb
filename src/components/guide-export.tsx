@@ -26,9 +26,10 @@ type SchemaBlock = Block<
 
 /**
  * The body never contains the guide's title, so every export opens with it
- * as a level-1 heading. Stored GuideBlocks are structurally BlockNote Blocks
- * for our schema (guide-content.ts is the source of truth for that shape),
- * hence the single cast here.
+ * as a level-1 heading followed by a rule — the hairline under the title on
+ * the page. Stored GuideBlocks are structurally BlockNote Blocks for our
+ * schema (guide-content.ts is the source of truth for that shape), hence the
+ * single cast here.
  */
 function documentFor({ title, blocks }: ExportableGuide): SchemaBlock[] {
   const heading = {
@@ -44,7 +45,8 @@ function documentFor({ title, blocks }: ExportableGuide): SchemaBlock[] {
     content: [{ type: "text", text: title, styles: {} }],
     children: [],
   };
-  return [heading, ...blocks] as unknown as SchemaBlock[];
+  const rule = { id: "guide-title-rule", type: "divider", props: {}, children: [] };
+  return [heading, rule, ...blocks] as unknown as SchemaBlock[];
 }
 
 /**

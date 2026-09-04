@@ -1,7 +1,8 @@
 # Plan: "Copy link" split button with PDF / DOCX / Markdown export and Edit
 
-**Status: implemented 2026-09-04 on `feat/guide-export-menu` — awaiting the
-manual test plan on staging and a PR to `main`.** Open questions below are
+**Status: implemented 2026-09-04 on `feat/guide-export-menu` — Chris is
+testing locally; staging currently holds this branch (pushed 2026-09-04,
+before the no-unrequested-push rule); PR to `main` still to come.** Open questions below are
 answered. Notes from implementation: format labels live in
 `src/lib/export-formats.ts` so the menu never imports the exporters; the
 DOCX exporter is inlined in `vitest.config.ts` because its lazy `buffer`
@@ -268,7 +269,7 @@ title, as in the mockup.
    - `guide-actions.test.tsx`: menu opens/closes (click, Escape, outside click); ArrowDown focuses items; "Edit guide" present only with `editHref` and links to it; Copy writes the canonical absolute URL (mock `navigator.clipboard`) and shows "Copied"; a rejected clipboard write shows the fallback input; choosing a download calls the mocked export module with the right format.
    - `guide-export.test.ts`: Markdown output for a fixture containing every `GuideBlockType` starts with `# {title}` and contains a ```` ```mermaid ```` fence; DOCX conversion of the same fixture yields a non-empty Blob (docx.js runs in Node; stub `resolveFileUrl`/mermaid image rendering). PDF conversion is browser-only in practice — cover it manually.
 7. README: add exports to the feature list and a short note under License that the `@blocknote/xl-*` packages are used under their GPL-3.0 option.
-8. Update this file's status line; push to staging with the `push-to-staging` skill and walk the manual test plan below on the deployed build before opening the PR.
+8. Update this file's status line and commit on the feature branch. Chris tests locally, then decides when to push to staging and open the PR.
 
 ## Test plan
 
