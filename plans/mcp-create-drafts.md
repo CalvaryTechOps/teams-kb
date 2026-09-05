@@ -23,6 +23,16 @@ against React's server-only build, and `@blocknote/server-util` imports
 `@blocknote/react`. `serverExternalPackages: ["@blocknote/server-util"]` in
 `next.config.ts` makes Node load it from node_modules with the full React;
 verified by calling the converter from a route in a production build.
+Fourth follow-up: production then failed with `ERR_REQUIRE_ESM` from
+`html-encoding-sniffer` requiring `@exodus/bytes` (an ES module). jsdom ≥ 28
+relies on Node's require(esm), which Vercel's function runtime disables
+(`--no-experimental-require-module` in execArgv; the documented
+`NODE_OPTIONS=--experimental-require-module` is reported not to override it).
+Fix in the repo: an npm `overrides` entry pins `@blocknote/server-util`'s
+jsdom to 26.x, the last line whose dependency chain is all CommonJS.
+Reproduced and verified locally with `node --no-experimental-require-module`
+and a production `next start` under the same flag. Revisit the pin when
+Vercel enables require(esm).
 
 ## Goal
 

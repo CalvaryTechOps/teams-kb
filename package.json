@@ -55,5 +55,10 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "@blocknote/server-util": {
+      "jsdom": "~26.1.0"
+    }
   }
 }
