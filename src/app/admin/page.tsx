@@ -1,10 +1,23 @@
 import Link from "next/link";
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, isNotNull, or } from "drizzle-orm";
 import { db } from "@/db";
-import { allStaffRequest, guideDeletionRequest, syncRun, tag } from "@/db/schema";
+import {
+  allStaffRequest,
+  guideDeletionRequest,
+  m365Group,
+  space,
+  syncRun,
+  tag,
+} from "@/db/schema";
 
 export default async function AdminDashboard() {
-  const [recentRuns, [pendingRequests], [pendingDeletions], [tagCount]] = await Promise.all([
+  const [
+    recentRuns,
+    [pendingRequests],
+    [pendingDeletions],
+    [tagCount],
+    [orphanCount],
+  ] = await Promise.all([
     db.select().from(syncRun).orderBy(desc(syncRun.startedAt)).limit(10),
     db
       .select({ n: count() })
@@ -15,6 +28,14 @@ export default async function AdminDashboard() {
       .from(guideDeletionRequest)
       .where(eq(guideDeletionRequest.status, "pending")),
     db.select({ n: count() }).from(tag),
+    // Spaces nobody can author in: Team deleted or group un-flagged.
+    db
+      .select({ n: count() })
+      .from(space)
+      .innerJoin(m365Group, eq(m365Group.id, space.groupId))
+      .where(
+        or(isNotNull(m365Group.deletedAt), eq(m365Group.isDepartment, false)),
+      ),
   ]);
 
   return (
@@ -25,6 +46,13 @@ export default async function AdminDashboard() {
           <li>
             <Link href="/admin/groups" className="text-blue-600 hover:underline">
               M365 groups — flag departments &amp; admin groups, run sync
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/spaces" className="text-blue-600 hover:underline">
+              Spaces — inventory, re-home or merge orphaned departments
+              {(orphanCount?.n ?? 0) > 0 &&
+                ` — ${orphanCount!.n} orphaned`}
             </Link>
           </li>
           <li>
@@ -78,7 +106,8 @@ export default async function AdminDashboard() {
                 <th className="py-1 pr-4">Kind</th>
                 <th className="py-1 pr-4">Groups</th>
                 <th className="py-1 pr-4">Memberships</th>
-                <th className="py-1">Result</th>
+                <th className="py-1 pr-4">Result</th>
+                <th className="py-1">Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -88,7 +117,7 @@ export default async function AdminDashboard() {
                   <td className="py-1 pr-4">{run.kind}</td>
                   <td className="py-1 pr-4">{run.groupsCount ?? "—"}</td>
                   <td className="py-1 pr-4">{run.membershipsCount ?? "—"}</td>
-                  <td className="py-1">
+                  <td className="py-1 pr-4">
                     {run.error ? (
                       <span className="text-red-600">{run.error}</span>
                     ) : run.finishedAt ? (
@@ -97,6 +126,7 @@ export default async function AdminDashboard() {
                       "running…"
                     )}
                   </td>
+                  <td className="py-1 text-gray-500">{run.note ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

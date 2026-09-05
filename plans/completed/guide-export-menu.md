@@ -1,8 +1,6 @@
 # Plan: "Copy link" split button with PDF / DOCX / Markdown export and Edit
 
-**Status: implemented 2026-09-04 on `feat/guide-export-menu` — Chris is
-testing locally; staging currently holds this branch (pushed 2026-09-04,
-before the no-unrequested-push rule); PR to `main` still to come.** Open questions below are
+**Status: complete — implemented 2026-09-04 on `feat/guide-export-menu`, merged to `main` via PR #2.** Open questions below are
 answered. Notes from implementation: format labels live in
 `src/lib/export-formats.ts` so the menu never imports the exporters; the
 DOCX exporter is inlined in `vitest.config.ts` because its lazy `buffer`

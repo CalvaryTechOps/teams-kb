@@ -26,9 +26,19 @@ import {
 } from "@/lib/guide-content";
 import {
   requireAccess,
+  requireAdmin,
   resolveGuidePermissions,
   type UserAccess,
 } from "@/lib/permissions";
+import { GENERAL_CATEGORY_SLUG } from "@/lib/categories";
+import {
+  guidePath,
+  moveCategoryInTx,
+  moveGeneralGuidesInTx,
+  moveGuideInTx,
+  revalidateMove,
+  uniqueGuideSlugIn,
+} from "@/lib/moves";
 import { slugify } from "@/lib/slug";
 import { pruneUnusedTags } from "@/lib/tags";
 
@@ -53,16 +63,7 @@ function spacePermissions(access: UserAccess, spaceGroupId: string) {
 }
 
 async function uniqueGuideSlug(spaceId: string, title: string) {
-  const base = slugify(title);
-  let slug = base;
-  for (let n = 2; ; n++) {
-    const taken = await db
-      .select({ id: guide.id })
-      .from(guide)
-      .where(and(eq(guide.spaceId, spaceId), eq(guide.slug, slug)));
-    if (taken.length === 0) return slug;
-    slug = `${base}-${n}`;
-  }
+  return uniqueGuideSlugIn(db, spaceId, slugify(title));
 }
 
 /**
@@ -195,6 +196,9 @@ export async function createCategory(spaceSlug: string, formData: FormData) {
   if (!name) redirect(`/spaces/${s.slug}`);
 
   const slug = slugify(name);
+  // "General" is the synthetic card for uncategorized guides; a real
+  // category with that slug would be unreachable and ambiguous to move.
+  if (slug === GENERAL_CATEGORY_SLUG) redirect(`/spaces/${s.slug}`);
   const existing = await db
     .select({ id: category.id })
     .from(category)
@@ -616,4 +620,116 @@ export async function requestGuideDeletion(input: GuideRef) {
   revalidatePath("/admin/deletion-requests");
   revalidatePath("/admin/guides");
   redirect(`/spaces/${s.slug}`);
+}
+
+// ---------------------------------------------------------------------------
+// Moving content. Space owners (and admins) may re-file a guide into another
+// category of its own space — the same thing the guide form's category picker
+// does, in one step. Handing content to a *different* department is an admin
+// decision (plan Q9/Q10, revised after testing). Category moves are
+// admin-only. Primitives live in src/lib/moves.ts.
+// ---------------------------------------------------------------------------
+
+async function targetSpaceOrNull(spaceId: string) {
+  if (!spaceId) return null;
+  const [t] = await db.select().from(space).where(eq(space.id, spaceId));
+  return t ?? null;
+}
+
+/** A category id from the form, verified to belong to the target space. */
+async function categoryInSpaceOrNull(categoryId: string, spaceId: string) {
+  if (!categoryId) return null;
+  const [c] = await db
+    .select({ id: category.id })
+    .from(category)
+    .where(and(eq(category.id, categoryId), eq(category.spaceId, spaceId)));
+  return c ?? null;
+}
+
+export async function moveGuide(input: GuideRef, formData: FormData) {
+  const access = await requireAccess();
+  const s = await spaceBySlugOr404(input.spaceSlug);
+  if (!spacePermissions(access, s.groupId).canApprove) redirect(`/spaces/${s.slug}`);
+  const [g] = await db
+    .select()
+    .from(guide)
+    .where(and(eq(guide.id, input.guideId), eq(guide.spaceId, s.id)));
+  if (!g) notFound();
+  const back = guidePath(s.slug, g.slug);
+
+  const target = await targetSpaceOrNull(String(formData.get("spaceId") ?? ""));
+  if (!target) redirect(back);
+  // Only admins may move a guide out of its department.
+  if (target.id !== s.id && !access.isAdmin) redirect(back);
+  const requestedCategory = String(formData.get("categoryId") ?? "");
+  const cat = await categoryInSpaceOrNull(requestedCategory, target.id);
+  // An id that isn't one of the target's categories is a stale or tampered
+  // form — don't silently file the guide under General.
+  if (requestedCategory && !cat) redirect(back);
+  const categoryId = cat?.id ?? null;
+  if (target.id === s.id && categoryId === g.categoryId) redirect(back);
+
+  const moved = await db.transaction((tx) =>
+    moveGuideInTx(tx, g, { spaceId: target.id, categoryId }),
+  );
+
+  const dest = guidePath(target.slug, moved.newSlug);
+  revalidateMove({ spaceSlugs: [s.slug, target.slug], guidePaths: [back, dest] });
+  redirect(dest);
+}
+
+type CategoryRef = { spaceSlug: string; categorySlug: string };
+
+export async function moveCategory(input: CategoryRef, formData: FormData) {
+  await requireAdmin();
+  const s = await spaceBySlugOr404(input.spaceSlug);
+  const [cat] = await db
+    .select()
+    .from(category)
+    .where(and(eq(category.spaceId, s.id), eq(category.slug, input.categorySlug)));
+  if (!cat) notFound();
+  const back = `/spaces/${s.slug}#${cat.slug}`;
+
+  const target = await targetSpaceOrNull(String(formData.get("spaceId") ?? ""));
+  if (!target || target.id === s.id) redirect(back);
+
+  const result = await db.transaction((tx) => moveCategoryInTx(tx, cat, target.id));
+
+  revalidateMove({
+    spaceSlugs: [s.slug, target.slug],
+    guidePaths: result.guides.flatMap((m) => [
+      guidePath(s.slug, m.oldSlug),
+      guidePath(target.slug, m.newSlug),
+    ]),
+  });
+  redirect(`/spaces/${target.slug}#${cat.slug}`);
+}
+
+/** "Move all General guides": every uncategorized guide of a space (plan Q6). */
+export async function moveGeneralGuides(spaceSlug: string, formData: FormData) {
+  await requireAdmin();
+  const s = await spaceBySlugOr404(spaceSlug);
+  const back = `/spaces/${s.slug}#${GENERAL_CATEGORY_SLUG}`;
+
+  const target = await targetSpaceOrNull(String(formData.get("spaceId") ?? ""));
+  if (!target || target.id === s.id) redirect(back);
+  const requestedCategory = String(formData.get("categoryId") ?? "");
+  const cat = await categoryInSpaceOrNull(requestedCategory, target.id);
+  if (requestedCategory && !cat) redirect(back);
+
+  const moved = await db.transaction((tx) =>
+    moveGeneralGuidesInTx(tx, s.id, {
+      spaceId: target.id,
+      categoryId: cat?.id ?? null,
+    }),
+  );
+
+  revalidateMove({
+    spaceSlugs: [s.slug, target.slug],
+    guidePaths: moved.flatMap((m) => [
+      guidePath(s.slug, m.oldSlug),
+      guidePath(target.slug, m.newSlug),
+    ]),
+  });
+  redirect(`/spaces/${target.slug}`);
 }

@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { m365Group, space } from "@/db/schema";
 import { runFullSync } from "@/lib/graph-sync";
+import { deleteSpaceIfEmpty } from "@/lib/moves";
 import { requireAdmin } from "@/lib/permissions";
 import { slugify } from "@/lib/slug";
 
@@ -16,9 +17,20 @@ export async function setDepartmentFlag(groupId: string, isDepartment: boolean) 
     .set({ isDepartment })
     .where(eq(m365Group.id, groupId));
 
-  if (isDepartment) {
-    // Auto-create the department's space on first flag. Un-flagging keeps the
-    // space (it may hold guides); the flag alone gates authoring.
+  if (!isDepartment) {
+    // Un-flagging: a space with nothing in it goes away with the flag. One
+    // that holds guides or categories stays, listed as orphaned on
+    // /admin/spaces until an admin re-homes or merges it.
+    const [existing] = await db
+      .select({ id: space.id, slug: space.slug })
+      .from(space)
+      .where(eq(space.groupId, groupId));
+    if (existing && (await deleteSpaceIfEmpty(db, existing.id))) {
+      revalidatePath("/");
+      revalidatePath(`/spaces/${existing.slug}`);
+    }
+  } else {
+    // Auto-create the department's space on first flag.
     const [group] = await db
       .select()
       .from(m365Group)
@@ -49,6 +61,7 @@ export async function setDepartmentFlag(groupId: string, isDepartment: boolean) 
   }
 
   revalidatePath("/admin/groups");
+  revalidatePath("/admin/spaces");
 }
 
 export async function setAdminGroupFlag(groupId: string, isAdminGroup: boolean) {

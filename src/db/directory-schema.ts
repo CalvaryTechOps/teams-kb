@@ -90,4 +90,7 @@ export const syncRun = pgTable("sync_run", {
   groupsCount: integer("groups_count"),
   membershipsCount: integer("memberships_count"),
   error: text("error"),
+  // Housekeeping the run did besides mirroring (e.g. audience links pruned
+  // because their group was deleted); shown on the admin dashboard.
+  note: text("note"),
 });

@@ -1,6 +1,7 @@
-import { and, eq, isNull, notInArray, or } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, notExists, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  guide,
   guideAudienceGroup,
   m365Group,
   m365GroupMember,
@@ -101,34 +102,12 @@ export async function runFullSync(): Promise<{
 
     let membershipsCount = 0;
     for (const groupId of rosterGroupIds) {
-      const [members, owners] = await Promise.all([
-        graphGetAll<GraphDirectoryObject>(
-          `/groups/${groupId}/members/microsoft.graph.user?$select=id&$top=999`,
-        ),
-        graphGetAll<GraphDirectoryObject>(
-          `/groups/${groupId}/owners/microsoft.graph.user?$select=id&$top=999`,
-        ),
-      ]);
-      const rows = [
-        ...members.map((m) => ({
-          groupId,
-          entraObjectId: m.id,
-          role: "member" as const,
-        })),
-        ...owners.map((o) => ({
-          groupId,
-          entraObjectId: o.id,
-          role: "owner" as const,
-        })),
-      ];
-      await db.transaction(async (tx) => {
-        await tx.delete(m365GroupMember).where(eq(m365GroupMember.groupId, groupId));
-        if (rows.length > 0) {
-          await tx.insert(m365GroupMember).values(rows).onConflictDoNothing();
-        }
-      });
-      membershipsCount += rows.length;
+      membershipsCount += await syncGroupRoster(groupId);
     }
+
+    // Deleted groups can't be an audience any more; drop the links now
+    // rather than let a guide's readership shrink silently (plan Q3).
+    const pruned = await pruneStaleAudiences();
 
     await db
       .update(syncRun)
@@ -136,6 +115,7 @@ export async function runFullSync(): Promise<{
         finishedAt: new Date(),
         groupsCount: groups.length,
         membershipsCount,
+        note: pruned.note,
       })
       .where(eq(syncRun.id, run.id));
 
@@ -150,6 +130,96 @@ export async function runFullSync(): Promise<{
       .where(eq(syncRun.id, run.id));
     throw err;
   }
+}
+
+/**
+ * Replace one group's member/owner rows from Graph. Used by the full sync
+ * for every roster group, and by admin re-homing so a newly assigned
+ * department can author right away instead of after the next nightly run.
+ * Returns the number of rows written.
+ */
+export async function syncGroupRoster(groupId: string): Promise<number> {
+  const [members, owners] = await Promise.all([
+    graphGetAll<GraphDirectoryObject>(
+      `/groups/${groupId}/members/microsoft.graph.user?$select=id&$top=999`,
+    ),
+    graphGetAll<GraphDirectoryObject>(
+      `/groups/${groupId}/owners/microsoft.graph.user?$select=id&$top=999`,
+    ),
+  ]);
+  const rows = [
+    ...members.map((m) => ({
+      groupId,
+      entraObjectId: m.id,
+      role: "member" as const,
+    })),
+    ...owners.map((o) => ({
+      groupId,
+      entraObjectId: o.id,
+      role: "owner" as const,
+    })),
+  ];
+  await db.transaction(async (tx) => {
+    await tx.delete(m365GroupMember).where(eq(m365GroupMember.groupId, groupId));
+    if (rows.length > 0) {
+      await tx.insert(m365GroupMember).values(rows).onConflictDoNothing();
+    }
+  });
+  return rows.length;
+}
+
+/**
+ * Remove guide_audience_group rows whose group is soft-deleted. A guide left
+ * with audience 'groups' but no groups falls back to 'department' — the same
+ * reading the audience picker applies to "specific teams, none chosen". The
+ * note goes on the sync run so the cleanup is visible on the dashboard.
+ */
+export async function pruneStaleAudiences(): Promise<{
+  prunedLinks: number;
+  narrowedGuides: number;
+  note: string | null;
+}> {
+  const pruned = await db
+    .delete(guideAudienceGroup)
+    .where(
+      inArray(
+        guideAudienceGroup.groupId,
+        db
+          .select({ id: m365Group.id })
+          .from(m365Group)
+          .where(isNotNull(m365Group.deletedAt)),
+      ),
+    )
+    .returning({ guideId: guideAudienceGroup.guideId });
+  if (pruned.length === 0) {
+    return { prunedLinks: 0, narrowedGuides: 0, note: null };
+  }
+
+  const affected = [...new Set(pruned.map((r) => r.guideId))];
+  const narrowed = await db
+    .update(guide)
+    .set({ audience: "department" })
+    .where(
+      and(
+        inArray(guide.id, affected),
+        eq(guide.audience, "groups"),
+        notExists(
+          db
+            .select({ one: sql`1` })
+            .from(guideAudienceGroup)
+            .where(eq(guideAudienceGroup.guideId, guide.id)),
+        ),
+      ),
+    )
+    .returning({ id: guide.id });
+
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const note =
+    `Pruned ${plural(pruned.length, "audience link")} to deleted groups` +
+    (narrowed.length > 0
+      ? `; ${plural(narrowed.length, "guide")} fell back to the department audience.`
+      : ".");
+  return { prunedLinks: pruned.length, narrowedGuides: narrowed.length, note };
 }
 
 /**

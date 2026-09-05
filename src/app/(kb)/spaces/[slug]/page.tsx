@@ -3,9 +3,16 @@ import { notFound } from "next/navigation";
 import { and, asc, count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { APP_TITLE } from "@/lib/branding";
-import { category, guide, guideRevision, space, user } from "@/db/schema";
+import {
+  category,
+  guide,
+  guideRevision,
+  m365Group,
+  space,
+  user,
+} from "@/db/schema";
 import { Badge, Button, ButtonLink, MicroLabel } from "@/components/ui";
-import { PlusIcon } from "@/components/icons";
+import { FolderMoveIcon, PlusIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import {
   getSession,
@@ -13,6 +20,12 @@ import {
   resolveGuidePermissions,
   visibleGuidesWhere,
 } from "@/lib/permissions";
+import { GENERAL_CATEGORY_NAME, GENERAL_CATEGORY_SLUG } from "@/lib/categories";
+import {
+  isOrphaned,
+  spaceHealth,
+  spaceHealthDescription,
+} from "@/lib/space-health";
 import { timeAgo } from "@/lib/time";
 import { createCategory } from "../actions";
 
@@ -23,8 +36,24 @@ export default async function SpacePage({
   const access = await requireAccess();
   const session = await getSession();
 
-  const [s] = await db.select().from(space).where(eq(space.slug, slug));
-  if (!s) notFound();
+  const [row] = await db
+    .select({
+      s: space,
+      groupDeletedAt: m365Group.deletedAt,
+      groupIsDepartment: m365Group.isDepartment,
+    })
+    .from(space)
+    .innerJoin(m365Group, eq(m365Group.id, space.groupId))
+    .where(eq(space.slug, slug));
+  if (!row) notFound();
+  const s = row.s;
+  // Admin-only notice: an orphaned space (Team deleted, or un-flagged) has
+  // nobody who can author in it. Members just see the "New guide" button
+  // vanish, which is the intended quiet degradation.
+  const health = spaceHealth({
+    deletedAt: row.groupDeletedAt,
+    isDepartment: row.groupIsDepartment,
+  });
 
   // Authoring rights in this space (published stand-in — unpublished guides
   // are further gated by authorship in the list query itself).
@@ -81,11 +110,11 @@ export default async function SpacePage({
       guides: guides.filter((g) => g.categoryId === c.id),
     })),
     {
-      key: "general",
-      name: "General",
+      key: GENERAL_CATEGORY_SLUG,
+      name: GENERAL_CATEGORY_NAME,
       guides: guides.filter((g) => g.categoryId === null),
     },
-  ].filter((sec) => sec.guides.length > 0 || sec.key !== "general");
+  ].filter((sec) => sec.guides.length > 0 || sec.key !== GENERAL_CATEGORY_SLUG);
 
   return (
     <>
@@ -125,6 +154,14 @@ export default async function SpacePage({
         {s.description && (
           <p className="mt-2 max-w-[640px] text-grey-500">{s.description}</p>
         )}
+        {access.isAdmin && isOrphaned(health) && (
+          <div className="mt-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-100/50 px-4 py-3 text-sm text-grey-800">
+            <span>{spaceHealthDescription(health)}</span>
+            <ButtonLink href="/admin/spaces" variant="secondary" size="sm">
+              Manage spaces
+            </ButtonLink>
+          </div>
+        )}
 
         <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
           {sections.map((sec) => (
@@ -134,7 +171,29 @@ export default async function SpacePage({
               className="scroll-mt-20 rounded-xl border border-grey-200 bg-white px-6 py-5 shadow-xs"
             >
               <div className="mb-2 flex items-baseline justify-between">
-                <div className="font-bold text-ink">{sec.name}</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-bold text-ink">{sec.name}</div>
+                  {access.isAdmin &&
+                    (sec.key !== GENERAL_CATEGORY_SLUG ||
+                      sec.guides.length > 0) && (
+                      <Link
+                        href={`/spaces/${s.slug}/categories/${sec.key}/move`}
+                        aria-label={
+                          sec.key === GENERAL_CATEGORY_SLUG
+                            ? "Move all General guides"
+                            : `Move ${sec.name}`
+                        }
+                        title={
+                          sec.key === GENERAL_CATEGORY_SLUG
+                            ? "Move all General guides to another department"
+                            : "Move to another department"
+                        }
+                        className="rounded-md p-1 text-grey-400 hover:bg-grey-100 hover:text-cyan-700"
+                      >
+                        <FolderMoveIcon size={14} />
+                      </Link>
+                    )}
+                </div>
                 <div className="text-xs text-grey-500">
                   {sec.guides.length}
                 </div>

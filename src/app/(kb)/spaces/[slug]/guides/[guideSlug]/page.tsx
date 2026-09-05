@@ -322,6 +322,11 @@ export default async function GuidePage({
                   ? `/spaces/${s.slug}/guides/${g.slug}/edit`
                   : undefined
               }
+              moveHref={
+                perms.canApprove
+                  ? `/spaces/${s.slug}/guides/${g.slug}/move`
+                  : undefined
+              }
             />
           </div>
 
