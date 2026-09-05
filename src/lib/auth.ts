@@ -2,10 +2,21 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { sso } from "@better-auth/sso";
+import { jwt } from "better-auth/plugins";
+import { mcp } from "@better-auth/mcp";
+import { cimd } from "@better-auth/cimd";
+import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { refreshUserGroups, shouldRefreshGroups } from "@/lib/graph-sync";
+import {
+  MCP_ACCESS_TOKEN_SECONDS,
+  MCP_ALLOW_DCR,
+  MCP_REFRESH_TOKEN_SECONDS,
+  MCP_RESOURCE_URL,
+  MCP_SCOPE,
+} from "@/lib/mcp/config";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -137,6 +148,29 @@ export const auth = betterAuth({
             },
           ]
         : [],
+    }),
+    // --- MCP (plans/mcp-server.md) ---------------------------------------
+    // The KB is the OAuth 2.1 authorization server *and* the protected
+    // resource for its own MCP endpoint. Agents discover us via
+    // /.well-known/oauth-protected-resource, send staff through the normal
+    // SAML sign-in plus a consent page, and receive JWTs audience-bound to
+    // MCP_RESOURCE_URL that src/app/api/mcp/route.ts verifies against /jwks.
+    jwt(),
+    mcp({
+      loginPage: "/sign-in",
+      consentPage: "/connect/consent",
+      resource: MCP_RESOURCE_URL,
+      // The OIDC defaults stay so clients that ask for them aren't refused;
+      // the protected-resource metadata advertises only guides:read.
+      scopes: ["openid", "profile", "email", "offline_access", MCP_SCOPE],
+      allowDynamicClientRegistration: MCP_ALLOW_DCR,
+      allowUnauthenticatedClientRegistration: MCP_ALLOW_DCR,
+      accessTokenExpiresIn: MCP_ACCESS_TOKEN_SECONDS,
+      refreshTokenExpiresIn: MCP_REFRESH_TOKEN_SECONDS,
+    }),
+    cimd({
+      fetchClientMetadataResource,
+      metadataProfile: "mcp-2026-07-28",
     }),
     // Must be last: makes server actions set cookies correctly in Next.
     nextCookies(),

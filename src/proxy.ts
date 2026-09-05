@@ -16,7 +16,8 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except auth/api routes, static assets, and the sign-in page.
-    "/((?!api|_next/static|_next/image|sign-in|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // Everything except auth/api routes, OAuth discovery (/.well-known, read
+    // by MCP clients with no cookie), static assets, and the sign-in page.
+    "/((?!api|_next/static|_next/image|sign-in|\\.well-known|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

@@ -1,27 +1,21 @@
 import Link from "next/link";
 import { Fragment } from "react";
-import { and, asc, desc, eq, exists, inArray, sql, type SQL } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { APP_TITLE } from "@/lib/branding";
-import { guide, guideTag, space, tag } from "@/db/schema";
+import { space } from "@/db/schema";
 import { Badge } from "@/components/ui";
 import { SearchIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { TagPicker } from "@/components/tag-picker";
 import { listTagsWithCounts } from "@/lib/tags";
-import {
-  getSession,
-  requireAccess,
-  visibleGuidesWhere,
-} from "@/lib/permissions";
+import { HL_END, HL_START, searchGuides } from "@/lib/guide-search";
+import { getSession, requireAccess } from "@/lib/permissions";
 
-// Postgres FTS over guide.search_vector (title weighted A, published body B),
-// ALWAYS AND-ed with the visibility fragment — ranking never widens access.
-
-// ts_headline marks matches with these tokens; rendering maps them to <mark>
-// in React so user content is never injected as HTML.
-const HL_START = "[[[";
-const HL_END = "]]]";
+// The FTS query itself lives in src/lib/guide-search.ts (shared with the MCP
+// search tool); this page adds the form, the tag/space filters and the
+// highlighted rendering. Match markers map to <mark> in React so user content
+// is never injected as HTML.
 
 function Snippet({ text }: { text: string }) {
   const parts = text.split(HL_START);
@@ -82,57 +76,17 @@ export default async function SearchPage({
     (slug) => !activeTags.some((t) => t.slug === slug),
   );
 
-  const tsquery = sql`websearch_to_tsquery('english', ${query})`;
-  const conditions: SQL[] = [visibleGuidesWhere(access)];
-  if (query) conditions.push(sql`${guide.searchVector} @@ ${tsquery}`);
-  if (spaceParam) conditions.push(eq(space.slug, spaceParam));
-  if (activeTags.length > 0) {
-    conditions.push(
-      exists(
-        db
-          .select({ one: sql`1` })
-          .from(guideTag)
-          .innerJoin(tag, eq(tag.id, guideTag.tagId))
-          .where(
-            and(
-              eq(guideTag.guideId, guide.id),
-              inArray(
-                tag.slug,
-                activeTags.map((t) => t.slug),
-              ),
-            ),
-          ),
-      ),
-    );
-  }
-
   const searching = Boolean(
     query || activeTags.length || spaceParam || missingTagSlugs.length,
   );
   const results = searching
-    ? await db
-        .select({
-          slug: guide.slug,
-          title: guide.title,
-          status: guide.status,
-          searchText: guide.searchText,
-          updatedAt: guide.updatedAt,
-          spaceSlug: space.slug,
-          spaceName: space.name,
-          snippet: query
-            ? sql<string>`ts_headline('english', coalesce(${guide.searchText}, ''), ${tsquery},
-                'StartSel=${sql.raw(HL_START)}, StopSel=${sql.raw(HL_END)}, MaxWords=32, MinWords=12')`
-            : sql<string>`''`,
-        })
-        .from(guide)
-        .innerJoin(space, eq(space.id, guide.spaceId))
-        .where(and(...conditions))
-        .orderBy(
-          query
-            ? desc(sql`ts_rank(${guide.searchVector}, ${tsquery})`)
-            : desc(guide.updatedAt),
-        )
-        .limit(50)
+    ? await searchGuides({
+        access,
+        query,
+        spaceSlug: spaceParam || undefined,
+        tagSlugs: activeTags.map((t) => t.slug),
+        limit: 50,
+      })
     : [];
 
   const summaryFor = [
