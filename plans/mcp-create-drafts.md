@@ -4,7 +4,12 @@
 local testing and a PR.** Open questions answered below and reflected in the
 code. Parser choice (§3): `@blocknote/server-util` works in the route handler;
 it needs the optional `y-prosemirror` + `y-protocols` peers of BlockNote core
-installed, nothing in `next.config.ts`.
+installed, nothing in `next.config.ts`. Follow-up (same day): registered
+clients carry a snapshot of the server scope list on `oauth_client.scopes`, and
+the authorize endpoint validates requests against it — so without a backfill,
+existing agents could never obtain `guides:write` (they would get
+`invalid_scope`). Migration `drizzle/0009_mcp-write-scope.sql` appends the
+scope to existing client rows; people still reconnect once.
 
 ## Goal
 

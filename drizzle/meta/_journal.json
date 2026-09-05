@@ -64,6 +64,13 @@
       "when": 1788573539263,
       "tag": "0008_mcp-oauth",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788620853973,
+      "tag": "0009_mcp-write-scope",
+      "breakpoints": true
     }
   ]
 }

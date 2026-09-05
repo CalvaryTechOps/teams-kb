@@ -114,7 +114,8 @@ holds a token for that person only.
   normal review path. No file uploads; images work by `https` URL only.
   Draft creation is off until an admin turns it on in **Admin → MCP**, and
   agents connected before it existed must be disconnected and reconnected
-  once to grant the new permission (the consent screen lists it).
+  once to grant the new permission (the consent screen lists it; a migration
+  adds the scope to already-registered clients so the reconnect succeeds).
 - **Same permissions as the browser.** Every query is filtered with the
   same visibility rules as the site, resolved from the signed-in person's
   group memberships. Group changes reach agents at the next directory sync
