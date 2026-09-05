@@ -1,8 +1,10 @@
 import "server-only";
 import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
 import { z } from "zod";
+import { MCP_MAX_MARKDOWN_BYTES, MCP_MAX_TITLE_LENGTH } from "./config";
 import {
   GENERAL_CATEGORY,
+  createDraft,
   getGuide,
   listGuides,
   listSpaces,
@@ -11,11 +13,12 @@ import {
 } from "./tools";
 
 // One McpServer per request (the handler is stateless), built for the
-// authenticated caller. Four read-only tools; each returns the same JSON as
+// authenticated caller. Four read-only tools plus create_draft (which only
+// ever writes an unpublished draft); each returns the same JSON as
 // `structuredContent` and as a text block, so every client can use it.
 
 const SERVER_NAME = "teams-kb";
-const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = "0.2.0";
 
 const MAX_QUERY_LENGTH = 200;
 const MAX_TAGS = 12;
@@ -28,6 +31,12 @@ const slug = z
   .describe("URL slug, as returned by other tools");
 
 const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false } as const;
+const creates = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: false,
+} as const;
 
 function ok(payload: Record<string, unknown>): CallToolResult {
   return {
@@ -131,6 +140,49 @@ export function buildKbServer(ctx: McpToolContext): McpServer {
       const doc = await getGuide(ctx, input);
       if (!doc) return fail("No published guide matches that reference, or you don't have access to it.");
       return ok(doc);
+    },
+  );
+
+  server.registerTool(
+    "create_draft",
+    {
+      title: "Create a draft guide",
+      description:
+        "Create a NEW guide as an unpublished draft from Markdown, in a department the signed-in person belongs to (admins: any department). " +
+        "The draft is visible only to its author, the department's owners and admins; a person must review it in the knowledge base and submit or publish it there — this tool never publishes. " +
+        "Supported Markdown: headings, paragraphs, bold/italic/strikethrough/inline code, links, bullet/numbered/task lists, quotes, tables, fenced code (```mermaid becomes a diagram), images by https URL, horizontal rules. No file uploads. " +
+        "Do not repeat the title as a first heading (it is shown by the page). Calling twice with the same title makes two drafts, so don't retry a call that succeeded. " +
+        "Returns the draft's `url` (view) and `editUrl` for the person to open.",
+      inputSchema: z.object({
+        space: slug.describe("Department slug from list_spaces"),
+        title: z
+          .string()
+          .trim()
+          .min(1)
+          .max(MCP_MAX_TITLE_LENGTH)
+          .describe("Guide title"),
+        markdown: z
+          .string()
+          .min(1)
+          .max(MCP_MAX_MARKDOWN_BYTES)
+          .describe("Guide body as Markdown"),
+        category: slug
+          .optional()
+          .describe(`Optional category slug in that department (see list_guides); omit or "${GENERAL_CATEGORY}" for none`),
+      }),
+      outputSchema: z.looseObject({
+        id: z.string(),
+        slug: z.string(),
+        status: z.literal("draft"),
+        url: z.string(),
+        editUrl: z.string(),
+      }),
+      annotations: creates,
+    },
+    async (input) => {
+      const result = await createDraft(ctx, input);
+      if (!result.ok) return fail(result.error);
+      return ok(result.draft);
     },
   );
 

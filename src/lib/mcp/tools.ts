@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidatePath } from "next/cache";
 import { and, asc, count, desc, eq, inArray, isNull, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
@@ -12,26 +13,33 @@ import {
 } from "@/db/schema";
 import type { GuideBlock } from "@/lib/guide-content";
 import { searchGuides, stripHighlight } from "@/lib/guide-search";
+import { createGuideWithFirstRevision } from "@/lib/guide-writes";
 import { clampLimit, type McpSettings } from "@/lib/mcp-settings";
-import { visibleGuidesWhere } from "@/lib/permissions";
+import { canAuthorInSpace, visibleGuidesWhere } from "@/lib/permissions";
 import type { UserAccess } from "@/lib/user-access";
+import { MCP_WRITE_SCOPE } from "./config";
+import { markdownToGuideContent } from "./markdown";
 import {
+  guideUrl,
   isGuideId,
   toGuideMetadata,
   type GuideMetadata,
   type GuideMetadataRow,
 } from "./shape";
 
-// Read-only MCP tool queries. Every query is AND-ed with visibleGuidesWhere —
-// the same fragment the browser uses — plus `status = 'published'`: an agent
-// following unapproved instructions is exactly what the review queue exists
-// to prevent (plans/mcp-server.md §2).
+// MCP tool queries. Every read is AND-ed with visibleGuidesWhere — the same
+// fragment the browser uses — plus `status = 'published'`: an agent following
+// unapproved instructions is exactly what the review queue exists to prevent
+// (plans/mcp-server.md §2). The one write, createDraft, only ever produces an
+// unpublished draft (plans/mcp-create-drafts.md).
 
 export type McpToolContext = {
   access: UserAccess;
   settings: McpSettings;
   /** NEXT_PUBLIC_APP_URL, for absolute guide links. */
   appUrl: string;
+  /** Scopes carried by the verified token. */
+  scopes: readonly string[];
 };
 
 /** Sentinel category slug for a space's uncategorized guides (matches the space page). */
@@ -253,6 +261,125 @@ export async function getGuide(
       version,
       authorName,
       publishedAt: metadata.publishedAt,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+export type CreateDraftInput = {
+  space: string;
+  title: string;
+  markdown: string;
+  /** Category slug within the space; "general" or omitted means none. */
+  category?: string;
+};
+
+export type CreatedDraft = {
+  id: string;
+  title: string;
+  slug: string;
+  status: "draft";
+  space: { slug: string; name: string };
+  category: { slug: string; name: string } | null;
+  url: string;
+  editUrl: string;
+  revision: { version: 1 };
+  blockCount: number;
+};
+
+export type CreateDraftResult =
+  | { ok: true; draft: CreatedDraft }
+  | { ok: false; error: string };
+
+/**
+ * Create a new guide in draft status from Markdown. The rows are exactly what
+ * the browser's new-guide form writes as a draft (shared helper), authored by
+ * the token's user, so the existing visibility rules apply from the start:
+ * the author, the department's owners and admins can see it; nobody else.
+ */
+export async function createDraft(
+  ctx: McpToolContext,
+  input: CreateDraftInput,
+): Promise<CreateDraftResult> {
+  if (!ctx.settings.draftsEnabled) {
+    return {
+      ok: false,
+      error: "Draft creation over MCP is turned off for this knowledge base.",
+    };
+  }
+  if (!ctx.scopes.includes(MCP_WRITE_SCOPE)) {
+    return {
+      ok: false,
+      error:
+        "This connection was approved before draft creation existed. Disconnect and reconnect the knowledge base in your agent to grant it.",
+    };
+  }
+
+  const [s] = await db
+    .select({ id: space.id, slug: space.slug, name: space.name, groupId: space.groupId })
+    .from(space)
+    .where(eq(space.slug, input.space))
+    .limit(1);
+  // Unknown and not-yours read the same, so the tool can't be used to probe
+  // for departments the person has no business seeing.
+  if (!s || !canAuthorInSpace(ctx.access, s.groupId)) {
+    return {
+      ok: false,
+      error: `No department with slug "${input.space}" that you can create drafts in. Call list_spaces to see your departments.`,
+    };
+  }
+
+  let cat: { id: string; slug: string; name: string } | null = null;
+  const categorySlug = input.category?.trim();
+  if (categorySlug && categorySlug !== GENERAL_CATEGORY) {
+    const [row] = await db
+      .select({ id: category.id, slug: category.slug, name: category.name })
+      .from(category)
+      .where(and(eq(category.spaceId, s.id), eq(category.slug, categorySlug)))
+      .limit(1);
+    if (!row) {
+      return {
+        ok: false,
+        error: `No category with slug "${categorySlug}" in ${s.name}. Omit \`category\` for an uncategorized draft.`,
+      };
+    }
+    cat = row;
+  }
+
+  const title = input.title.trim();
+  const converted = await markdownToGuideContent(input.markdown, title);
+  if (!converted.ok) return converted;
+
+  const created = await createGuideWithFirstRevision({
+    spaceId: s.id,
+    title,
+    content: converted.content,
+    authorId: ctx.access.userId,
+    categoryId: cat?.id ?? null,
+    revisionStatus: "draft",
+  });
+
+  // Same surfaces the browser's draft save invalidates (nothing is pending,
+  // so the queue is untouched).
+  revalidatePath("/");
+  revalidatePath(`/spaces/${s.slug}`);
+  revalidatePath(`/spaces/${s.slug}/guides/${created.slug}`);
+
+  const url = guideUrl(ctx.appUrl, s.slug, created.slug);
+  return {
+    ok: true,
+    draft: {
+      id: created.id,
+      title,
+      slug: created.slug,
+      status: "draft",
+      space: { slug: s.slug, name: s.name },
+      category: cat ? { slug: cat.slug, name: cat.name } : null,
+      url,
+      editUrl: `${url}/edit`,
+      revision: { version: 1 },
+      blockCount: converted.content.length,
     },
   };
 }

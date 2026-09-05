@@ -19,7 +19,12 @@ import {
   user,
 } from "@/db/schema";
 import { ConfirmForm } from "@/components/confirm-form";
-import { MCP_ALLOW_DCR, MCP_PATHS, MCP_RESOURCE_URL } from "@/lib/mcp/config";
+import {
+  MCP_ALLOW_DCR,
+  MCP_PATHS,
+  MCP_RESOURCE_URL,
+  MCP_WRITE_SCOPE,
+} from "@/lib/mcp/config";
 import {
   MCP_INSTRUCTIONS_MAX_LENGTH,
   MCP_MAX_RESULTS_MAX,
@@ -127,6 +132,7 @@ export default async function AdminMcpPage({
           createdAt: oauthRefreshToken.createdAt,
           expiresAt: oauthRefreshToken.expiresAt,
           rotatedAt: oauthRefreshToken.rotatedAt,
+          scopes: oauthRefreshToken.scopes,
         })
         .from(oauthRefreshToken)
         .innerJoin(user, eq(user.id, oauthRefreshToken.userId))
@@ -147,6 +153,7 @@ export default async function AdminMcpPage({
     enabled: settings.enabled !== MCP_SETTING_DEFAULTS.enabled,
     instructions: settings.instructions !== MCP_SETTING_DEFAULTS.instructions,
     maxResults: settings.maxResults !== MCP_SETTING_DEFAULTS.maxResults,
+    draftsEnabled: settings.draftsEnabled !== MCP_SETTING_DEFAULTS.draftsEnabled,
   };
   const anyCustom = Object.values(isCustom).some(Boolean);
 
@@ -166,7 +173,9 @@ export default async function AdminMcpPage({
           Staff can connect an AI agent (Claude, Claude Code, Cursor…) to the
           knowledge base over the Model Context Protocol. Each person signs in
           with their work account and approves once; the agent then searches
-          and reads only the published guides that person can see. Read-only.
+          and reads only the published guides that person can see, and — when
+          allowed below — creates unpublished drafts in that person’s own
+          departments. It never publishes.
         </p>
 
         {params.ok && messages[params.ok] && (
@@ -198,6 +207,13 @@ export default async function AdminMcpPage({
             {(keyCount?.n ?? 0) > 0
               ? "Token signing key present."
               : "No signing key yet — one is created on the first authorization."}
+          </Check>
+          <Check ok>
+            Draft creation by agents is{" "}
+            <strong>{settings.draftsEnabled ? "on" : "off"}</strong>.
+            {settings.draftsEnabled
+              ? " Drafts go through the normal review path; connections approved before this existed must reconnect once to use it."
+              : " Turn it on below to let agents create drafts."}
           </Check>
           <Check ok>
             Dynamic client registration is{" "}
@@ -272,6 +288,23 @@ export default async function AdminMcpPage({
               <span className="block text-xs text-gray-500">
                 Kill switch. When off, tools answer 503; sign-in and token
                 refresh keep working so agents recover the moment it is back on.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="draftsEnabled"
+              defaultChecked={settings.draftsEnabled}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-medium">Allow agents to create drafts</span>
+              <span className="block text-xs text-gray-500">
+                Enables the create_draft tool: a new, unpublished draft from
+                Markdown in a department the person belongs to (any department
+                for admins). Reading is unaffected either way.
               </span>
             </span>
           </label>
@@ -427,6 +460,7 @@ export default async function AdminMcpPage({
               <tr>
                 <th className="py-2 pr-4">Staff member</th>
                 <th className="py-2 pr-4">Client</th>
+                <th className="py-2 pr-4">Can</th>
                 <th className="py-2 pr-4">Granted</th>
                 <th className="py-2 pr-4">Last refreshed</th>
                 <th className="py-2 pr-4">Expires</th>
@@ -441,6 +475,9 @@ export default async function AdminMcpPage({
                     <div className="text-xs text-gray-500">{g.userEmail}</div>
                   </td>
                   <td className="py-2 pr-4">{g.clientName?.trim() || truncate(g.clientId)}</td>
+                  <td className="py-2 pr-4 text-gray-500" title={g.scopes.join(" ")}>
+                    {g.scopes.includes(MCP_WRITE_SCOPE) ? "Read, draft" : "Read"}
+                  </td>
                   <td className="py-2 pr-4 text-gray-500">
                     {g.createdAt ? g.createdAt.toLocaleString() : "—"}
                   </td>

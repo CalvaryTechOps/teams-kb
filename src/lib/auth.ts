@@ -16,6 +16,7 @@ import {
   MCP_REFRESH_TOKEN_SECONDS,
   MCP_RESOURCE_URL,
   MCP_SCOPE,
+  MCP_WRITE_SCOPE,
 } from "@/lib/mcp/config";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -161,8 +162,10 @@ export const auth = betterAuth({
       consentPage: "/connect/consent",
       resource: MCP_RESOURCE_URL,
       // The OIDC defaults stay so clients that ask for them aren't refused;
-      // the protected-resource metadata advertises only guides:read.
-      scopes: ["openid", "profile", "email", "offline_access", MCP_SCOPE],
+      // the protected-resource metadata advertises guides:read and
+      // guides:write. Connections approved before the write scope existed
+      // keep read-only tokens until the person reconnects.
+      scopes: ["openid", "profile", "email", "offline_access", MCP_SCOPE, MCP_WRITE_SCOPE],
       allowDynamicClientRegistration: MCP_ALLOW_DCR,
       allowUnauthenticatedClientRegistration: MCP_ALLOW_DCR,
       accessTokenExpiresIn: MCP_ACCESS_TOKEN_SECONDS,
