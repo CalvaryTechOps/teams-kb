@@ -225,7 +225,9 @@ Admins can edit these without a deploy. Blank means "use the default".
   (`@blocknote/server-util`, `src/lib/mcp/markdown.ts`), then validates the
   blocks with the same `parseGuideContentJson` gate as the browser and writes
   them through the same helper as the new-guide form (`src/lib/guide-writes.ts`);
-  a `guides:write` scope on the token gates it. Discovery documents at
+  a `guides:write` scope on the token gates it; the endpoint's 401 challenge
+  advertises both scopes (`challengeScopes`), which is where MCP clients take
+  their scope request from, while only `guides:read` is enforced. Discovery documents at
   `/.well-known/…` are served by route files that forward to the auth handler
   (`src/lib/mcp/discovery.ts`); the proxy excludes that prefix so they work
   without a cookie. Because SAML can't carry the provider's in-request OAuth

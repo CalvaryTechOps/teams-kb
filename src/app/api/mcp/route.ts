@@ -1,7 +1,7 @@
 import { createMcpHandler } from "@modelcontextprotocol/server";
 import { requireMcpAuth } from "@better-auth/mcp";
 import { auth } from "@/lib/auth";
-import { MCP_RESOURCE_URL, MCP_SCOPE } from "@/lib/mcp/config";
+import { MCP_RESOURCE_URL, MCP_SCOPE, MCP_WRITE_SCOPE } from "@/lib/mcp/config";
 import { buildKbServer } from "@/lib/mcp/server";
 import type { McpToolContext } from "@/lib/mcp/tools";
 import { getMcpSettings } from "@/lib/mcp-settings.server";
@@ -73,5 +73,15 @@ export const POST = requireMcpAuth(
       },
     });
   },
-  { resource: MCP_RESOURCE_URL, requiredScopes: [MCP_SCOPE] },
+  {
+    resource: MCP_RESOURCE_URL,
+    // Enforced on every token: reading. Tokens without guides:write still work
+    // for the read tools; create_draft explains how to reconnect.
+    requiredScopes: [MCP_SCOPE],
+    // Advertised in the 401 challenge's `scope` hint. MCP clients (Claude.ai
+    // included) request exactly what this names and ignore the metadata
+    // document's scopes_supported, so it must list everything a fresh
+    // connection should be granted — not just the enforced minimum.
+    challengeScopes: [MCP_SCOPE, MCP_WRITE_SCOPE],
+  },
 );

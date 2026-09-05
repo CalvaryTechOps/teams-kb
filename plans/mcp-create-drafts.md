@@ -10,6 +10,12 @@ the authorize endpoint validates requests against it — so without a backfill,
 existing agents could never obtain `guides:write` (they would get
 `invalid_scope`). Migration `drizzle/0009_mcp-write-scope.sql` appends the
 scope to existing client rows; people still reconnect once.
+Second follow-up (after the first production deploy): reconnecting still showed
+a read-only consent screen. Claude.ai takes its scope list from the `scope`
+hint in the MCP endpoint's 401 challenge, not from `scopes_supported`; the
+hint defaulted to the enforced `requiredScopes` (`guides:read`). The route now
+sets `challengeScopes: [guides:read, guides:write]` while still enforcing only
+read, so old tokens keep working.
 
 ## Goal
 
