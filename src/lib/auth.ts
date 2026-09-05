@@ -5,11 +5,11 @@ import { sso } from "@better-auth/sso";
 import { jwt } from "better-auth/plugins";
 import { mcp } from "@better-auth/mcp";
 import { cimd } from "@better-auth/cimd";
-import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { refreshUserGroups, shouldRefreshGroups } from "@/lib/graph-sync";
+import { fetchClientMetadataResource } from "@/lib/mcp/cimd-fetch";
 import {
   MCP_ACCESS_TOKEN_SECONDS,
   MCP_ALLOW_DCR,
@@ -169,6 +169,8 @@ export const auth = betterAuth({
       refreshTokenExpiresIn: MCP_REFRESH_TOKEN_SECONDS,
     }),
     cimd({
+      // Our own transport: the package's Node fetcher can't connect on
+      // Node ≥ 20 (see src/lib/mcp/cimd-fetch.ts).
       fetchClientMetadataResource,
       metadataProfile: "mcp-2026-07-28",
     }),
