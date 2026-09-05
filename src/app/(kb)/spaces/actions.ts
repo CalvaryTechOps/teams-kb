@@ -37,8 +37,8 @@ import {
   moveGeneralGuidesInTx,
   moveGuideInTx,
   revalidateMove,
-  uniqueGuideSlugIn,
 } from "@/lib/moves";
+import { createGuideWithFirstRevision } from "@/lib/guide-writes";
 import { slugify } from "@/lib/slug";
 import { pruneUnusedTags } from "@/lib/tags";
 
@@ -60,10 +60,6 @@ function spacePermissions(access: UserAccess, spaceGroupId: string) {
     status: "published",
     audience: "department",
   });
-}
-
-async function uniqueGuideSlug(spaceId: string, title: string) {
-  return uniqueGuideSlugIn(db, spaceId, slugify(title));
 }
 
 /**
@@ -248,44 +244,18 @@ export async function saveGuide(input: SaveGuideInput, formData: FormData) {
   let guideSlug: string;
 
   if (!input.guideId) {
-    // New guide + revision 1 in one transaction.
-    guideSlug = await uniqueGuideSlug(s.id, title);
-    const guideId = await db.transaction(async (tx) => {
-      const [g] = await tx
-        .insert(guide)
-        .values({
-          spaceId: s.id,
-          categoryId,
-          slug: guideSlug,
-          title,
-          createdBy: access.userId,
-        })
-        .returning({ id: guide.id });
-      const [rev] = await tx
-        .insert(guideRevision)
-        .values({
-          guideId: g!.id,
-          version: 1,
-          title,
-          content,
-          contentVersion: CONTENT_VERSION,
-          status: newRevisionStatus,
-          authorId: access.userId,
-        })
-        .returning({ id: guideRevision.id });
-      if (publish) {
-        await tx
-          .update(guide)
-          .set({
-            status: "published",
-            currentRevisionId: rev!.id,
-            searchText: blocksToPlainText(content),
-            publishedAt: new Date(),
-          })
-          .where(eq(guide.id, g!.id));
-      }
-      return g!.id;
+    // New guide + revision 1 — the shared helper also serves the MCP
+    // create_draft tool, so both paths write identical rows.
+    const created = await createGuideWithFirstRevision({
+      spaceId: s.id,
+      title,
+      content,
+      authorId: access.userId,
+      categoryId,
+      revisionStatus: newRevisionStatus,
     });
+    guideSlug = created.slug;
+    const guideId = created.id;
     await syncTags(guideId, tagsInput);
     if (perms.canApprove) {
       await applyAudience(access, guideId, s.groupId, formData);

@@ -17,8 +17,14 @@ describe("mergeMcpSettings", () => {
       { key: MCP_SETTING_KEYS.enabled, value: false },
       { key: MCP_SETTING_KEYS.instructions, value: "  Be brief.  " },
       { key: MCP_SETTING_KEYS.maxResults, value: 10 },
+      { key: MCP_SETTING_KEYS.draftsEnabled, value: true },
     ]);
-    expect(s).toEqual({ enabled: false, instructions: "Be brief.", maxResults: 10 });
+    expect(s).toEqual({
+      enabled: false,
+      instructions: "Be brief.",
+      maxResults: 10,
+      draftsEnabled: true,
+    });
   });
 
   it("ignores wrong types, blanks, out-of-range and unknown keys", () => {
@@ -26,6 +32,7 @@ describe("mergeMcpSettings", () => {
       { key: MCP_SETTING_KEYS.enabled, value: "false" },
       { key: MCP_SETTING_KEYS.instructions, value: "   " },
       { key: MCP_SETTING_KEYS.maxResults, value: 1000 },
+      { key: MCP_SETTING_KEYS.draftsEnabled, value: "true" },
       { key: "signin.tagline", value: "x" },
     ]);
     expect(s).toEqual(MCP_SETTING_DEFAULTS);
@@ -38,6 +45,7 @@ describe("normalizeMcpSettingsInput", () => {
       enabled: "on",
       instructions: MCP_SETTING_DEFAULTS.instructions,
       maxResults: "25",
+      draftsEnabled: null,
     });
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.writes.every((w) => w.value === null)).toBe(true);
@@ -48,6 +56,7 @@ describe("normalizeMcpSettingsInput", () => {
       enabled: null,
       instructions: "Custom",
       maxResults: "5",
+      draftsEnabled: "on",
     });
     expect(r).toEqual({
       ok: true,
@@ -55,16 +64,17 @@ describe("normalizeMcpSettingsInput", () => {
         { key: MCP_SETTING_KEYS.enabled, value: false },
         { key: MCP_SETTING_KEYS.instructions, value: "Custom" },
         { key: MCP_SETTING_KEYS.maxResults, value: 5 },
+        { key: MCP_SETTING_KEYS.draftsEnabled, value: true },
       ],
     });
   });
 
   it("rejects a bad max results value", () => {
     expect(
-      normalizeMcpSettingsInput({ enabled: "on", instructions: "", maxResults: "0" }).ok,
+      normalizeMcpSettingsInput({ enabled: "on", instructions: "", maxResults: "0", draftsEnabled: null }).ok,
     ).toBe(false);
     expect(
-      normalizeMcpSettingsInput({ enabled: "on", instructions: "", maxResults: "2.5" }).ok,
+      normalizeMcpSettingsInput({ enabled: "on", instructions: "", maxResults: "2.5", draftsEnabled: null }).ok,
     ).toBe(false);
   });
 
@@ -73,6 +83,7 @@ describe("normalizeMcpSettingsInput", () => {
       enabled: "on",
       instructions: "x".repeat(2001),
       maxResults: "",
+      draftsEnabled: null,
     });
     expect(r.ok).toBe(false);
   });

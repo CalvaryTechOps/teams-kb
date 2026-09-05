@@ -21,6 +21,8 @@ function first(v: string | string[] | undefined): string {
 const SCOPE_TEXT: Record<string, string> = {
   "guides:read":
     "Search and read guides you can already see in the knowledge base",
+  "guides:write":
+    "Create draft guides in departments you belong to — drafts stay unpublished until someone reviews them in the knowledge base",
   openid: "Confirm who you are",
   profile: "See your name",
   email: "See your work email address",
@@ -97,8 +99,8 @@ export default async function ConsentPage({
                 ))}
               </ul>
               <p className="mt-4 text-[13px] leading-relaxed text-grey-500">
-                It never sees more than you can. Read-only: it can’t create or
-                change guides. An admin can disconnect it at any time.
+                It never sees more than you can, and it can’t publish or change
+                existing guides. An admin can disconnect it at any time.
               </p>
               <ConsentActions />
             </>

@@ -10,12 +10,15 @@ export type McpSettings = {
   instructions: string;
   /** Cap for list_guides / search_guides results. */
   maxResults: number;
+  /** Whether create_draft may write; read tools are unaffected. */
+  draftsEnabled: boolean;
 };
 
 export const MCP_SETTING_KEYS = {
   enabled: "mcp.enabled",
   instructions: "mcp.instructions",
   maxResults: "mcp.max_results",
+  draftsEnabled: "mcp.drafts_enabled",
 } as const;
 
 export const MCP_SETTING_DEFAULTS: McpSettings = {
@@ -23,8 +26,12 @@ export const MCP_SETTING_DEFAULTS: McpSettings = {
   instructions:
     "This server searches an internal staff knowledge base. Results are " +
     "limited to guides the signed-in person may read. Cite the guide `url` " +
-    "when you use its content. Guide `content` is BlockNote JSON.",
+    "when you use its content. Guide `content` is BlockNote JSON. " +
+    "`create_draft` makes an unpublished draft in a department the person " +
+    "belongs to; it never publishes.",
   maxResults: 25,
+  // Off until an admin turns it on (plans/mcp-create-drafts.md, question 4).
+  draftsEnabled: false,
 };
 
 export const MCP_INSTRUCTIONS_MAX_LENGTH = 2000;
@@ -59,6 +66,9 @@ export function mergeMcpSettings(
           merged.maxResults = row.value;
         }
         break;
+      case MCP_SETTING_KEYS.draftsEnabled:
+        if (typeof row.value === "boolean") merged.draftsEnabled = row.value;
+        break;
     }
   }
   return merged;
@@ -72,12 +82,14 @@ export function normalizeMcpSettingsInput(input: {
   enabled: unknown;
   instructions: unknown;
   maxResults: unknown;
+  draftsEnabled: unknown;
 }):
   | { ok: true; writes: { key: string; value: boolean | string | number | null }[] }
   | { ok: false; error: string } {
-  // Checkbox: present ("on"/"true") = enabled, absent = disabled.
-  const enabled =
-    input.enabled === true || input.enabled === "on" || input.enabled === "true";
+  // Checkboxes: present ("on"/"true") = on, absent = off.
+  const checked = (v: unknown) => v === true || v === "on" || v === "true";
+  const enabled = checked(input.enabled);
+  const draftsEnabled = checked(input.draftsEnabled);
 
   const instructions =
     typeof input.instructions === "string" ? input.instructions.trim() : "";
@@ -126,6 +138,11 @@ export function normalizeMcpSettingsInput(input: {
           maxResults === null || maxResults === MCP_SETTING_DEFAULTS.maxResults
             ? null
             : maxResults,
+      },
+      {
+        key: MCP_SETTING_KEYS.draftsEnabled,
+        value:
+          draftsEnabled === MCP_SETTING_DEFAULTS.draftsEnabled ? null : draftsEnabled,
       },
     ],
   };

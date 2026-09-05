@@ -77,3 +77,21 @@ export function resolveGuidePermissions(
 
   return { canRead, canEdit, canApprove: isOwner };
 }
+
+/**
+ * "May this user author (draft, edit, propose) in this space at all" — the
+ * gate for creating a new guide. A published department guide stands in for
+ * the not-yet-existing row, so the answer is: space members and owners, and
+ * admins. Unpublished guides are further gated by authorship once they exist
+ * (resolveGuidePermissions against the real row).
+ */
+export function canAuthorInSpace(
+  access: GroupAccess,
+  spaceGroupId: string,
+): boolean {
+  return resolveGuidePermissions(access, {
+    spaceGroupId,
+    status: "published",
+    audience: "department",
+  }).canEdit;
+}

@@ -34,6 +34,7 @@ export async function saveMcpSettings(formData: FormData) {
     enabled: formData.get("enabled"),
     instructions: formData.get("instructions"),
     maxResults: formData.get("maxResults"),
+    draftsEnabled: formData.get("draftsEnabled"),
   });
   if (!result.ok) bounce({ error: result.error });
 

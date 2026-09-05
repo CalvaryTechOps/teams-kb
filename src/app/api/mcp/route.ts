@@ -60,13 +60,14 @@ export const POST = requireMcpAuth(
         : typeof claims.azp === "string"
           ? claims.azp
           : "";
-    const toolContext: McpToolContext = { access, settings, appUrl };
+    const scopes = scope.split(" ").filter(Boolean);
+    const toolContext: McpToolContext = { access, settings, appUrl, scopes };
 
     return mcpHandler.fetch(request, {
       authInfo: {
         token,
         clientId,
-        scopes: scope.split(" ").filter(Boolean),
+        scopes,
         expiresAt: typeof claims.exp === "number" ? claims.exp : undefined,
         extra: { toolContext },
       },

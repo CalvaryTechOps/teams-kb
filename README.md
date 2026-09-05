@@ -103,10 +103,18 @@ supports remote MCP servers with OAuth. The first call opens the normal
 work-account sign-in, then a one-time consent screen; after that the agent
 holds a token for that person only.
 
-- **Read-only.** Four tools: `list_spaces`, `list_guides`, `search_guides`,
-  `get_guide`. They return guide metadata (title, department, category,
-  tags, URL) and, for `get_guide`, the raw BlockNote JSON of the published
-  revision. Drafts and unpublished work are never returned.
+- **Five tools.** `list_spaces`, `list_guides`, `search_guides` and
+  `get_guide` are read-only: they return guide metadata (title, department,
+  category, tags, URL) and, for `get_guide`, the raw BlockNote JSON of the
+  published revision. Drafts and unpublished work are never returned.
+  `create_draft` takes a department, a title and Markdown and creates a new
+  guide as an **unpublished draft** authored by that person, in a department
+  they belong to (admins: any department). It never publishes or submits for
+  review — the draft appears in the browser like any other and follows the
+  normal review path. No file uploads; images work by `https` URL only.
+  Draft creation is off until an admin turns it on in **Admin → MCP**, and
+  agents connected before it existed must be disconnected and reconnected
+  once to grant the new permission (the consent screen lists it).
 - **Same permissions as the browser.** Every query is filtered with the
   same visibility rules as the site, resolved from the signed-in person's
   group memberships. Group changes reach agents at the next directory sync
@@ -173,8 +181,9 @@ Admins can edit these without a deploy. Blank means "use the default".
 | Setting | Default |
 | --- | --- |
 | Enabled | on — when off, MCP tools answer 503 while sign-in and token refresh keep working |
-| Instructions for agents | A short note that results are limited to what the person may read, to cite the guide `url`, and that `content` is BlockNote JSON |
+| Instructions for agents | A short note that results are limited to what the person may read, to cite the guide `url`, that `content` is BlockNote JSON, and that `create_draft` never publishes |
 | Max results per call | 25 (1–100) |
+| Allow agents to create drafts | off — enables the `create_draft` tool; reading is unaffected |
 
 ## Architecture notes
 
@@ -210,7 +219,12 @@ Admins can edit these without a deploy. Blank means "use the default".
   `MCP_RESOURCE_URL` and verified against `/api/auth/jwks` with no database
   round-trip; the user id in the token is resolved to the same access context
   the browser uses (`getUserAccessById`) and every tool query is AND-ed with
-  `visibleGuidesWhere` plus `status = 'published'`. Discovery documents at
+  `visibleGuidesWhere` plus `status = 'published'`. The `create_draft` tool
+  converts Markdown with BlockNote's own parser run server-side
+  (`@blocknote/server-util`, `src/lib/mcp/markdown.ts`), then validates the
+  blocks with the same `parseGuideContentJson` gate as the browser and writes
+  them through the same helper as the new-guide form (`src/lib/guide-writes.ts`);
+  a `guides:write` scope on the token gates it. Discovery documents at
   `/.well-known/…` are served by route files that forward to the auth handler
   (`src/lib/mcp/discovery.ts`); the proxy excludes that prefix so they work
   without a cookie. Because SAML can't carry the provider's in-request OAuth

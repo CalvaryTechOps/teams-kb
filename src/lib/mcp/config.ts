@@ -23,8 +23,14 @@ export const MCP_ALLOW_DCR =
   process.env.MCP_ALLOW_DYNAMIC_CLIENT_REGISTRATION?.trim().toLowerCase() !==
   "false";
 
-/** The single scope v1 grants: search and read guides the user can see. */
+/** Read scope (v1): search and read guides the user can see. Required on every token. */
 export const MCP_SCOPE = "guides:read";
+/** Write scope: create draft guides in the user's own departments (plans/mcp-create-drafts.md). */
+export const MCP_WRITE_SCOPE = "guides:write";
+
+/** Caps on create_draft input, checked before any Markdown is parsed. */
+export const MCP_MAX_TITLE_LENGTH = 200;
+export const MCP_MAX_MARKDOWN_BYTES = 256 * 1024;
 
 export const MCP_ACCESS_TOKEN_SECONDS = 60 * 60;
 export const MCP_REFRESH_TOKEN_SECONDS = 30 * 24 * 60 * 60;
