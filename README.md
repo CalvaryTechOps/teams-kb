@@ -222,7 +222,9 @@ Admins can edit these without a deploy. Blank means "use the default".
   the browser uses (`getUserAccessById`) and every tool query is AND-ed with
   `visibleGuidesWhere` plus `status = 'published'`. The `create_draft` tool
   converts Markdown with BlockNote's own parser run server-side
-  (`@blocknote/server-util`, `src/lib/mcp/markdown.ts`), then validates the
+  (`@blocknote/server-util`, `src/lib/mcp/markdown.ts`; listed in
+  `serverExternalPackages` because bundled into a route handler it would see
+  React's server-only build and fail to import), then validates the
   blocks with the same `parseGuideContentJson` gate as the browser and writes
   them through the same helper as the new-guide form (`src/lib/guide-writes.ts`);
   a `guides:write` scope on the token gates it; the endpoint's 401 challenge

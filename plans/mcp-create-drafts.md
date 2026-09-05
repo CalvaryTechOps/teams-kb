@@ -4,7 +4,7 @@
 local testing and a PR.** Open questions answered below and reflected in the
 code. Parser choice (§3): `@blocknote/server-util` works in the route handler;
 it needs the optional `y-prosemirror` + `y-protocols` peers of BlockNote core
-installed, nothing in `next.config.ts`. Follow-up (same day): registered
+installed (and, per the third follow-up below, `serverExternalPackages`). Follow-up (same day): registered
 clients carry a snapshot of the server scope list on `oauth_client.scopes`, and
 the authorize endpoint validates requests against it — so without a backfill,
 existing agents could never obtain `guides:write` (they would get
@@ -16,6 +16,13 @@ hint in the MCP endpoint's 401 challenge, not from `scopes_supported`; the
 hint defaulted to the enforced `requiredScopes` (`guides:read`). The route now
 sets `challengeScopes: [guides:read, guides:write]` while still enforcing only
 read, so old tokens keep working.
+Third follow-up: with the scope granted, every create_draft call failed with
+"The Markdown could not be parsed." Reproduced against `next build` output:
+`TypeError: createContext is not a function` — route handlers are bundled
+against React's server-only build, and `@blocknote/server-util` imports
+`@blocknote/react`. `serverExternalPackages: ["@blocknote/server-util"]` in
+`next.config.ts` makes Node load it from node_modules with the full React;
+verified by calling the converter from a route in a production build.
 
 ## Goal
 
