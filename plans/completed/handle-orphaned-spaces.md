@@ -1,7 +1,7 @@
 # Plan: Handle orphaned spaces when a backing Team is deleted
 
-**Status: implemented locally on `feat/handle-orphaned-spaces` (2026-09-04);
-awaiting Chris's local testing, then a push/PR on request.** Requested
+**Status: complete — implemented on `feat/handle-orphaned-spaces` (2026-09-04),
+tested locally by Chris and pushed for staging.** Requested
 2026-08-30; expanded 2026-09-04 with in-KB Move guide / Move category tooling
 (§5). All open questions below are answered and reflected in the code.
 
