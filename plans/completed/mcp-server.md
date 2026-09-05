@@ -1,8 +1,18 @@
 # Plan: Read-only MCP server with staff sign-in and an Admin → MCP page
 
-**Status: implemented on `feat/mcp-server` (2026-09-04), awaiting Chris's
-local testing.** Requested 2026-09-04; all open questions below are answered
-and reflected in the code.
+**Status: complete — shipped to production from `feat/mcp-server`
+(PR merged 2026-09-04; tested in production because staging sits behind
+Vercel Authentication, which MCP clients can't pass).** Requested 2026-09-04;
+all open questions below are answered and reflected in the code.
+
+Follow-up fix (same branch, after the merge): Claude.ai's first connection
+failed with `invalid_client — Failed to fetch metadata document`. Claude
+identifies itself with a Client ID Metadata Document
+(`client_id=https://claude.ai/oauth/mcp-oauth-client-metadata`) and requests
+`guides:read offline_access`, so the scope design held; the failure was the
+`@better-auth/cimd/node` fetcher, whose DNS-pinning `lookup` callback returns
+a single address where Node ≥ 20 expects an array. `src/lib/mcp/cimd-fetch.ts`
+replaces it with the same protections and a correct callback.
 
 Implementation notes (where the design landed):
 
@@ -26,9 +36,10 @@ Implementation notes (where the design landed):
   `src/lib/guide-search.ts`.
 - Settings: `src/lib/mcp-settings.ts` (+ `.server.ts`); admin page
   `src/app/admin/mcp/`.
-- Not yet verified against real clients (needs a browser + SAML): the full
-  connect flow, and whether Claude.ai / Claude Code / Cursor request the
-  `guides:read` scope. Test plan below is the checklist.
+- Verified so far in production: discovery, Claude.ai reaching the
+  authorize endpoint with CIMD and the `guides:read` scope. The remaining
+  test plan below (sign-in resume after SAML, consent, tools, revocation) is
+  the checklist for the next connection attempt.
 
 ## Goal
 
