@@ -5,58 +5,59 @@ import { redirect } from "next/navigation";
 import { and, eq, exists, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { guide, guideAudienceGroup, space } from "@/db/schema";
+import { guide, guideAudienceGroup, space, user } from "@/db/schema";
 import { getMembershipRows } from "@/lib/graph-sync";
+import { buildUserAccess, type UserAccess } from "@/lib/user-access";
 
 // ---------------------------------------------------------------------------
 // THE authorization module. Nothing else in the app compares group ids.
 // Every server action and gated page calls into here first — the proxy.ts
-// cookie check is only an optimistic gate.
+// cookie check is only an optimistic gate. The MCP endpoint has no cookie:
+// it resolves the same access context from the user id in a verified token
+// (getUserAccessById) and then uses exactly the same helpers below.
 // ---------------------------------------------------------------------------
 
-export type UserAccess = {
-  userId: string;
-  entraObjectId: string | null;
-  /** Groups the user belongs to (member or owner). */
-  memberGroupIds: Set<string>;
-  /** Groups the user owns. Owners are treated as members too (Graph doesn't imply it). */
-  ownerGroupIds: Set<string>;
-  /** Admin: member of an admin-flagged group or the bootstrap admin group. */
-  isAdmin: boolean;
-};
+export type { UserAccess } from "@/lib/user-access";
 
 /** Current session (user name/email for the shell). Cached per request. */
 export const getSession = cache(async () =>
   auth.api.getSession({ headers: await headers() }),
 );
 
+async function accessFor(
+  userId: string,
+  entraObjectId: string | null,
+): Promise<UserAccess> {
+  return buildUserAccess({
+    userId,
+    entraObjectId,
+    rows: entraObjectId ? await getMembershipRows(entraObjectId) : [],
+    bootstrapAdminGroupId: process.env.KB_BOOTSTRAP_ADMIN_GROUP_ID,
+  });
+}
+
 /** Current user's access context. Null when signed out. Cached per request. */
 export const getUserAccess = cache(async (): Promise<UserAccess | null> => {
   const session = await getSession();
   if (!session) return null;
-
-  const entraObjectId = session.user.entraObjectId ?? null;
-  const access: UserAccess = {
-    userId: session.user.id,
-    entraObjectId,
-    memberGroupIds: new Set(),
-    ownerGroupIds: new Set(),
-    isAdmin: false,
-  };
-  if (!entraObjectId) return access;
-
-  const rows = await getMembershipRows(entraObjectId);
-  const bootstrapAdminGroupId = process.env.KB_BOOTSTRAP_ADMIN_GROUP_ID;
-
-  for (const row of rows) {
-    access.memberGroupIds.add(row.groupId);
-    if (row.role === "owner") access.ownerGroupIds.add(row.groupId);
-    if (row.isAdminGroup || row.groupId === bootstrapAdminGroupId) {
-      access.isAdmin = true;
-    }
-  }
-  return access;
+  return accessFor(session.user.id, session.user.entraObjectId ?? null);
 });
+
+/**
+ * Access context for a user id that arrived in a verified bearer token (MCP).
+ * Null when the user row no longer exists — the caller answers 401.
+ */
+export async function getUserAccessById(
+  userId: string,
+): Promise<UserAccess | null> {
+  const [row] = await db
+    .select({ id: user.id, entraObjectId: user.entraObjectId })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+  if (!row) return null;
+  return accessFor(row.id, row.entraObjectId ?? null);
+}
 
 /** For pages: redirect signed-out users to sign-in. */
 export async function requireAccess(): Promise<UserAccess> {

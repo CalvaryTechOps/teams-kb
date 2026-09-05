@@ -57,6 +57,13 @@
       "when": 1788564673449,
       "tag": "0007_sync-run-note",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788573539263,
+      "tag": "0008_mcp-oauth",
+      "breakpoints": true
     }
   ]
 }

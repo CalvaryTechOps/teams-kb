@@ -5,6 +5,8 @@ group becomes a department with its own space of guides; group members draft,
 group owners approve and publish, and an admin group runs the whole thing.
 Guides can be shared with specific groups or with everyone who can sign in,
 and any guide can be copied as a link or downloaded as PDF, DOCX or Markdown.
+Staff can also connect an AI agent over the Model Context Protocol and let it
+search and read the guides they can see (read-only).
 
 ## Assumptions
 
@@ -38,10 +40,10 @@ Please consider a tax deductible donation to Calvary Tech Ops: https://pushpay.c
 
 | Who | Can |
 | --- | --- |
-| Any signed-in user | Read published guides shared with all staff or with a group they belong to |
+| Any signed-in user | Read published guides shared with all staff or with a group they belong to; connect an AI agent that reads the same guides on their behalf |
 | Group **member** | Read everything published in their department, draft new guides, suggest edits |
 | Group **owner** | Approve and publish in their department, share with other groups, request all-staff publishing and deletion |
-| **Admin** (member of an admin-flagged group, or of `KB_BOOTSTRAP_ADMIN_GROUP_ID`) | Everything, plus flag departments/admin groups, approve all-staff and deletion requests, manage tags, edit site text |
+| **Admin** (member of an admin-flagged group, or of `KB_BOOTSTRAP_ADMIN_GROUP_ID`) | Everything, plus flag departments/admin groups, approve all-staff and deletion requests, manage tags, edit site text, manage connected AI agents |
 
 ## Local development
 
@@ -91,6 +93,28 @@ Set `KB_BOOTSTRAP_ADMIN_GROUP_ID` to the object id of an M365 group (for
 example your IT team). Its members are always admins. After the first sync,
 admins can flag further groups as admin groups in **Admin → Groups**.
 
+## Connecting an AI agent (MCP)
+
+The knowledge base is an MCP server at `https://kb.example.com/api/mcp`
+(**Admin → MCP** shows the exact URL and copy-ready snippets). Add it to
+Claude.ai (Settings → Connectors → custom connector), Claude Code
+(`claude mcp add --transport http kb <url>`), Cursor or any client that
+supports remote MCP servers with OAuth. The first call opens the normal
+work-account sign-in, then a one-time consent screen; after that the agent
+holds a token for that person only.
+
+- **Read-only.** Four tools: `list_spaces`, `list_guides`, `search_guides`,
+  `get_guide`. They return guide metadata (title, department, category,
+  tags, URL) and, for `get_guide`, the raw BlockNote JSON of the published
+  revision. Drafts and unpublished work are never returned.
+- **Same permissions as the browser.** Every query is filtered with the
+  same visibility rules as the site, resolved from the signed-in person's
+  group memberships. Group changes reach agents at the next directory sync
+  (nightly, or **Admin → Groups → Sync now**).
+- **Admin → MCP** holds the kill switch, the instructions text agents
+  receive, the result cap, and the list of connected clients and per-person
+  grants with disable/revoke controls.
+
 ## Deployment (Vercel + Neon)
 
 1. Create the Vercel project from this repository and add the **Neon**
@@ -124,6 +148,8 @@ second Enterprise application or a fixed staging alias.
 | `KB_BOOTSTRAP_ADMIN_GROUP_ID` | yes | Group whose members are always admins |
 | `BLOB_READ_WRITE_TOKEN` | for uploads | Vercel Blob store token; uploads return 503 until set |
 | `CRON_SECRET` | yes | Shared secret for `/api/cron/graph-sync` |
+| `MCP_ALLOW_DYNAMIC_CLIENT_REGISTRATION` | no | Let MCP clients register themselves (needed by clients that predate Client ID Metadata Documents). Default `true` |
+| `MCP_RESOURCE_URL` | no | Resource identifier MCP tokens are bound to. Default `${NEXT_PUBLIC_APP_URL}/api/mcp`; must be HTTPS off localhost |
 | `NEXT_PUBLIC_APP_TITLE` | no | Product name in the tab title, breadcrumbs, sign-in page and sidebar wordmark. Default `Knowledge base` |
 | `NEXT_PUBLIC_BUILT_BY` | no | Credit line on the sign-in page. Default `Built by Calvary Tech Ops`; set empty to hide |
 | `NEXT_PUBLIC_LOGO_URL` | no | Logo for the sidebar and sign-in page (shown on a dark background). Blank renders the app title as text |
@@ -141,6 +167,14 @@ Admins can edit these without a deploy. Blank means "use the default".
 | Sign-in button | "Sign In" |
 | Redirect note | "Redirects to your work sign-in" |
 | Account label (sidebar) | "Work account" |
+
+### Admin → MCP (stored in the database)
+
+| Setting | Default |
+| --- | --- |
+| Enabled | on — when off, MCP tools answer 503 while sign-in and token refresh keep working |
+| Instructions for agents | A short note that results are limited to what the person may read, to cite the guide `url`, and that `content` is BlockNote JSON |
+| Max results per call | 25 (1–100) |
 
 ## Architecture notes
 
@@ -169,6 +203,19 @@ Admins can edit these without a deploy. Blank means "use the default".
   BlockNote's lossy Markdown conversion. Media is fetched directly from Blob
   rather than through BlockNote's default CORS proxy. PDFs use the exporter's
   bundled Inter, since react-pdf can't load the site's WOFF2 Metropolis.
+- **MCP** (`src/app/api/mcp/route.ts`, `src/lib/mcp/`): the app is both the
+  OAuth 2.1 authorization server and the protected resource, via better-auth's
+  `@better-auth/mcp` plugin (plus `jwt` for signing keys and `@better-auth/cimd`
+  for Client ID Metadata Documents). Access tokens are JWTs audience-bound to
+  `MCP_RESOURCE_URL` and verified against `/api/auth/jwks` with no database
+  round-trip; the user id in the token is resolved to the same access context
+  the browser uses (`getUserAccessById`) and every tool query is AND-ed with
+  `visibleGuidesWhere` plus `status = 'published'`. Discovery documents at
+  `/.well-known/…` are served by route files that forward to the auth handler
+  (`src/lib/mcp/discovery.ts`); the proxy excludes that prefix so they work
+  without a cookie. Because SAML can't carry the provider's in-request OAuth
+  state across the Entra round-trip, the sign-in card sends the user back to
+  the authorize endpoint itself (`src/lib/oauth-resume.ts`).
 - **Typeface**: Metropolis (public domain, `src/fonts/LICENSE-Metropolis.txt`).
 
 ## Known tradeoffs
@@ -178,7 +225,10 @@ Admins can edit these without a deploy. Blank means "use the default".
   auth-checked `/api/files/*` proxy (no schema change).
 - Only Teams-enabled groups are synced. If a Team is deleted its space is
   orphaned (readable, not editable) until an admin re-homes it; see
-  `plans/handle-orphaned-spaces.md`.
+  `plans/completed/handle-orphaned-spaces.md`.
+- MCP access tokens live up to an hour and are not checked against the
+  database, so revoking a grant or removing someone from a group takes effect
+  at the next token refresh (and, for groups, the next directory sync).
 
 ## Contributing
 

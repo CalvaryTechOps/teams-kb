@@ -5,6 +5,7 @@ import {
   allStaffRequest,
   guideDeletionRequest,
   m365Group,
+  oauthClient,
   space,
   syncRun,
   tag,
@@ -17,6 +18,7 @@ export default async function AdminDashboard() {
     [pendingDeletions],
     [tagCount],
     [orphanCount],
+    [mcpClientCount],
   ] = await Promise.all([
     db.select().from(syncRun).orderBy(desc(syncRun.startedAt)).limit(10),
     db
@@ -36,6 +38,7 @@ export default async function AdminDashboard() {
       .where(
         or(isNotNull(m365Group.deletedAt), eq(m365Group.isDepartment, false)),
       ),
+    db.select({ n: count() }).from(oauthClient),
   ]);
 
   return (
@@ -87,6 +90,13 @@ export default async function AdminDashboard() {
           <li>
             <Link href="/admin/settings" className="text-blue-600 hover:underline">
               Settings — sign-in page text &amp; account label
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/mcp" className="text-blue-600 hover:underline">
+              MCP — connect AI agents, manage clients &amp; grants
+              {(mcpClientCount?.n ?? 0) > 0 &&
+                ` — ${mcpClientCount!.n} client${mcpClientCount!.n === 1 ? "" : "s"}`}
             </Link>
           </li>
         </ul>

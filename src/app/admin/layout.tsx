@@ -36,6 +36,9 @@ export default async function AdminLayout({
           <Link href="/admin/settings" className="hover:underline">
             Settings
           </Link>
+          <Link href="/admin/mcp" className="hover:underline">
+            MCP
+          </Link>
           <Link href="/" className="text-gray-500 hover:underline">
             ← Back to KB
           </Link>
