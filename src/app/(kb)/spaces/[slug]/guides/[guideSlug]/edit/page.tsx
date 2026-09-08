@@ -18,6 +18,11 @@ import { TopBar } from "@/components/shell/top-bar";
 import { audienceTargetGroups } from "@/lib/audience";
 import { listTagsWithCounts } from "@/lib/tags";
 import {
+  categoryPath,
+  GENERAL_CATEGORY_NAME,
+  GENERAL_CATEGORY_SLUG,
+} from "@/lib/categories";
+import {
   getSession,
   requireAccess,
   resolveGuidePermissions,
@@ -31,9 +36,15 @@ export default async function EditGuidePage({
   const session = await getSession();
 
   const [row] = await db
-    .select({ g: guide, s: space })
+    .select({
+      g: guide,
+      s: space,
+      categoryName: category.name,
+      categorySlug: category.slug,
+    })
     .from(guide)
     .innerJoin(space, eq(space.id, guide.spaceId))
+    .leftJoin(category, eq(category.id, guide.categoryId))
     .where(and(eq(space.slug, slug), eq(guide.slug, guideSlug)));
   if (!row) notFound();
   const { g, s } = row;
@@ -114,6 +125,10 @@ export default async function EditGuidePage({
         crumbs={[
           { label: APP_TITLE, href: "/" },
           { label: s.name, href: `/spaces/${s.slug}` },
+          {
+            label: row.categoryName ?? GENERAL_CATEGORY_NAME,
+            href: categoryPath(s.slug, row.categorySlug ?? GENERAL_CATEGORY_SLUG),
+          },
           { label: g.title, href: `/spaces/${s.slug}/guides/${g.slug}` },
           { label: "Edit" },
         ]}

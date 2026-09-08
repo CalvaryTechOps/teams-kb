@@ -13,6 +13,11 @@ import {
   resolveGuidePermissions,
 } from "@/lib/permissions";
 import { guidePath } from "@/lib/moves";
+import {
+  categoryPath,
+  GENERAL_CATEGORY_NAME,
+  GENERAL_CATEGORY_SLUG,
+} from "@/lib/categories";
 import { moveTargets } from "@/lib/move-targets";
 import { moveGuide } from "../../../../actions";
 
@@ -28,7 +33,12 @@ export default async function MoveGuidePage({
   const session = await getSession();
 
   const [row] = await db
-    .select({ g: guide, s: space, categoryName: category.name })
+    .select({
+      g: guide,
+      s: space,
+      categoryName: category.name,
+      categorySlug: category.slug,
+    })
     .from(guide)
     .innerJoin(space, eq(space.id, guide.spaceId))
     .leftJoin(category, eq(category.id, guide.categoryId))
@@ -72,6 +82,10 @@ export default async function MoveGuidePage({
         crumbs={[
           { label: APP_TITLE, href: "/" },
           { label: s.name, href: `/spaces/${s.slug}` },
+          {
+            label: row.categoryName ?? GENERAL_CATEGORY_NAME,
+            href: categoryPath(s.slug, row.categorySlug ?? GENERAL_CATEGORY_SLUG),
+          },
           { label: g.title, href: back },
           { label: "Move" },
         ]}
