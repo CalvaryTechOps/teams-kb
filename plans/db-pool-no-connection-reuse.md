@@ -1,9 +1,12 @@
 # Plan: Stop reusing Neon WebSocket connections across serverless invocations
 
-**Status: not started — requested 2026-09-08.**
-To implement, ask Claude to "execute the db-pool-no-connection-reuse plan".
-Resolve the open questions at the bottom first (or answer them when Claude
-asks).
+**Status: implemented locally on `feat/db-pool-no-connection-reuse`
+(2026-09-08); awaiting Chris's local testing, then push and PR.**
+Verified: lint, typecheck, tests and build pass; a direct pool check against
+the `development` DB branch showed zero clients retained after single
+queries, parallel queries, a committed transaction and a rolled-back one,
+with both queries inside a transaction on the same backend PID. The signed-in
+UI paths (guide save, admin action) need SAML SSO and were not exercised.
 
 ## Problem
 
