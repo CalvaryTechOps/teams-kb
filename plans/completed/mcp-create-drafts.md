@@ -1,8 +1,15 @@
 # Plan: Let agents create draft guides over MCP from Markdown
 
-**Status: implemented on `feat/mcp-create-drafts` (2026-09-05), awaiting
-local testing and a PR.** Open questions answered below and reflected in the
-code. Parser choice (§3): `@blocknote/server-util` works in the route handler;
+**Status: complete — merged to `main` and verified in production on
+2026-09-08 (Claude.ai connects with the write scope and `create_draft`
+succeeds).** Requested 2026-09-05; shipped across four PRs: the feature
+(`feat/mcp-create-drafts`), the 401-challenge scope hint
+(`fix/mcp-challenge-scopes`), the `serverExternalPackages` bundling fix
+(`fix/mcp-markdown-parser`) and the jsdom 26 pin for Vercel's runtime
+(`fix/mcp-jsdom-cjs`). Open questions answered below and reflected in the
+code. The original status notes follow, kept for the debugging trail.
+
+Implementation notes (2026-09-05). Parser choice (§3): `@blocknote/server-util` works in the route handler;
 it needs the optional `y-prosemirror` + `y-protocols` peers of BlockNote core
 installed (and, per the third follow-up below, `serverExternalPackages`). Follow-up (same day): registered
 clients carry a snapshot of the server scope list on `oauth_client.scopes`, and
