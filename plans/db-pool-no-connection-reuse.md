@@ -131,14 +131,17 @@ following week.
    the free/launch tiers can take a few seconds to wake from suspend, so
    anything under ~5 s risks false failures on the first request after a
    quiet period.
+   Answer: let's stick with the proposed 10 s
 2. The daily graph-sync cron runs many queries in one 5-minute invocation.
    With `maxUses: 1` each is a fresh connection. Acceptable (it is a
    background job), or should the cron open a single dedicated `Client` for
    its run? Recommendation: accept for now; revisit only if the cron's
    duration grows noticeably.
+   Answer: accept for now
 3. Neon also offers `neonConfig.poolQueryViaFetch = true`, which routes
    non-transaction `pool.query` calls over HTTP and leaves only transactions
    on WebSocket. It is marked experimental in the driver's types. Prefer the
    plain `maxUses: 1` approach here and keep HTTP for the dedicated plan, or
    try the flag instead? Recommendation: `maxUses: 1`; it is documented,
    boring, and has one failure mode.
+   Answer: go with the recommended maxUses: 1

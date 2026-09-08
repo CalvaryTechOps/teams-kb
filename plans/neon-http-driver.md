@@ -131,8 +131,11 @@ the `duration` field where present).
    if typical guide-page or MCP tool-call time grows by more than roughly a
    quarter after the pool plan ships, as judged from Vercel's function
    duration charts.
+   Answer: the suggested growth of roughly a quarter after the pool plan ships.
 2. `withTransaction` everywhere (recommended: least change), or convert the
    independent-statement transactions to `db.batch` while we are in there?
+   Answer: yes to the recommendation
 3. Should the daily graph-sync cron keep one WebSocket `Client` for its
    whole run instead of one per `withTransaction` call? It is a background
    job, so the recommendation is no unless its runtime becomes a problem.
+   Answer: no, we can revisit if there are issues

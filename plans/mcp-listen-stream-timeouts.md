@@ -126,9 +126,12 @@ the logged method identifies what to fix next.
    flags and the diagnostics stay useful), or deploy only the logging first
    and wait for one more burst to confirm the method before changing
    behaviour?
+   Answer: ship both diagnostics and fix together
 2. Keep the per-request method log permanently (recommended; one short info
    line per call, no payloads), or remove it once the diagnosis is confirmed?
+   Answer: keep
 3. Is the Claude.ai connector the only MCP client in use today? If another
    client relies on `tools/list_changed` notifications, say so — the answer
    changes nothing about the fix but belongs in the Admin → MCP page's help
    text.
+   Answer: We also use Hatz AI
