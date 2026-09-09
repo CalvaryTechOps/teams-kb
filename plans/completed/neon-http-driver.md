@@ -1,9 +1,10 @@
-# Plan (optional): Move the app's default database handle to Neon's HTTP driver
+# Plan: Move the app's default database handle to Neon's HTTP driver
 
-**Status: implemented 2026-09-09 on `feat/neon-http-driver`, awaiting Chris's
-local testing and a PR.** Executed to fix the 2026-09-09 production crashes:
-better-auth's init query timed out waiting for a WebSocket connection during
-bursts of parallel renders, and the unhandled rejection exited the function.
+**Status: complete — implemented on `feat/neon-http-driver` (2026-09-09),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Executed to fix the 2026-09-09 production crashes: better-auth's init query
+timed out waiting for a WebSocket connection during bursts of parallel
+renders, and the unhandled rejection exited the function.
 
 Implementation notes: eleven files (the plan's ten plus
 `src/app/admin/theme/actions.ts`, added since) and 24 call sites moved to
