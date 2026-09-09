@@ -1,11 +1,11 @@
 # Plan: An "Edit category" page — rename, move, delete in one place
 
-**Status: implemented on `feat/edit-categories` (2026-09-09), awaiting
-Chris's local testing.** Requested 2026-08-31; rewritten 2026-09-09 after
-the category pages (PR #15) and the admin move tooling (handle-orphaned-
-spaces) shipped. All open questions below are answered. Lint, typecheck,
-tests and build pass; the signed-in UI paths need SAML SSO and were not
-clicked through here.
+**Status: complete — implemented on `feat/edit-categories` (2026-09-09),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Requested 2026-08-31; rewritten 2026-09-09 after the category pages (PR #15)
+and the admin move tooling (handle-orphaned-spaces) shipped. All open
+questions below are answered and reflected in the code. Lint, typecheck,
+tests and build pass.
 
 Implementation notes (where the design landed):
 
@@ -21,8 +21,6 @@ Implementation notes (where the design landed):
   guides) because its page only moves; every real category gets the pencil.
 - `moveCategory` now redirects to the category's page in the target space,
   and a bad target bounces to the edit page.
-
-To implement, ask Claude to "execute the edit-categories plan".
 
 ## Problem
 
