@@ -261,6 +261,12 @@ export default async function AdminMcpPage({
             </Link>
             .
           </p>
+          <p className="text-xs text-fg-muted">
+            The tool list is fixed per connection: this server never pushes
+            tool-list change notifications and declines subscription streams,
+            so clients (Claude.ai, Hatz AI and others) pick up changes the next
+            time they connect.
+          </p>
         </div>
       </section>
 
