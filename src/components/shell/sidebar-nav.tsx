@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDownIcon, ChevronRightIcon } from "@/components/icons";
 import { Badge, Switch } from "@/components/ui";
 import { isSpaceShown } from "@/lib/space-visibility";
+import { categoryPath } from "@/lib/categories";
 import { setShowEmptyDepartments } from "@/app/(kb)/actions";
 
 export type SidebarSpace = {
@@ -116,7 +117,7 @@ export function SidebarNav({
                 {s.categories.map((c) => (
                   <Link
                     key={c.slug}
-                    href={`/spaces/${s.slug}#${c.slug}`}
+                    href={categoryPath(s.slug, c.slug)}
                     className="rounded-md px-2.5 py-1.5 text-[13px] text-grey-300 hover:bg-white/5 hover:text-white"
                   >
                     {c.name}

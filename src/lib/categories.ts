@@ -3,3 +3,8 @@
 // category move route treats it as "every guide with no category".
 export const GENERAL_CATEGORY_SLUG = "general";
 export const GENERAL_CATEGORY_NAME = "General";
+
+/** The category's own page (the General card resolves to the reserved slug). */
+export function categoryPath(spaceSlug: string, categorySlug: string): string {
+  return `/spaces/${spaceSlug}/categories/${categorySlug}`;
+}

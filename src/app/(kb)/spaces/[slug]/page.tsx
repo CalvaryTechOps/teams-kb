@@ -20,7 +20,13 @@ import {
   resolveGuidePermissions,
   visibleGuidesWhere,
 } from "@/lib/permissions";
-import { GENERAL_CATEGORY_NAME, GENERAL_CATEGORY_SLUG } from "@/lib/categories";
+import {
+  categoryPath,
+  GENERAL_CATEGORY_NAME,
+  GENERAL_CATEGORY_SLUG,
+} from "@/lib/categories";
+import { CATEGORY_CARD_LIMIT, mostRecent } from "@/lib/category-list";
+import { AudienceIcon } from "@/components/audience-icon";
 import {
   isOrphaned,
   spaceHealth,
@@ -87,6 +93,7 @@ export default async function SpacePage({
         slug: guide.slug,
         title: guide.title,
         status: guide.status,
+        audience: guide.audience,
         categoryId: guide.categoryId,
         updatedAt: guide.updatedAt,
         authorName: user.name,
@@ -102,7 +109,9 @@ export default async function SpacePage({
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
     .slice(0, 3);
 
-  // Category cards; uncategorized guides gather under "General".
+  // Category cards; uncategorized guides gather under "General". Each card
+  // shows only the most recently updated few — the category's own page has
+  // the full list.
   const sections = [
     ...categories.map((c) => ({
       key: c.slug,
@@ -172,7 +181,12 @@ export default async function SpacePage({
             >
               <div className="mb-2 flex items-baseline justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="font-bold text-ink">{sec.name}</div>
+                  <Link
+                    href={categoryPath(s.slug, sec.key)}
+                    className="font-bold text-ink hover:text-cyan-700"
+                  >
+                    {sec.name}
+                  </Link>
                   {access.isAdmin &&
                     (sec.key !== GENERAL_CATEGORY_SLUG ||
                       sec.guides.length > 0) && (
@@ -199,13 +213,14 @@ export default async function SpacePage({
                 </div>
               </div>
               <div className="flex flex-col">
-                {sec.guides.map((g) => (
+                {mostRecent(sec.guides, CATEGORY_CARD_LIMIT).map((g) => (
                   <Link
                     key={g.id}
                     href={`/spaces/${s.slug}/guides/${g.slug}`}
-                    className="flex items-center justify-between gap-3 border-t border-grey-100 py-2.5 text-sm text-grey-800 hover:text-cyan-700"
+                    className="flex items-center gap-3 border-t border-grey-100 py-2.5 text-sm text-grey-800 hover:text-cyan-700"
                   >
-                    <span className="truncate">{g.title}</span>
+                    <AudienceIcon audience={g.audience} />
+                    <span className="min-w-0 flex-1 truncate">{g.title}</span>
                     {g.status !== "published" && (
                       <Badge tone="warning">Draft</Badge>
                     )}
@@ -215,6 +230,16 @@ export default async function SpacePage({
                   <p className="border-t border-grey-100 py-2.5 text-sm text-grey-400">
                     Nothing here yet.
                   </p>
+                )}
+                {sec.guides.length > CATEGORY_CARD_LIMIT && (
+                  <div className="flex justify-end border-t border-grey-100 pt-2.5">
+                    <Link
+                      href={categoryPath(s.slug, sec.key)}
+                      className="text-xs font-medium text-cyan-700 hover:text-cyan-600"
+                    >
+                      more…
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>

@@ -12,6 +12,7 @@ import { SearchIcon, SettingsIcon } from "@/components/icons";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SidebarClose } from "./sidebar-shell";
 import { SidebarNav, type SidebarSpace } from "./sidebar-nav";
+import { GENERAL_CATEGORY_NAME, GENERAL_CATEGORY_SLUG } from "@/lib/categories";
 
 // Ink sidebar from the mockups: logo, search, departments accordion, user
 // footer. Space names are not secret — the guides inside are what's filtered;
@@ -44,9 +45,14 @@ export async function AppSidebar({
     name: s.name,
     articleCount: s.articles,
     isMine: s.isMine,
-    categories: categories
-      .filter((c) => c.spaceId === s.id)
-      .map((c) => ({ slug: c.slug, name: c.name })),
+    // Every department ends with General (its uncategorized guides), even
+    // when nothing is filed there yet — the page says so.
+    categories: [
+      ...categories
+        .filter((c) => c.spaceId === s.id)
+        .map((c) => ({ slug: c.slug, name: c.name })),
+      { slug: GENERAL_CATEGORY_SLUG, name: GENERAL_CATEGORY_NAME },
+    ],
   }));
 
   return (

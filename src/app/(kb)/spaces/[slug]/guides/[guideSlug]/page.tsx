@@ -27,6 +27,11 @@ import {
   resolveGuidePermissions,
 } from "@/lib/permissions";
 import { timeAgo } from "@/lib/time";
+import {
+  categoryPath,
+  GENERAL_CATEGORY_NAME,
+  GENERAL_CATEGORY_SLUG,
+} from "@/lib/categories";
 import { publishLatestDraft } from "../../../actions";
 
 export default async function GuidePage({
@@ -39,7 +44,12 @@ export default async function GuidePage({
   const session = await getSession();
 
   const [row] = await db
-    .select({ g: guide, s: space, categoryName: category.name })
+    .select({
+      g: guide,
+      s: space,
+      categoryName: category.name,
+      categorySlug: category.slug,
+    })
     .from(guide)
     .innerJoin(space, eq(space.id, guide.spaceId))
     .leftJoin(category, eq(category.id, guide.categoryId))
@@ -174,7 +184,10 @@ export default async function GuidePage({
         crumbs={[
           { label: APP_TITLE, href: "/" },
           { label: s.name, href: `/spaces/${s.slug}` },
-          ...(row.categoryName ? [{ label: row.categoryName }] : []),
+          {
+            label: row.categoryName ?? GENERAL_CATEGORY_NAME,
+            href: categoryPath(s.slug, row.categorySlug ?? GENERAL_CATEGORY_SLUG),
+          },
           { label: revision.title },
         ]}
         userName={session?.user.name ?? "Staff"}

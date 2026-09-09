@@ -159,3 +159,36 @@ export function FolderMoveIcon({ size, className }: IconProps) {
     </svg>
   );
 }
+
+export function UsersIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  );
+}
+
+/** The group icon with a plus in the top-right corner: shared beyond one team. */
+export function UsersPlusIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 00-3-3.87" />
+      <path d="M19 3v6M16 6h6" />
+    </svg>
+  );
+}
+
+export function GlobeIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 000 20 14.5 14.5 0 000-20" />
+      <path d="M2 12h20" />
+    </svg>
+  );
+}

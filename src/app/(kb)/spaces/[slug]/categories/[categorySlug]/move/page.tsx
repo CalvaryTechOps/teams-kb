@@ -8,7 +8,11 @@ import { Badge } from "@/components/ui";
 import { TopBar } from "@/components/shell/top-bar";
 import { MoveForm } from "@/components/move-form";
 import { getSession, requireAdmin } from "@/lib/permissions";
-import { GENERAL_CATEGORY_NAME, GENERAL_CATEGORY_SLUG } from "@/lib/categories";
+import {
+  categoryPath,
+  GENERAL_CATEGORY_NAME,
+  GENERAL_CATEGORY_SLUG,
+} from "@/lib/categories";
 import { guidePath } from "@/lib/moves";
 import { moveTargets } from "@/lib/move-targets";
 import { timeAgo } from "@/lib/time";
@@ -57,7 +61,7 @@ export default async function MoveCategoryPage({
   if (isGeneral && guides.length === 0) redirect(`/spaces/${s.slug}`);
 
   const name = isGeneral ? GENERAL_CATEGORY_NAME : cat!.name;
-  const back = `/spaces/${s.slug}#${categorySlug}`;
+  const back = categoryPath(s.slug, categorySlug);
   const targets = (await moveTargets()).filter((t) => t.id !== s.id);
 
   return (
