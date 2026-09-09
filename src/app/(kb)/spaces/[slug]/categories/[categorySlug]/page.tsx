@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { APP_TITLE } from "@/lib/branding";
 import { category, guide, guideRevision, guideTag, space, tag, user } from "@/db/schema";
 import { ButtonLink } from "@/components/ui";
-import { PlusIcon } from "@/components/icons";
+import { PencilIcon, PlusIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import {
   CategoryGuideList,
@@ -15,9 +15,14 @@ import {
   canAuthorInSpace,
   getSession,
   requireAccess,
+  resolveGuidePermissions,
   visibleGuidesWhere,
 } from "@/lib/permissions";
-import { GENERAL_CATEGORY_NAME, GENERAL_CATEGORY_SLUG } from "@/lib/categories";
+import {
+  categoryEditPath,
+  GENERAL_CATEGORY_NAME,
+  GENERAL_CATEGORY_SLUG,
+} from "@/lib/categories";
 import { guidePath } from "@/lib/moves";
 
 // One category on its own: every guide the viewer may see in it, with when it
@@ -69,6 +74,12 @@ export default async function CategoryPage({
 
   const name = isGeneral ? GENERAL_CATEGORY_NAME : cat!.name;
   const canEdit = canAuthorInSpace(access, s.groupId);
+  // Owners and admins (the people who can create categories) manage them.
+  const canManage = resolveGuidePermissions(access, {
+    spaceGroupId: s.groupId,
+    status: "published",
+    audience: "department",
+  }).canApprove;
 
   // Who last changed a guide is the author of its current revision — the same
   // name the guide page prints beside "Updated". A never-published draft has
@@ -139,10 +150,22 @@ export default async function CategoryPage({
     { label: name },
   ];
   const actions = canEdit ? (
-    <ButtonLink href={`/spaces/${s.slug}/new`} size="sm">
-      <PlusIcon size={14} />
-      New guide
-    </ButtonLink>
+    <>
+      {canManage && !isGeneral && (
+        <ButtonLink
+          href={categoryEditPath(s.slug, categorySlug)}
+          variant="secondary"
+          size="sm"
+        >
+          <PencilIcon size={14} />
+          Edit category
+        </ButtonLink>
+      )}
+      <ButtonLink href={`/spaces/${s.slug}/new`} size="sm">
+        <PlusIcon size={14} />
+        New guide
+      </ButtonLink>
+    </>
   ) : undefined;
 
   // General is a link in every department's sidebar, so a new department

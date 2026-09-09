@@ -12,7 +12,7 @@ import {
   user,
 } from "@/db/schema";
 import { Badge, Button, ButtonLink, MicroLabel } from "@/components/ui";
-import { FolderMoveIcon, PlusIcon } from "@/components/icons";
+import { FolderMoveIcon, PencilIcon, PlusIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import {
   getSession,
@@ -21,6 +21,7 @@ import {
   visibleGuidesWhere,
 } from "@/lib/permissions";
 import {
+  categoryEditPath,
   categoryPath,
   GENERAL_CATEGORY_NAME,
   GENERAL_CATEGORY_SLUG,
@@ -187,26 +188,31 @@ export default async function SpacePage({
                   >
                     {sec.name}
                   </Link>
-                  {access.isAdmin &&
-                    (sec.key !== GENERAL_CATEGORY_SLUG ||
-                      sec.guides.length > 0) && (
-                      <Link
-                        href={`/spaces/${s.slug}/categories/${sec.key}/move`}
-                        aria-label={
-                          sec.key === GENERAL_CATEGORY_SLUG
-                            ? "Move all General guides"
-                            : `Move ${sec.name}`
-                        }
-                        title={
-                          sec.key === GENERAL_CATEGORY_SLUG
-                            ? "Move all General guides to another department"
-                            : "Move to another department"
-                        }
-                        className="rounded-md p-1 text-fg-subtle hover:bg-surface-sunken hover:text-accent-text"
-                      >
-                        <FolderMoveIcon size={14} />
-                      </Link>
-                    )}
+                  {/* Owners and admins edit a category (rename, move, delete)
+                      on its own page. General has nothing to rename: admins
+                      get its mover, and only when there is something to move. */}
+                  {sec.key === GENERAL_CATEGORY_SLUG
+                    ? access.isAdmin &&
+                      sec.guides.length > 0 && (
+                        <Link
+                          href={categoryEditPath(s.slug, sec.key)}
+                          aria-label="Move all General guides"
+                          title="Move all General guides to another department"
+                          className="rounded-md p-1 text-fg-subtle hover:bg-surface-sunken hover:text-accent-text"
+                        >
+                          <FolderMoveIcon size={14} />
+                        </Link>
+                      )
+                    : perms.canApprove && (
+                        <Link
+                          href={categoryEditPath(s.slug, sec.key)}
+                          aria-label={`Edit ${sec.name}`}
+                          title="Edit category"
+                          className="rounded-md p-1 text-fg-subtle hover:bg-surface-sunken hover:text-accent-text"
+                        >
+                          <PencilIcon size={14} />
+                        </Link>
+                      )}
                 </div>
                 <div className="text-xs text-fg-muted">
                   {sec.guides.length}
