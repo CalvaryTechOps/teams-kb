@@ -11,6 +11,7 @@ import { getSiteSettings } from "@/lib/site-settings.server";
 import { SearchIcon, SettingsIcon } from "@/components/icons";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SidebarClose } from "./sidebar-shell";
+import { SIDEBAR_SEARCH_ID } from "@/lib/sidebar-state";
 import { SidebarNav, type SidebarSpace } from "./sidebar-nav";
 import { GENERAL_CATEGORY_NAME, GENERAL_CATEGORY_SLUG } from "@/lib/categories";
 
@@ -56,8 +57,10 @@ export async function AppSidebar({
   }));
 
   return (
-    <aside className="flex h-full w-[268px] flex-col overflow-y-auto bg-ink py-5">
-      <div className="flex items-center justify-between px-5 pb-5">
+    <aside className="flex h-full w-[268px] shrink-0 flex-col overflow-y-auto bg-ink pb-5">
+      {/* 60px header, level with the TopBar so the collapse control here and
+          the hamburger there share a baseline. */}
+      <div className="flex h-[60px] shrink-0 items-center justify-between px-5">
         <Link href="/">
           <BrandMark />
         </Link>
@@ -75,15 +78,23 @@ export async function AppSidebar({
         </div>
       </div>
 
-      <form action="/search" className="px-4 pb-4">
-        <div className="flex items-center gap-2 rounded-lg bg-white/10 px-2.5 focus-within:shadow-focus">
+      <form action="/search" className="px-4 pb-4 pt-1">
+        <div className="group flex items-center gap-2 rounded-lg bg-white/10 px-2.5 focus-within:shadow-focus">
           <SearchIcon size={14} className="shrink-0 text-grey-400" />
           <input
+            id={SIDEBAR_SEARCH_ID}
             type="search"
             name="q"
             placeholder="Search articles"
             className="h-9 w-full bg-transparent text-[13px] text-white placeholder-grey-400 focus:outline-none"
           />
+          {/* Shortcut hint; hides while typing. Keyboard-only, so md+ only. */}
+          <kbd
+            aria-hidden
+            className="hidden rounded border border-white/15 px-1.5 text-[11px] leading-5 text-grey-400 md:inline md:group-focus-within:hidden"
+          >
+            /
+          </kbd>
         </div>
       </form>
 
