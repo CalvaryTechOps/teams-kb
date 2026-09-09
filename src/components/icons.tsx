@@ -103,6 +103,18 @@ export function CheckIcon({ size, className }: IconProps) {
   );
 }
 
+// Panel with an arrow pointing into its left pane: "collapse the sidebar".
+// Reserved for persistent panels; overlays keep using XIcon ("dismiss").
+export function PanelLeftCloseIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M9 3v18" />
+      <path d="M16 15l-3-3 3-3" />
+    </svg>
+  );
+}
+
 export function XIcon({ size, className }: IconProps) {
   return (
     <svg {...base(size, className)}>

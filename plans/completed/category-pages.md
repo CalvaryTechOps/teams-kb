@@ -1,8 +1,9 @@
 # Plan: Category pages, truncated category cards, and audience icons
 
-**Status: implemented locally on `feat/category-pages` (2026-09-08);
-awaiting Chris's local testing, then push and PR.**
-Verified: lint, typecheck, tests and build pass; the category page's join
+**Status: complete — implemented on `feat/category-pages` (2026-09-08),
+tested by Chris locally and on staging, merged to `main` via PR #15 and
+live in production.**
+Verified before the push: lint, typecheck, tests and build pass; the category page's join
 (current-revision author, creator fallback, tags) was run against the
 `development` DB branch for a real category and for General. Signed-in UI
 paths need SAML SSO and were not clicked through; the dev DB also holds too
