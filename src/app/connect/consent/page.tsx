@@ -65,47 +65,47 @@ export default async function ConsentPage({
   })();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-grey-50 p-8">
+    <main className="flex min-h-screen items-center justify-center bg-surface p-8">
       <div className="w-full max-w-[440px]">
-        <div className="mb-6 flex justify-center rounded-2xl bg-ink px-6 py-4">
+        <div className="mb-6 flex justify-center rounded-2xl bg-sidebar px-6 py-4">
           <BrandMark size="hero" />
         </div>
-        <div className="rounded-2xl border border-grey-200 bg-white px-9 py-10 shadow-md">
-          <h1 className="text-[26px] font-black tracking-tight text-ink">
+        <div className="rounded-2xl border border-border bg-surface-raised px-9 py-10 shadow-md">
+          <h1 className="text-[26px] font-black tracking-tight text-fg-strong">
             Connect to {APP_TITLE}?
           </h1>
 
           {usable ? (
             <>
-              <p className="mt-3 text-[15px] leading-relaxed text-grey-600">
-                <strong className="text-ink">{clientName}</strong>
+              <p className="mt-3 text-[15px] leading-relaxed text-fg-muted">
+                <strong className="text-fg-strong">{clientName}</strong>
                 {clientHost && (
-                  <span className="text-grey-500"> ({clientHost})</span>
+                  <span className="text-fg-muted"> ({clientHost})</span>
                 )}{" "}
                 wants to use the knowledge base as{" "}
-                <strong className="text-ink">
+                <strong className="text-fg-strong">
                   {session?.user.name ?? "you"}
                 </strong>
                 . It will be able to:
               </p>
-              <ul className="mt-4 space-y-2 text-[14px] leading-relaxed text-grey-700">
+              <ul className="mt-4 space-y-2 text-[14px] leading-relaxed text-fg">
                 {(scopes.length ? scopes : ["guides:read"]).map((s) => (
                   <li key={s} className="flex gap-2.5">
-                    <span aria-hidden className="mt-[3px] text-cyan-600">
+                    <span aria-hidden className="mt-[3px] text-accent-strong">
                       ✓
                     </span>
                     <span>{SCOPE_TEXT[s] ?? s}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 text-[13px] leading-relaxed text-grey-500">
+              <p className="mt-4 text-[13px] leading-relaxed text-fg-muted">
                 It never sees more than you can, and it can’t publish or change
                 existing guides. An admin can disconnect it at any time.
               </p>
               <ConsentActions />
             </>
           ) : (
-            <p className="mt-3 text-[15px] leading-relaxed text-grey-600">
+            <p className="mt-3 text-[15px] leading-relaxed text-fg-muted">
               {client?.disabled
                 ? "This agent has been disabled by an administrator."
                 : "This connection request is missing or has expired. Start the connection again from your AI agent."}

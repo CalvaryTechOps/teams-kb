@@ -2,10 +2,78 @@
 
 /* ── Design system tokens ──
    Two-color core: cyan #00bae5 + ink #001519 on a cool grey ramp. Cyan is the
-   single accent; no gradients, no extra hues. Single light theme by design. */
+   single accent; no gradients, no extra hues.
+
+   Components use the SEMANTIC tokens (surface, fg, accent, sidebar, …), never
+   the raw ramp below them — src/lib/theme-classes.test.ts enforces it. The
+   semantic values here are the light theme and double as the no-JS/no-DB
+   fallback; at runtime the root layout injects an unlayered <style> from
+   src/lib/theme.ts that redefines them per mode (`data-theme` on <html>) with
+   whatever admins saved on Admin → Theme. That works because Tailwind emits
+   utilities as `var(--color-*)`; switching to `@theme inline` would break it. */
+
+:root {
+  /* Semantic token defaults = the light theme. Keep in sync with
+     THEME_DEFAULTS.light in src/lib/theme.ts (theme.test.ts fails otherwise). */
+  --theme-surface: #f6f8f9;
+  --theme-surface-raised: #ffffff;
+  --theme-surface-sunken: #eceff1;
+  --theme-border: #dde3e6;
+  --theme-border-strong: #c4ced2;
+  --theme-fg: #1e2c31;
+  --theme-fg-strong: #001519;
+  --theme-fg-muted: #697c84;
+  --theme-fg-subtle: #94a3aa;
+  --theme-accent: #00bae5;
+  --theme-accent-strong: #0098bd;
+  --theme-accent-text: #017a99;
+  --theme-accent-soft: #eefafe;
+  --theme-accent-soft-strong: #d6f3fb;
+  --theme-on-accent: #001519;
+  --theme-sidebar: #001519;
+  --theme-sidebar-fg: #ffffff;
+  --theme-sidebar-fg-muted: #94a3aa;
+  --theme-sidebar-fg-subtle: #697c84;
+  --theme-success: #1f9d55;
+  --theme-success-soft: #dcf3e6;
+  --theme-warning: #d98315;
+  --theme-warning-soft: #fbeed6;
+  --theme-danger: #d64545;
+  --theme-danger-soft: #f8dede;
+}
 
 @theme {
-  /* Brand */
+  /* Semantic — the editable theme. Each points at its :root default above
+     rather than holding the hex itself so Tailwind emits opacity modifiers
+     (`bg-accent/15`) as runtime color-mix() instead of baking in a literal —
+     otherwise those washes would ignore the admin's palette. */
+  --color-surface: var(--theme-surface);
+  --color-surface-raised: var(--theme-surface-raised);
+  --color-surface-sunken: var(--theme-surface-sunken);
+  --color-border: var(--theme-border);
+  --color-border-strong: var(--theme-border-strong);
+  --color-fg: var(--theme-fg);
+  --color-fg-strong: var(--theme-fg-strong);
+  --color-fg-muted: var(--theme-fg-muted);
+  --color-fg-subtle: var(--theme-fg-subtle);
+  --color-accent: var(--theme-accent);
+  --color-accent-strong: var(--theme-accent-strong);
+  --color-accent-text: var(--theme-accent-text);
+  --color-accent-soft: var(--theme-accent-soft);
+  --color-accent-soft-strong: var(--theme-accent-soft-strong);
+  --color-on-accent: var(--theme-on-accent);
+  --color-sidebar: var(--theme-sidebar);
+  --color-sidebar-fg: var(--theme-sidebar-fg);
+  --color-sidebar-fg-muted: var(--theme-sidebar-fg-muted);
+  --color-sidebar-fg-subtle: var(--theme-sidebar-fg-subtle);
+  --color-success: var(--theme-success);
+  --color-success-soft: var(--theme-success-soft);
+  --color-warning: var(--theme-warning);
+  --color-warning-soft: var(--theme-warning-soft);
+  --color-danger: var(--theme-danger);
+  --color-danger-soft: var(--theme-danger-soft);
+
+  /* Raw palette the light defaults come from. Reference only. */
   --color-cyan-50: #eefafe;
   --color-cyan-100: #d6f3fb;
   --color-cyan-400: #00bae5;
@@ -14,8 +82,6 @@
   --color-ink: #001519;
   --color-ink-800: #0a2229;
   --color-ink-700: #153039;
-
-  /* Neutrals — cool grey ramp derived from the ink */
   --color-grey-0: #ffffff;
   --color-grey-50: #f6f8f9;
   --color-grey-100: #eceff1;
@@ -26,14 +92,6 @@
   --color-grey-600: #4c5d64;
   --color-grey-700: #33434a;
   --color-grey-800: #1e2c31;
-
-  /* Status (badges and alerts only, never décor) */
-  --color-success: #1f9d55;
-  --color-success-100: #dcf3e6;
-  --color-warning: #d98315;
-  --color-warning-100: #fbeed6;
-  --color-danger: #d64545;
-  --color-danger-100: #f8dede;
 
   /* Metropolis via next/font (see layout.tsx) */
   --font-sans: var(--font-metropolis), "Helvetica Neue", Arial, system-ui,
@@ -47,9 +105,64 @@
   --shadow-focus: 0 0 0 3px rgba(0, 186, 229, 0.35);
 }
 
+/* `dark:` for the rare mode-specific tweak. Fix it with a token first. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 body {
-  background: var(--color-grey-50);
-  color: var(--color-grey-800);
+  background: var(--color-surface);
+  color: var(--color-fg);
+}
+
+/* ── Guide highlight colors ──
+   BlockNote's nine text/background palette names, as rendered by
+   src/components/guide-content.tsx. The light values are BlockNote's own;
+   the dark set is tuned for the dark surfaces. Not admin-editable. */
+:root {
+  --guide-text-gray: #9b9a97;
+  --guide-bg-gray: #ebeced;
+  --guide-text-brown: #64473a;
+  --guide-bg-brown: #e9e5e3;
+  --guide-text-red: #e03e3e;
+  --guide-bg-red: #fbe4e4;
+  --guide-text-orange: #d9730d;
+  --guide-bg-orange: #f6e9d9;
+  --guide-text-yellow: #dfab01;
+  --guide-bg-yellow: #fbf3db;
+  --guide-text-green: #4d6461;
+  --guide-bg-green: #ddedea;
+  --guide-text-blue: #0b6e99;
+  --guide-bg-blue: #ddebf1;
+  --guide-text-purple: #6940a5;
+  --guide-bg-purple: #eae4f2;
+  --guide-text-pink: #ad1a72;
+  --guide-bg-pink: #f4dfeb;
+}
+:root[data-theme="dark"] {
+  --guide-text-gray: #b0b7ba;
+  --guide-bg-gray: #2b3a40;
+  --guide-text-brown: #c9a08c;
+  --guide-bg-brown: #3e2d26;
+  --guide-text-red: #f47c7c;
+  --guide-bg-red: #4a1f1f;
+  --guide-text-orange: #f0a054;
+  --guide-bg-orange: #4a3015;
+  --guide-text-yellow: #e9c94a;
+  --guide-bg-yellow: #46390f;
+  --guide-text-green: #8fd1b8;
+  --guide-bg-green: #1c3b33;
+  --guide-text-blue: #6fc3e8;
+  --guide-bg-blue: #163445;
+  --guide-text-purple: #b89be3;
+  --guide-bg-purple: #302343;
+  --guide-text-pink: #e98bc4;
+  --guide-bg-pink: #451d36;
 }
 
 /* ── Guide article body (BlockNote document, server-rendered by
@@ -57,7 +170,7 @@ body {
 .prose-guide {
   font-size: 16px;
   line-height: 1.7;
-  color: var(--color-grey-800);
+  color: var(--color-fg);
 }
 .prose-guide > :first-child {
   margin-top: 0;
@@ -69,28 +182,28 @@ body {
   font-size: 28px;
   font-weight: 900;
   letter-spacing: -0.015em;
-  color: var(--color-ink);
+  color: var(--color-fg-strong);
   margin: 36px 0 14px;
 }
 .prose-guide h2 {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--color-ink);
+  color: var(--color-fg-strong);
   margin: 32px 0 12px;
 }
 .prose-guide h3 {
   font-size: 18px;
   font-weight: 700;
-  color: var(--color-ink);
+  color: var(--color-fg-strong);
   margin: 24px 0 10px;
 }
 .prose-guide a {
-  color: var(--color-cyan-700);
+  color: var(--color-accent-text);
   font-weight: 500;
 }
 .prose-guide a:hover {
-  color: var(--color-cyan-600);
+  color: var(--color-accent-strong);
 }
 .prose-guide ul,
 .prose-guide ol {
@@ -107,26 +220,33 @@ body {
   list-style: decimal;
 }
 .prose-guide blockquote {
-  border-left: 3px solid var(--color-grey-200);
+  border-left: 3px solid var(--color-border);
   padding-left: 16px;
-  color: var(--color-grey-500);
+  color: var(--color-fg-muted);
   margin: 0 0 20px;
 }
 .prose-guide code {
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 14px;
-  background: var(--color-grey-100);
-  border: 1px solid var(--color-grey-200);
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 1px 5px;
 }
+/* Code blocks are an ink panel in the light theme; on dark surfaces a sunken
+   panel reads better than a second near-black. */
 .prose-guide pre {
-  background: var(--color-ink);
-  color: var(--color-grey-100);
+  background: var(--color-sidebar);
+  color: var(--color-sidebar-fg);
   border-radius: 8px;
   padding: 16px 18px;
   overflow-x: auto;
   margin: 0 0 24px;
+}
+:root[data-theme="dark"] .prose-guide pre {
+  background: var(--color-surface-sunken);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
 }
 .prose-guide pre code {
   background: none;
@@ -136,13 +256,13 @@ body {
 }
 .prose-guide img {
   max-width: 100%;
-  border: 1px solid var(--color-grey-200);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   margin: 18px 0;
 }
 .prose-guide hr {
   border: none;
-  border-top: 1px solid var(--color-grey-200);
+  border-top: 1px solid var(--color-border);
   margin: 28px 0;
 }
 .prose-guide table {
@@ -153,14 +273,14 @@ body {
 }
 .prose-guide th,
 .prose-guide td {
-  border: 1px solid var(--color-grey-200);
+  border: 1px solid var(--color-border);
   padding: 8px 12px;
   text-align: left;
 }
 .prose-guide th {
-  background: var(--color-grey-50);
+  background: var(--color-surface);
   font-weight: 700;
-  color: var(--color-ink);
+  color: var(--color-fg-strong);
 }
 
 /* Block structures BlockNote can produce beyond plain markdown. */
@@ -183,13 +303,13 @@ body {
   grid-column: 1 / -1;
 }
 .prose-guide ul.checklist input[type="checkbox"] {
-  accent-color: var(--color-cyan-400);
+  accent-color: var(--color-accent);
   position: relative;
   top: 2px;
   margin: 0;
 }
 .prose-guide ul.checklist .checked {
-  color: var(--color-grey-500);
+  color: var(--color-fg-muted);
   text-decoration: line-through;
 }
 .prose-guide details.toggle {
@@ -221,7 +341,7 @@ body {
 .prose-guide figure video {
   max-width: 100%;
   margin: 0;
-  border: 1px solid var(--color-grey-200);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 .prose-guide figure audio {
@@ -230,7 +350,7 @@ body {
 }
 .prose-guide figcaption {
   font-size: 13px;
-  color: var(--color-grey-500);
+  color: var(--color-fg-muted);
 }
 .prose-guide .guide-diagram {
   display: flex;
@@ -249,24 +369,25 @@ body {
 /* ── BlockNote guide editor ──
    BlockNote brings its own block styling (the Mantine theme CSS is imported by
    the editor component only, so read pages never load it). These variables map
-   its theme to the brand tokens and line editor typography up with
-   .prose-guide, so authors see what readers get. */
+   its theme to the semantic tokens — so they follow light/dark and the admin's
+   palette — and line editor typography up with .prose-guide, so authors see
+   what readers get. */
 .guide-editor .bn-root {
-  --bn-colors-editor-text: var(--color-grey-800);
-  --bn-colors-editor-background: var(--color-grey-0);
-  --bn-colors-menu-text: var(--color-grey-800);
-  --bn-colors-menu-background: var(--color-grey-0);
-  --bn-colors-tooltip-text: var(--color-grey-0);
-  --bn-colors-tooltip-background: var(--color-ink);
-  --bn-colors-hovered-text: var(--color-ink);
-  --bn-colors-hovered-background: var(--color-cyan-50);
-  --bn-colors-selected-text: var(--color-cyan-700);
-  --bn-colors-selected-background: var(--color-cyan-100);
-  --bn-colors-disabled-text: var(--color-grey-400);
-  --bn-colors-disabled-background: var(--color-grey-100);
+  --bn-colors-editor-text: var(--color-fg);
+  --bn-colors-editor-background: var(--color-surface-raised);
+  --bn-colors-menu-text: var(--color-fg);
+  --bn-colors-menu-background: var(--color-surface-raised);
+  --bn-colors-tooltip-text: var(--color-sidebar-fg);
+  --bn-colors-tooltip-background: var(--color-sidebar);
+  --bn-colors-hovered-text: var(--color-fg-strong);
+  --bn-colors-hovered-background: var(--color-accent-soft);
+  --bn-colors-selected-text: var(--color-accent-text);
+  --bn-colors-selected-background: var(--color-accent-soft-strong);
+  --bn-colors-disabled-text: var(--color-fg-subtle);
+  --bn-colors-disabled-background: var(--color-surface-sunken);
   --bn-colors-shadow: rgba(0, 21, 25, 0.12);
-  --bn-colors-border: var(--color-grey-200);
-  --bn-colors-side-menu: var(--color-grey-400);
+  --bn-colors-border: var(--color-border);
+  --bn-colors-side-menu: var(--color-fg-subtle);
   --bn-border-radius: 8px;
   --bn-font-family: var(--font-sans);
 }
@@ -286,5 +407,5 @@ body {
   --level: 18px;
 }
 .guide-editor .bn-inline-content a {
-  color: var(--color-cyan-700);
+  color: var(--color-accent-text);
 }

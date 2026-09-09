@@ -174,14 +174,14 @@ export function TagPicker({
           {selected.map((tagName) => (
             <li
               key={tagName}
-              className="inline-flex h-[26px] items-center gap-1 rounded-full border border-grey-200 bg-white pl-2.5 pr-1 text-xs text-grey-700"
+              className="inline-flex h-[26px] items-center gap-1 rounded-full border border-border bg-surface-raised pl-2.5 pr-1 text-xs text-fg"
             >
               {tagName}
               <button
                 type="button"
                 onClick={() => remove(tagName)}
                 aria-label={`Remove tag ${tagName}`}
-                className="rounded-full p-0.5 text-grey-400 hover:bg-grey-100 hover:text-grey-700"
+                className="rounded-full p-0.5 text-fg-subtle hover:bg-surface-sunken hover:text-fg"
               >
                 <XIcon size={12} />
               </button>
@@ -221,10 +221,10 @@ export function TagPicker({
               : (placeholder ??
                 (selected.length > 0 ? "Add another tag…" : "Add a tag…"))
           }
-          className={`h-11 w-full rounded-lg border bg-white px-3 text-sm text-ink placeholder-grey-400 focus:shadow-focus focus:outline-none disabled:bg-grey-50 disabled:text-grey-400 ${
+          className={`h-11 w-full rounded-lg border bg-surface-raised px-3 text-sm text-fg-strong placeholder-fg-subtle focus:shadow-focus focus:outline-none disabled:bg-surface disabled:text-fg-subtle ${
             pending
               ? "border-warning focus:border-warning"
-              : "border-grey-300 focus:border-cyan-400"
+              : "border-border-strong focus:border-accent"
           }`}
         />
 
@@ -233,10 +233,10 @@ export function TagPicker({
             id={listId}
             role="listbox"
             aria-label="Matching tags"
-            className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-grey-200 bg-white py-1 shadow-md"
+            className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-raised py-1 shadow-md"
           >
             {options.length === 0 && (
-              <li className="px-3 py-2 text-xs text-grey-500">
+              <li className="px-3 py-2 text-xs text-fg-muted">
                 {pending || !allowCreate
                   ? "No matching tags."
                   : "No tags yet — type to create one."}
@@ -255,10 +255,10 @@ export function TagPicker({
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => pick(opt)}
-                  className={`${base} ${isActive ? "bg-cyan-50 text-ink" : "text-grey-800"}`}
+                  className={`${base} ${isActive ? "bg-accent-soft text-fg-strong" : "text-fg"}`}
                 >
                   <span className="truncate">{opt.tag.name}</span>
-                  <span className="shrink-0 text-xs text-grey-500">
+                  <span className="shrink-0 text-xs text-fg-muted">
                     {opt.tag.guideCount} guide{opt.tag.guideCount === 1 ? "" : "s"}
                   </span>
                 </li>
@@ -271,9 +271,9 @@ export function TagPicker({
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => pick(opt)}
-                  className={`${base} ${i > 0 ? "mt-1 border-t border-dashed border-grey-200 pt-2.5" : ""} ${
-                    isActive ? "bg-cyan-50" : ""
-                  } text-cyan-700`}
+                  className={`${base} ${i > 0 ? "mt-1 border-t border-dashed border-border pt-2.5" : ""} ${
+                    isActive ? "bg-accent-soft" : ""
+                  } text-accent-text`}
                 >
                   <span className="inline-flex min-w-0 items-center gap-1.5">
                     <PlusIcon size={14} className="shrink-0" />
@@ -289,7 +289,7 @@ export function TagPicker({
       </div>
 
       {(hint !== null || pending || full) && (
-        <p className={`text-xs ${pending ? "text-warning" : "text-grey-500"}`}>
+        <p className={`text-xs ${pending ? "text-warning" : "text-fg-muted"}`}>
           {full
             ? `Up to ${MAX_TAGS} tags.`
             : pending

@@ -1,6 +1,5 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import {
-  COLORS,
   inlineToText,
   plainToText,
   type ColorName,
@@ -32,10 +31,10 @@ type ColorProps = {
 function styleFor(props: ColorProps): CSSProperties | undefined {
   const style: CSSProperties = {};
   if (props.textColor && props.textColor !== "default") {
-    style.color = COLORS[props.textColor].text;
+    style.color = `var(--guide-text-${props.textColor})`;
   }
   if (props.backgroundColor && props.backgroundColor !== "default") {
-    style.backgroundColor = COLORS[props.backgroundColor].background;
+    style.backgroundColor = `var(--guide-bg-${props.backgroundColor})`;
   }
   if (props.textAlignment && props.textAlignment !== "left") {
     style.textAlign = props.textAlignment;

@@ -24,24 +24,24 @@ export default async function SettingsPage({
   return (
     <div className="max-w-2xl">
       <h2 className="text-lg font-semibold">Site text</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-fg-muted">
         Sign-in page copy and the account label shown in the sidebar. Leave a
         field blank to use the default. The app title, credit line and logo are
         set per deployment with environment variables.
       </p>
 
       {params.ok === "saved" && (
-        <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
+        <p className="mt-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
           Saved.
         </p>
       )}
       {params.ok === "reset" && (
-        <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
+        <p className="mt-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
           Reset to default.
         </p>
       )}
       {params.error && (
-        <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+        <p className="mt-4 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
           {params.error}
         </p>
       )}
@@ -51,18 +51,18 @@ export default async function SettingsPage({
           const meta = SETTING_META[key];
           const isCustom = customized.has(key);
           const inputClass =
-            "mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none";
+            "mt-1 w-full rounded-md border border-border-strong px-3 py-2 text-sm focus:border-accent focus:outline-none";
           return (
             <div key={key}>
               <div className="flex items-center justify-between">
                 <label htmlFor={key} className="text-sm font-medium">
                   {meta.label}
                   {isCustom ? (
-                    <span className="ml-2 rounded bg-blue-50 px-1.5 py-0.5 text-xs font-normal text-blue-700">
+                    <span className="ml-2 rounded bg-accent-soft-strong px-1.5 py-0.5 text-xs font-normal text-accent-text">
                       customized
                     </span>
                   ) : (
-                    <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-600">
+                    <span className="ml-2 rounded bg-surface-sunken px-1.5 py-0.5 text-xs font-normal text-fg-muted">
                       default
                     </span>
                   )}
@@ -73,13 +73,13 @@ export default async function SettingsPage({
                     formAction={resetSiteSetting}
                     name="key"
                     value={key}
-                    className="text-xs text-gray-500 hover:underline"
+                    className="text-xs text-fg-muted hover:underline"
                   >
                     Reset to default
                   </button>
                 )}
               </div>
-              <p className="text-xs text-gray-500">{meta.help}</p>
+              <p className="text-xs text-fg-muted">{meta.help}</p>
               {meta.multiline ? (
                 <textarea
                   id={key}
@@ -106,7 +106,7 @@ export default async function SettingsPage({
         })}
         <button
           type="submit"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-strong"
         >
           Save
         </button>

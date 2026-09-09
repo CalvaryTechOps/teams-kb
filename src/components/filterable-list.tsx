@@ -48,8 +48,8 @@ export function FilterableList<T>({
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-grey-300 bg-grey-50 px-2.5 focus-within:border-cyan-400 focus-within:shadow-focus">
-          <SearchIcon size={14} className="shrink-0 text-grey-400" />
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-strong bg-surface px-2.5 focus-within:border-accent focus-within:shadow-focus">
+          <SearchIcon size={14} className="shrink-0 text-fg-subtle" />
           <input
             type="text"
             autoComplete="off"
@@ -58,24 +58,24 @@ export function FilterableList<T>({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={guardEnter}
-            className="h-9 w-full min-w-0 bg-transparent text-sm text-ink placeholder-grey-400 focus:outline-none"
+            className="h-9 w-full min-w-0 bg-transparent text-sm text-fg-strong placeholder-fg-subtle focus:outline-none"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery("")}
               aria-label="Clear filter"
-              className="shrink-0 rounded p-0.5 text-grey-400 hover:bg-grey-200 hover:text-grey-700"
+              className="shrink-0 rounded p-0.5 text-fg-subtle hover:bg-border hover:text-fg"
             >
               <XIcon size={14} />
             </button>
           )}
         </div>
-        {aside && <div className="shrink-0 text-xs text-grey-500">{aside}</div>}
+        {aside && <div className="shrink-0 text-xs text-fg-muted">{aside}</div>}
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-xs text-grey-500">
+        <p className="text-xs text-fg-muted">
           No {noun} match “{trimmed}”.
         </p>
       ) : (
@@ -151,7 +151,7 @@ export function FilterableCheckboxList({
             {selectedFirst(visible, selected).map((g) => (
               <label
                 key={g.id}
-                className="flex cursor-pointer items-center gap-2 text-sm text-grey-800"
+                className="flex cursor-pointer items-center gap-2 text-sm text-fg"
               >
                 <input
                   type="checkbox"

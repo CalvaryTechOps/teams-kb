@@ -27,7 +27,7 @@ function Snippet({ text }: { text: string }) {
         if (end === -1) return <Fragment key={i}>{part}</Fragment>;
         return (
           <Fragment key={i}>
-            <mark className="rounded-sm bg-cyan-100 px-0.5 text-inherit">
+            <mark className="rounded-sm bg-accent-soft-strong px-0.5 text-inherit">
               {part.slice(0, end)}
             </mark>
             {part.slice(end + HL_END.length)}
@@ -107,24 +107,24 @@ export default async function SearchPage({
         userName={session?.user.name ?? "Staff"}
       />
       <main className="px-14 py-10">
-        <h1 className="text-3xl font-black tracking-tight text-ink">Search</h1>
+        <h1 className="text-3xl font-black tracking-tight text-fg-strong">Search</h1>
 
         <form action="/search" className="mt-5 flex max-w-[720px] flex-wrap items-center gap-3">
-          <div className="flex flex-1 items-center gap-3 rounded-xl border border-grey-300 bg-white px-4 shadow-xs focus-within:border-cyan-400 focus-within:shadow-focus">
-            <SearchIcon size={18} className="shrink-0 text-grey-400" />
+          <div className="flex flex-1 items-center gap-3 rounded-xl border border-border-strong bg-surface-raised px-4 shadow-xs focus-within:border-accent focus-within:shadow-focus">
+            <SearchIcon size={18} className="shrink-0 text-fg-subtle" />
             <input
               type="search"
               name="q"
               defaultValue={query}
               autoFocus
               placeholder="Search articles"
-              className="h-[52px] w-full bg-transparent text-[15px] text-ink placeholder-grey-400 focus:outline-none"
+              className="h-[52px] w-full bg-transparent text-[15px] text-fg-strong placeholder-fg-subtle focus:outline-none"
             />
           </div>
           <select
             name="space"
             defaultValue={spaceParam}
-            className="h-[52px] rounded-xl border border-grey-300 bg-white px-3 text-sm text-ink shadow-xs focus:border-cyan-400 focus:shadow-focus focus:outline-none"
+            className="h-[52px] rounded-xl border border-border-strong bg-surface-raised px-3 text-sm text-fg-strong shadow-xs focus:border-accent focus:shadow-focus focus:outline-none"
           >
             <option value="">All departments</option>
             {spaces.map((s) => (
@@ -138,7 +138,7 @@ export default async function SearchPage({
           <div className="basis-full max-w-[480px]">
             <label
               htmlFor="tag-filter"
-              className="mb-1.5 block text-xs font-medium text-grey-500"
+              className="mb-1.5 block text-xs font-medium text-fg-muted"
             >
               Filter by tag
             </label>
@@ -163,7 +163,7 @@ export default async function SearchPage({
         </form>
 
         {missingTagSlugs.length > 0 && (
-          <p className="mt-3 max-w-[720px] rounded-lg border border-warning-100 bg-warning-100/50 px-4 py-2.5 text-sm text-grey-800">
+          <p className="mt-3 max-w-[720px] rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-2.5 text-sm text-fg">
             Tag{missingTagSlugs.length === 1 ? "" : "s"}{" "}
             {missingTagSlugs.map((s) => `“${s}”`).join(", ")}{" "}
             {missingTagSlugs.length === 1 ? "wasn’t" : "weren’t"} found —{" "}
@@ -176,7 +176,7 @@ export default async function SearchPage({
         )}
 
         {searching && (
-          <p className="mt-6 text-sm text-grey-500">
+          <p className="mt-6 text-sm text-fg-muted">
             {results.length === 0
               ? `Nothing found for ${summaryFor}.`
               : `${results.length} result${results.length === 1 ? "" : "s"} for ${summaryFor}`}
@@ -188,14 +188,14 @@ export default async function SearchPage({
             <Link
               key={`${r.spaceSlug}/${r.slug}`}
               href={`/spaces/${r.spaceSlug}/guides/${r.slug}`}
-              className="rounded-xl border border-grey-200 bg-white px-5 py-4 shadow-xs transition-shadow hover:shadow-md"
+              className="rounded-xl border border-border bg-surface-raised px-5 py-4 shadow-xs transition-shadow hover:shadow-md"
             >
               <div className="flex items-center gap-2.5">
-                <span className="font-bold text-ink">{r.title}</span>
+                <span className="font-bold text-fg-strong">{r.title}</span>
                 {r.status !== "published" && <Badge tone="warning">Draft</Badge>}
               </div>
               {(r.snippet || r.searchText) && (
-                <p className="mt-1 line-clamp-2 text-[13px] leading-normal text-grey-500">
+                <p className="mt-1 line-clamp-2 text-[13px] leading-normal text-fg-muted">
                   {r.snippet ? (
                     <Snippet text={r.snippet} />
                   ) : (
@@ -203,7 +203,7 @@ export default async function SearchPage({
                   )}
                 </p>
               )}
-              <div className="mt-2 text-xs font-medium text-cyan-700">
+              <div className="mt-2 text-xs font-medium text-accent-text">
                 {r.spaceName}
               </div>
             </Link>

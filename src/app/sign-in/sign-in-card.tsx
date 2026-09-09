@@ -45,15 +45,15 @@ export function SignInCard({
   }
 
   return (
-    <div className="w-full max-w-[396px] rounded-2xl border border-grey-200 bg-white px-9 py-10 shadow-md">
-      <h2 className="text-[28px] font-black tracking-tight text-ink">
+    <div className="w-full max-w-[396px] rounded-2xl border border-border bg-surface-raised px-9 py-10 shadow-md">
+      <h2 className="text-[28px] font-black tracking-tight text-fg-strong">
         Sign in
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-grey-500">
+      <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">
         {helpText}
       </p>
       {oauthSignIn && (
-        <p className="mt-3 rounded-lg bg-cyan-50 px-3 py-2 text-[13px] leading-relaxed text-grey-700">
+        <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-[13px] leading-relaxed text-fg">
           An AI agent is asking to connect to the knowledge base on your behalf.
           Sign in, then review what it may access.
         </p>
@@ -62,7 +62,7 @@ export function SignInCard({
         <Button size="lg" onClick={handleSignIn} disabled={pending}>
           {pending ? "Redirecting…" : buttonLabel}
         </Button>
-        <p className="text-center text-xs text-grey-500">{redirectNote}</p>
+        <p className="text-center text-xs text-fg-muted">{redirectNote}</p>
         {error && (
           <p className="text-center text-sm text-danger" role="alert">
             {error}

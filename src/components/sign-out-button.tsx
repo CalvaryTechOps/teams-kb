@@ -14,7 +14,7 @@ export function SignOutButton() {
         router.push("/sign-in");
       }}
       title="Sign out"
-      className="rounded-md p-1.5 text-grey-500 hover:bg-white/10 hover:text-white"
+      className="rounded-md p-1.5 text-sidebar-fg-subtle hover:bg-sidebar-fg/10 hover:text-sidebar-fg"
     >
       <LogOutIcon size={15} />
       <span className="sr-only">Sign out</span>

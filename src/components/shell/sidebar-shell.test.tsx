@@ -36,7 +36,7 @@ describe("SidebarShell", () => {
     expect(cls).toContain("-translate-x-full");
     expect(html).toContain("md:translate-x-0");
     expect(html).not.toContain("md:-translate-x-full");
-    expect(html).not.toContain("bg-ink/60");
+    expect(html).not.toContain("bg-sidebar/60");
     expect(html).not.toContain("inert");
   });
 

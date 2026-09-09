@@ -47,14 +47,14 @@ import {
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const inputClass =
-  "mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none";
+  "mt-1 w-full rounded-md border border-border-strong px-3 py-2 text-sm focus:border-accent focus:outline-none";
 const smallButton =
-  "h-7 rounded-md border px-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50";
+  "h-7 rounded-md border px-2 text-xs font-medium hover:bg-surface disabled:opacity-50";
 
 function Check({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2">
-      <span className={ok ? "text-green-700" : "text-amber-600"} aria-hidden>
+      <span className={ok ? "text-success" : "text-warning"} aria-hidden>
         {ok ? "✓" : "!"}
       </span>
       <span>{children}</span>
@@ -66,10 +66,10 @@ function Snippet({ title, text }: { title: string; text: string }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-medium text-gray-600">{title}</span>
+        <span className="text-xs font-medium text-fg-muted">{title}</span>
         <CopyButton text={text} />
       </div>
-      <pre className="mt-1 overflow-x-auto rounded-md bg-gray-50 px-3 py-2 text-xs leading-relaxed">
+      <pre className="mt-1 overflow-x-auto rounded-md bg-surface px-3 py-2 text-xs leading-relaxed">
         {text}
       </pre>
     </div>
@@ -169,7 +169,7 @@ export default async function AdminMcpPage({
     <div className="max-w-3xl space-y-10">
       <section>
         <h2 className="text-lg font-semibold">MCP</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-fg-muted">
           Staff can connect an AI agent (Claude, Claude Code, Cursor…) to the
           knowledge base over the Model Context Protocol. Each person signs in
           with their work account and approves once; the agent then searches
@@ -179,12 +179,12 @@ export default async function AdminMcpPage({
         </p>
 
         {params.ok && messages[params.ok] && (
-          <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
+          <p className="mt-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
             {messages[params.ok]}
           </p>
         )}
         {params.error && (
-          <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+          <p className="mt-4 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
             {params.error}
           </p>
         )}
@@ -227,7 +227,7 @@ export default async function AdminMcpPage({
 
       <section>
         <h3 className="font-semibold">Connect an agent</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-fg-muted">
           Give staff the server URL. Their agent opens the sign-in page, then a
           consent screen; nothing to paste or configure beyond the URL.
         </p>
@@ -245,18 +245,18 @@ export default async function AdminMcpPage({
               2,
             )}
           />
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-fg-muted">
             Claude.ai: Settings → Connectors → Add custom connector → paste the
             server URL. Discovery documents, for troubleshooting:{" "}
-            <Link href={MCP_PATHS.protectedResourceMetadata} className="text-blue-600 hover:underline">
+            <Link href={MCP_PATHS.protectedResourceMetadata} className="text-accent-text hover:underline">
               protected resource
             </Link>
             {" · "}
-            <Link href={MCP_PATHS.authorizationServerMetadata} className="text-blue-600 hover:underline">
+            <Link href={MCP_PATHS.authorizationServerMetadata} className="text-accent-text hover:underline">
               authorization server
             </Link>
             {" · "}
-            <Link href={MCP_PATHS.jwks} className="text-blue-600 hover:underline">
+            <Link href={MCP_PATHS.jwks} className="text-accent-text hover:underline">
               signing keys
             </Link>
             .
@@ -269,7 +269,7 @@ export default async function AdminMcpPage({
           <h3 className="font-semibold">Settings</h3>
           {anyCustom && (
             <form action={resetMcpSettings}>
-              <button type="submit" className="text-xs text-gray-500 hover:underline">
+              <button type="submit" className="text-xs text-fg-muted hover:underline">
                 Reset all to defaults
               </button>
             </form>
@@ -285,7 +285,7 @@ export default async function AdminMcpPage({
             />
             <span>
               <span className="font-medium">Enabled</span>
-              <span className="block text-xs text-gray-500">
+              <span className="block text-xs text-fg-muted">
                 Kill switch. When off, tools answer 503; sign-in and token
                 refresh keep working so agents recover the moment it is back on.
               </span>
@@ -301,7 +301,7 @@ export default async function AdminMcpPage({
             />
             <span>
               <span className="font-medium">Allow agents to create drafts</span>
-              <span className="block text-xs text-gray-500">
+              <span className="block text-xs text-fg-muted">
                 Enables the create_draft tool: a new, unpublished draft from
                 Markdown in a department the person belongs to (any department
                 for admins). Reading is unaffected either way.
@@ -312,11 +312,11 @@ export default async function AdminMcpPage({
           <div>
             <label htmlFor="instructions" className="text-sm font-medium">
               Instructions for agents
-              <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-600">
+              <span className="ml-2 rounded bg-surface-sunken px-1.5 py-0.5 text-xs font-normal text-fg-muted">
                 {isCustom.instructions ? "customized" : "default"}
               </span>
             </label>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-fg-muted">
               Sent to the agent when it connects; tell it how to treat the
               knowledge base. Blank uses the default.
             </p>
@@ -334,11 +334,11 @@ export default async function AdminMcpPage({
           <div className="max-w-xs">
             <label htmlFor="maxResults" className="text-sm font-medium">
               Max results per call
-              <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-600">
+              <span className="ml-2 rounded bg-surface-sunken px-1.5 py-0.5 text-xs font-normal text-fg-muted">
                 {isCustom.maxResults ? "customized" : "default"}
               </span>
             </label>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-fg-muted">
               Cap for list and search tools ({MCP_MAX_RESULTS_MIN}–{MCP_MAX_RESULTS_MAX}).
               Blank uses {MCP_SETTING_DEFAULTS.maxResults}.
             </p>
@@ -356,7 +356,7 @@ export default async function AdminMcpPage({
 
           <button
             type="submit"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-strong"
           >
             Save
           </button>
@@ -365,17 +365,17 @@ export default async function AdminMcpPage({
 
       <section>
         <h3 className="font-semibold">Connected clients</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-fg-muted">
           Every agent application that has registered. Disabling a client
           blocks new sign-ins and token refreshes for everyone using it.
         </p>
         {clients.length === 0 ? (
-          <p className="mt-4 rounded-lg border border-dashed p-6 text-sm text-gray-500">
+          <p className="mt-4 rounded-lg border border-border border-dashed p-6 text-sm text-fg-muted">
             No agents have connected yet.
           </p>
         ) : (
           <table className="mt-4 w-full text-left text-sm">
-            <thead className="text-gray-500">
+            <thead className="text-fg-muted">
               <tr>
                 <th className="py-2 pr-4">Client</th>
                 <th className="py-2 pr-4">Registered via</th>
@@ -389,29 +389,29 @@ export default async function AdminMcpPage({
                 const users = usersByClient.get(c.clientId) ?? 0;
                 const last = lastByClient.get(c.clientId) ?? null;
                 return (
-                  <tr key={c.clientId} className={`border-t ${c.disabled ? "text-gray-400" : ""}`}>
+                  <tr key={c.clientId} className={`border-t ${c.disabled ? "text-fg-subtle" : ""}`}>
                     <td className="py-2 pr-4">
                       <div className="font-medium">
                         {c.name?.trim() || "Unnamed client"}
                         {c.disabled && (
-                          <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-xs font-normal text-red-800">
+                          <span className="ml-2 rounded bg-danger-soft px-1.5 py-0.5 text-xs font-normal text-danger">
                             disabled
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500" title={c.clientId}>
+                      <div className="text-xs text-fg-muted" title={c.clientId}>
                         {c.uri ? `${c.uri} · ` : ""}
                         {truncate(c.clientId)}
                       </div>
                     </td>
                     <td className="py-2 pr-4">
                       {c.discoveryId ? "Metadata document" : "Dynamic registration"}
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-fg-muted">
                         {c.createdAt ? c.createdAt.toLocaleDateString() : "—"}
                       </div>
                     </td>
                     <td className="py-2 pr-4">{users}</td>
-                    <td className="py-2 pr-4 text-gray-500">
+                    <td className="py-2 pr-4 text-fg-muted">
                       {last ? last.toLocaleString() : "—"}
                     </td>
                     <td className="py-2">
@@ -429,7 +429,7 @@ export default async function AdminMcpPage({
                             message={`Revoke every grant for “${c.name?.trim() || c.clientId}”? ${users} staff member${users === 1 ? "" : "s"} will have to reconnect.`}
                           >
                             <input type="hidden" name="clientId" value={c.clientId} />
-                            <button type="submit" className={`${smallButton} text-red-700`}>
+                            <button type="submit" className={`${smallButton} text-danger`}>
                               Revoke all grants
                             </button>
                           </ConfirmForm>
@@ -446,17 +446,17 @@ export default async function AdminMcpPage({
 
       <section>
         <h3 className="font-semibold">Grants</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-fg-muted">
           Who has connected which agent. Revoking a grant disconnects that one
           agent for that one person; they can reconnect any time.
         </p>
         {grants.length === 0 ? (
-          <p className="mt-4 rounded-lg border border-dashed p-6 text-sm text-gray-500">
+          <p className="mt-4 rounded-lg border border-border border-dashed p-6 text-sm text-fg-muted">
             No active grants.
           </p>
         ) : (
           <table className="mt-4 w-full text-left text-sm">
-            <thead className="text-gray-500">
+            <thead className="text-fg-muted">
               <tr>
                 <th className="py-2 pr-4">Staff member</th>
                 <th className="py-2 pr-4">Client</th>
@@ -469,22 +469,22 @@ export default async function AdminMcpPage({
             </thead>
             <tbody>
               {grants.map((g) => (
-                <tr key={g.id} className="border-t">
+                <tr key={g.id} className="border-t border-border">
                   <td className="py-2 pr-4">
                     <div>{g.userName}</div>
-                    <div className="text-xs text-gray-500">{g.userEmail}</div>
+                    <div className="text-xs text-fg-muted">{g.userEmail}</div>
                   </td>
                   <td className="py-2 pr-4">{g.clientName?.trim() || truncate(g.clientId)}</td>
-                  <td className="py-2 pr-4 text-gray-500" title={g.scopes.join(" ")}>
+                  <td className="py-2 pr-4 text-fg-muted" title={g.scopes.join(" ")}>
                     {g.scopes.includes(MCP_WRITE_SCOPE) ? "Read, draft" : "Read"}
                   </td>
-                  <td className="py-2 pr-4 text-gray-500">
+                  <td className="py-2 pr-4 text-fg-muted">
                     {g.createdAt ? g.createdAt.toLocaleString() : "—"}
                   </td>
-                  <td className="py-2 pr-4 text-gray-500">
+                  <td className="py-2 pr-4 text-fg-muted">
                     {g.rotatedAt ? g.rotatedAt.toLocaleString() : "—"}
                   </td>
-                  <td className="py-2 pr-4 text-gray-500">
+                  <td className="py-2 pr-4 text-fg-muted">
                     {g.expiresAt ? g.expiresAt.toLocaleDateString() : "—"}
                   </td>
                   <td className="py-2">
@@ -493,7 +493,7 @@ export default async function AdminMcpPage({
                       message={`Disconnect “${g.clientName?.trim() || g.clientId}” for ${g.userName}?`}
                     >
                       <input type="hidden" name="grantId" value={g.id} />
-                      <button type="submit" className={`${smallButton} text-red-700`}>
+                      <button type="submit" className={`${smallButton} text-danger`}>
                         Revoke
                       </button>
                     </ConfirmForm>

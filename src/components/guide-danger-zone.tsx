@@ -29,9 +29,9 @@ export function GuideDangerZone({
   const ref = { spaceSlug, guideId };
 
   return (
-    <section className="mt-10 max-w-[860px] rounded-lg border border-danger-100 bg-white px-5 py-4">
-      <h2 className="text-sm font-semibold text-ink">Unpublish or delete</h2>
-      <p className="mt-1 text-xs text-grey-500">
+    <section className="mt-10 max-w-[860px] rounded-lg border border-danger-100 bg-surface-raised px-5 py-4">
+      <h2 className="text-sm font-semibold text-fg-strong">Unpublish or delete</h2>
+      <p className="mt-1 text-xs text-fg-muted">
         {isPublished
           ? "Converting to draft hides the body from search and marks the guide as a draft; publish again when it's ready. "
           : ""}

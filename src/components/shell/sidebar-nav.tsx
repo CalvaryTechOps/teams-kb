@@ -70,8 +70,8 @@ export function SidebarNav({
             <div
               className={`flex items-center gap-1 rounded-lg pr-2 text-sm font-medium ${
                 isActive
-                  ? "bg-cyan-400/15 text-white"
-                  : "text-grey-200 hover:bg-white/5"
+                  ? "bg-accent/15 text-sidebar-fg"
+                  : "text-sidebar-fg/85 hover:bg-sidebar-fg/5"
               }`}
             >
               <button
@@ -83,9 +83,9 @@ export function SidebarNav({
                 className="flex h-9 w-8 shrink-0 items-center justify-center rounded-md"
               >
                 {isOpen ? (
-                  <ChevronDownIcon size={15} className="text-cyan-400" />
+                  <ChevronDownIcon size={15} className="text-accent" />
                 ) : (
-                  <ChevronRightIcon size={15} className="text-grey-500" />
+                  <ChevronRightIcon size={15} className="text-sidebar-fg-subtle" />
                 )}
               </button>
               <Link
@@ -118,7 +118,7 @@ export function SidebarNav({
                   <Link
                     key={c.slug}
                     href={categoryPath(s.slug, c.slug)}
-                    className="rounded-md px-2.5 py-1.5 text-[13px] text-grey-300 hover:bg-white/5 hover:text-white"
+                    className="rounded-md px-2.5 py-1.5 text-[13px] text-sidebar-fg/70 hover:bg-sidebar-fg/5 hover:text-sidebar-fg"
                   >
                     {c.name}
                   </Link>
@@ -129,12 +129,12 @@ export function SidebarNav({
         );
       })}
       {spaces.length === 0 && (
-        <p className="px-3 py-2 text-[13px] text-grey-500">
+        <p className="px-3 py-2 text-[13px] text-sidebar-fg-subtle">
           No departments yet.
         </p>
       )}
       {spaces.length > 0 && shown.length === 0 && (
-        <p className="px-3 py-2 text-[13px] leading-snug text-grey-500">
+        <p className="px-3 py-2 text-[13px] leading-snug text-sidebar-fg-subtle">
           Nothing to read yet — turn on Show empty to browse every department.
         </p>
       )}

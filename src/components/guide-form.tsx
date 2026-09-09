@@ -43,8 +43,8 @@ export function GuideForm({
   };
 }) {
   const inputClasses =
-    "rounded-lg border border-grey-300 bg-white px-3 text-sm text-ink " +
-    "focus:border-cyan-400 focus:shadow-focus focus:outline-none";
+    "rounded-lg border border-border-strong bg-surface-raised px-3 text-sm text-fg-strong " +
+    "focus:border-accent focus:shadow-focus focus:outline-none";
 
   return (
     // Two regions in one <form>: the editor column (title, content, buttons)
@@ -57,7 +57,7 @@ export function GuideForm({
     <form className="flex flex-col gap-5 xl:flex-row xl:items-start xl:gap-6">
       <div className="flex min-w-0 max-w-[860px] flex-1 flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="title" className="text-sm font-medium text-ink">
+          <label htmlFor="title" className="text-sm font-medium text-fg-strong">
             Title
           </label>
           <input
@@ -71,16 +71,16 @@ export function GuideForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">Content</span>
+          <span className="text-sm font-medium text-fg-strong">Content</span>
           <GuideEditor name="content" initialContent={defaults?.content} />
-          <p className="text-xs text-grey-500">
-            Type <kbd className="rounded border border-grey-200 bg-grey-50 px-1">/</kbd>{" "}
+          <p className="text-xs text-fg-muted">
+            Type <kbd className="rounded border border-border bg-surface px-1">/</kbd>{" "}
             for headings, lists, tables, diagrams and more. Paste or drop
             images, audio or video to upload them.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 border-t border-grey-200 pt-5">
+        <div className="flex items-center gap-3 border-t border-border pt-5">
           {/* Same "publish" intent for both roles — the server decides: owners
             publish immediately, members' submissions land in the queue. */}
           <Button
@@ -108,7 +108,7 @@ export function GuideForm({
             Cancel
           </ButtonLink>
           {!canApprove && (
-            <p className="text-xs text-grey-500">
+            <p className="text-xs text-fg-muted">
               Submissions go live once a group owner approves them.
             </p>
           )}
@@ -117,7 +117,7 @@ export function GuideForm({
 
       <aside className="flex flex-col gap-5 xl:w-72 xl:shrink-0">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="categoryId" className="text-sm font-medium text-ink">
+          <label htmlFor="categoryId" className="text-sm font-medium text-fg-strong">
             Category
           </label>
           <select
@@ -135,7 +135,7 @@ export function GuideForm({
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="tags" className="text-sm font-medium text-ink">
+          <label htmlFor="tags" className="text-sm font-medium text-fg-strong">
             Tags
           </label>
           <TagPicker

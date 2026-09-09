@@ -93,19 +93,19 @@ export default async function HomePage() {
     <>
       <TopBar crumbs={[{ label: APP_TITLE }]} userName={userName} />
       <main className="px-14 py-11">
-        <h1 className="text-4xl font-black tracking-tight text-ink">
+        <h1 className="text-4xl font-black tracking-tight text-fg-strong">
           {greeting()}, {firstName}
         </h1>
-        <p className="mt-2.5 text-grey-500">What do you need a hand with?</p>
+        <p className="mt-2.5 text-fg-muted">What do you need a hand with?</p>
 
         <form action="/search" className="mt-6 max-w-[620px]">
-          <div className="flex items-center gap-3 rounded-xl border border-grey-300 bg-white px-4 shadow-xs focus-within:border-cyan-400 focus-within:shadow-focus">
-            <SearchIcon size={18} className="shrink-0 text-grey-400" />
+          <div className="flex items-center gap-3 rounded-xl border border-border-strong bg-surface-raised px-4 shadow-xs focus-within:border-accent focus-within:shadow-focus">
+            <SearchIcon size={18} className="shrink-0 text-fg-subtle" />
             <input
               type="search"
               name="q"
               placeholder={`Search ${totalArticles} article${totalArticles === 1 ? "" : "s"}`}
-              className="h-[52px] w-full bg-transparent text-[15px] text-ink placeholder-grey-400 focus:outline-none"
+              className="h-[52px] w-full bg-transparent text-[15px] text-fg-strong placeholder-fg-subtle focus:outline-none"
             />
           </div>
         </form>
@@ -115,9 +115,9 @@ export default async function HomePage() {
             {feeds.map((feed) => (
               <section
                 key={feed.key}
-                className="rounded-xl border border-grey-200 bg-white px-6 py-5 shadow-xs"
+                className="rounded-xl border border-border bg-surface-raised px-6 py-5 shadow-xs"
               >
-                <div className="mb-2 text-[11px] font-medium uppercase tracking-[.09em] text-grey-500">
+                <div className="mb-2 text-[11px] font-medium uppercase tracking-[.09em] text-fg-muted">
                   {feed.label}
                 </div>
                 <div className="flex flex-col">
@@ -125,12 +125,12 @@ export default async function HomePage() {
                     <Link
                       key={`${g.spaceSlug}/${g.slug}`}
                       href={`/spaces/${g.spaceSlug}/guides/${g.slug}`}
-                      className="flex items-baseline justify-between gap-3 border-t border-grey-100 py-2.5 first:border-t-0"
+                      className="flex items-baseline justify-between gap-3 border-t border-border py-2.5 first:border-t-0"
                     >
-                      <span className="truncate text-sm text-grey-800 hover:text-cyan-700">
+                      <span className="truncate text-sm text-fg hover:text-accent-text">
                         {g.title}
                       </span>
-                      <span className="shrink-0 text-xs text-grey-500">
+                      <span className="shrink-0 text-xs text-fg-muted">
                         {g.spaceName}
                         {g.publishedAt ? ` · ${timeAgo(g.publishedAt)}` : ""}
                       </span>
@@ -142,7 +142,7 @@ export default async function HomePage() {
           </div>
         )}
 
-        <div className="mt-9 text-[11px] font-medium uppercase tracking-[.09em] text-grey-500">
+        <div className="mt-9 text-[11px] font-medium uppercase tracking-[.09em] text-fg-muted">
           Browse by department
         </div>
         <div className="mt-3.5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -150,27 +150,27 @@ export default async function HomePage() {
             <Link
               key={s.slug}
               href={`/spaces/${s.slug}`}
-              className="rounded-xl border border-grey-200 bg-white p-5 shadow-xs transition-shadow hover:-translate-y-0.5 hover:shadow-md"
+              className="rounded-xl border border-border bg-surface-raised p-5 shadow-xs transition-shadow hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="text-[17px] font-bold text-ink">{s.name}</div>
+              <div className="text-[17px] font-bold text-fg-strong">{s.name}</div>
               {s.description && (
-                <div className="mt-1.5 line-clamp-2 text-[13px] leading-normal text-grey-500">
+                <div className="mt-1.5 line-clamp-2 text-[13px] leading-normal text-fg-muted">
                   {s.description}
                 </div>
               )}
-              <div className="mt-3.5 text-xs font-medium text-cyan-700">
+              <div className="mt-3.5 text-xs font-medium text-accent-text">
                 {s.articles} article{s.articles === 1 ? "" : "s"}
               </div>
             </Link>
           ))}
           {spaces.length === 0 && (
-            <div className="rounded-xl border border-dashed border-grey-300 p-6 text-sm text-grey-500 md:col-span-2 xl:col-span-3">
+            <div className="rounded-xl border border-dashed border-border-strong p-6 text-sm text-fg-muted md:col-span-2 xl:col-span-3">
               No departments yet. Admins flag M365 groups as departments in
               the admin area, and each one gets a space here.
             </div>
           )}
           {spaces.length > 0 && shownSpaces.length === 0 && (
-            <div className="rounded-xl border border-dashed border-grey-300 p-6 text-sm text-grey-500 md:col-span-2 xl:col-span-3">
+            <div className="rounded-xl border border-dashed border-border-strong p-6 text-sm text-fg-muted md:col-span-2 xl:col-span-3">
               Nothing to read yet. Turn on <em>Show empty</em> in the sidebar
               to browse every department.
             </div>

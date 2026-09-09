@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { useThemeMode } from "@/components/theme-provider";
 
 // Diagram blocks store Mermaid source; Mermaid needs a browser to lay out and
 // render, so this is the one part of a guide body that renders client-side.
@@ -13,6 +14,7 @@ export function MermaidDiagram({ source }: { source: string }) {
   // Mermaid puts this id on the rendered <svg>, so it must be unique per
   // diagram on the page and start with a letter.
   const id = "d" + useId().replace(/[^a-zA-Z0-9]/g, "");
+  const { mode } = useThemeMode();
 
   useEffect(() => {
     let stale = false;
@@ -23,7 +25,7 @@ export function MermaidDiagram({ source }: { source: string }) {
           startOnLoad: false,
           suppressErrorRendering: true,
           securityLevel: "strict",
-          theme: "neutral",
+          theme: mode === "dark" ? "dark" : "neutral",
           fontFamily: "inherit",
         });
         await mermaid.parse(source);
@@ -39,7 +41,7 @@ export function MermaidDiagram({ source }: { source: string }) {
     return () => {
       stale = true;
     };
-  }, [source, id]);
+  }, [source, id, mode]);
 
   if (svg) {
     return (

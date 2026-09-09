@@ -20,7 +20,7 @@ export function BrandMark({ size = "sidebar" }: { size?: "sidebar" | "hero" }) {
   }
   return (
     <span
-      className={`flex ${heightClass} items-center font-black tracking-tight text-white ${
+      className={`flex ${heightClass} items-center font-black tracking-tight text-sidebar-fg ${
         size === "hero" ? "text-2xl" : "text-lg"
       }`}
     >

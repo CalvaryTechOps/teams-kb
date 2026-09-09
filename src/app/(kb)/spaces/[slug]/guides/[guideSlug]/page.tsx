@@ -208,7 +208,7 @@ export default async function GuidePage({
         <article>
           {latestUnpublished &&
             (hasNewerUnpublished || pendingBeforeFirstPublish) && (
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-100/50 px-4 py-3 text-sm text-grey-800">
+              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg">
                 {pendingBeforeFirstPublish ? (
                   <span>
                     v{latestUnpublished.version} is awaiting owner approval
@@ -262,7 +262,7 @@ export default async function GuidePage({
             )}
 
           {showRejected && latestRejected && (
-            <div className="mb-5 rounded-lg border border-danger-100 bg-danger-100/50 px-4 py-3 text-sm text-grey-800">
+            <div className="mb-5 rounded-lg border border-danger-100 bg-danger-soft/50 px-4 py-3 text-sm text-fg">
               <div className="flex flex-wrap items-center gap-3">
                 <span>
                   Submission v{latestRejected.version} was rejected
@@ -280,7 +280,7 @@ export default async function GuidePage({
                 </ButtonLink>
               </div>
               {latestRejected.reviewNote && (
-                <p className="mt-1.5 text-[13px] text-grey-600">
+                <p className="mt-1.5 text-[13px] text-fg-muted">
                   Reviewer note: “{latestRejected.reviewNote}”
                 </p>
               )}
@@ -288,7 +288,7 @@ export default async function GuidePage({
           )}
 
           {pendingAllStaff.length > 0 && (
-            <div className="mb-5 rounded-lg border border-grey-200 bg-grey-100 px-4 py-3 text-sm text-grey-800">
+            <div className="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3 text-sm text-fg">
               An all-staff publish request for this guide is awaiting admin
               approval. Until then it keeps its current audience.
             </div>
@@ -304,11 +304,11 @@ export default async function GuidePage({
               </Badge>
             )}
           </div>
-          <h1 className="text-4xl font-black leading-[1.15] tracking-tight text-ink">
+          <h1 className="text-4xl font-black leading-[1.15] tracking-tight text-fg-strong">
             {revision.title}
           </h1>
-          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-grey-200 pb-5">
-            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-grey-500">
+          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border pb-5">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-fg-muted">
               <span>
                 Updated{" "}
                 {revision.createdAt.toLocaleDateString("en-US", {
@@ -358,7 +358,7 @@ export default async function GuidePage({
                     <Link
                       key={t.slug}
                       href={`/search?tag=${encodeURIComponent(t.slug)}`}
-                      className="inline-flex h-[26px] items-center rounded-full border border-grey-200 bg-white px-2.5 text-xs text-grey-600 hover:border-cyan-400 hover:text-cyan-700"
+                      className="inline-flex h-[26px] items-center rounded-full border border-border bg-surface-raised px-2.5 text-xs text-fg-muted hover:border-accent hover:text-accent-text"
                     >
                       {t.name}
                     </Link>
@@ -366,9 +366,9 @@ export default async function GuidePage({
                 </div>
               </div>
             )}
-            <div className={tags.length > 0 ? "border-t border-grey-200 pt-5" : ""}>
+            <div className={tags.length > 0 ? "border-t border-border pt-5" : ""}>
               <MicroLabel className="mb-2.5">About this guide</MicroLabel>
-              <p className="text-[13px] leading-relaxed text-grey-500">
+              <p className="text-[13px] leading-relaxed text-fg-muted">
                 Maintained by {s.name}.{" "}
                 {g.audience === "all_staff"
                   ? "Visible to all staff."

@@ -152,19 +152,19 @@ export default async function SpacePage({
       />
       <main className="px-14 py-10">
         <div className="flex items-end justify-between">
-          <h1 className="text-4xl font-black tracking-tight text-ink">
+          <h1 className="text-4xl font-black tracking-tight text-fg-strong">
             {s.name}
           </h1>
-          <div className="text-[13px] text-grey-500">
+          <div className="text-[13px] text-fg-muted">
             {published.length} article{published.length === 1 ? "" : "s"} ·{" "}
             {categories.length} categor{categories.length === 1 ? "y" : "ies"}
           </div>
         </div>
         {s.description && (
-          <p className="mt-2 max-w-[640px] text-grey-500">{s.description}</p>
+          <p className="mt-2 max-w-[640px] text-fg-muted">{s.description}</p>
         )}
         {access.isAdmin && isOrphaned(health) && (
-          <div className="mt-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-100/50 px-4 py-3 text-sm text-grey-800">
+          <div className="mt-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg">
             <span>{spaceHealthDescription(health)}</span>
             <ButtonLink href="/admin/spaces" variant="secondary" size="sm">
               Manage spaces
@@ -177,13 +177,13 @@ export default async function SpacePage({
             <div
               key={sec.key}
               id={sec.key}
-              className="scroll-mt-20 rounded-xl border border-grey-200 bg-white px-6 py-5 shadow-xs"
+              className="scroll-mt-20 rounded-xl border border-border bg-surface-raised px-6 py-5 shadow-xs"
             >
               <div className="mb-2 flex items-baseline justify-between">
                 <div className="flex items-center gap-2">
                   <Link
                     href={categoryPath(s.slug, sec.key)}
-                    className="font-bold text-ink hover:text-cyan-700"
+                    className="font-bold text-fg-strong hover:text-accent-text"
                   >
                     {sec.name}
                   </Link>
@@ -202,13 +202,13 @@ export default async function SpacePage({
                             ? "Move all General guides to another department"
                             : "Move to another department"
                         }
-                        className="rounded-md p-1 text-grey-400 hover:bg-grey-100 hover:text-cyan-700"
+                        className="rounded-md p-1 text-fg-subtle hover:bg-surface-sunken hover:text-accent-text"
                       >
                         <FolderMoveIcon size={14} />
                       </Link>
                     )}
                 </div>
-                <div className="text-xs text-grey-500">
+                <div className="text-xs text-fg-muted">
                   {sec.guides.length}
                 </div>
               </div>
@@ -217,7 +217,7 @@ export default async function SpacePage({
                   <Link
                     key={g.id}
                     href={`/spaces/${s.slug}/guides/${g.slug}`}
-                    className="flex items-center gap-3 border-t border-grey-100 py-2.5 text-sm text-grey-800 hover:text-cyan-700"
+                    className="flex items-center gap-3 border-t border-border py-2.5 text-sm text-fg hover:text-accent-text"
                   >
                     <AudienceIcon audience={g.audience} />
                     <span className="min-w-0 flex-1 truncate">{g.title}</span>
@@ -227,15 +227,15 @@ export default async function SpacePage({
                   </Link>
                 ))}
                 {sec.guides.length === 0 && (
-                  <p className="border-t border-grey-100 py-2.5 text-sm text-grey-400">
+                  <p className="border-t border-border py-2.5 text-sm text-fg-subtle">
                     Nothing here yet.
                   </p>
                 )}
                 {sec.guides.length > CATEGORY_CARD_LIMIT && (
-                  <div className="flex justify-end border-t border-grey-100 pt-2.5">
+                  <div className="flex justify-end border-t border-border pt-2.5">
                     <Link
                       href={categoryPath(s.slug, sec.key)}
-                      className="text-xs font-medium text-cyan-700 hover:text-cyan-600"
+                      className="text-xs font-medium text-accent-text hover:text-accent-strong"
                     >
                       more…
                     </Link>
@@ -245,21 +245,21 @@ export default async function SpacePage({
             </div>
           ))}
 
-          <div className="rounded-xl border border-grey-200 bg-grey-100 px-6 py-5">
+          <div className="rounded-xl border border-border bg-surface-sunken px-6 py-5">
             <MicroLabel className="mb-3.5">Recently updated</MicroLabel>
             <div className="flex flex-col gap-3.5">
               {recent.map((g) => (
                 <Link key={g.id} href={`/spaces/${s.slug}/guides/${g.slug}`}>
-                  <div className="text-sm font-medium text-grey-800 hover:text-cyan-700">
+                  <div className="text-sm font-medium text-fg hover:text-accent-text">
                     {g.title}
                   </div>
-                  <div className="mt-0.5 text-xs text-grey-500">
+                  <div className="mt-0.5 text-xs text-fg-muted">
                     Updated {timeAgo(g.updatedAt)} · {g.authorName}
                   </div>
                 </Link>
               ))}
               {recent.length === 0 && (
-                <p className="text-sm text-grey-500">
+                <p className="text-sm text-fg-muted">
                   {perms.canEdit
                     ? "No guides yet — write the first one."
                     : "No guides shared with you yet."}
@@ -278,7 +278,7 @@ export default async function SpacePage({
               name="name"
               placeholder="New category name"
               required
-              className="h-10 w-full rounded-lg border border-grey-300 bg-white px-3 text-sm focus:border-cyan-400 focus:shadow-focus focus:outline-none"
+              className="h-10 w-full rounded-lg border border-border-strong bg-surface-raised px-3 text-sm focus:border-accent focus:shadow-focus focus:outline-none"
             />
             <Button type="submit" variant="secondary">
               Add category

@@ -17,7 +17,7 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
           // Clipboard blocked (insecure context): the text is visible to select.
         }
       }}
-      className="h-7 shrink-0 rounded-md border px-2 text-xs font-medium hover:bg-gray-50"
+      className="h-7 shrink-0 rounded-md border border-border px-2 text-xs font-medium hover:bg-surface"
     >
       {copied ? "Copied" : label}
     </button>

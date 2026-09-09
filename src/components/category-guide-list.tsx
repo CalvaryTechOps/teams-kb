@@ -41,8 +41,8 @@ export function CategoryGuideList({ guides }: { guides: CategoryGuideRow[] }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-grey-300 bg-white px-4 shadow-xs focus-within:border-cyan-400 focus-within:shadow-focus sm:max-w-[560px]">
-          <SearchIcon size={16} className="shrink-0 text-grey-400" />
+        <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-border-strong bg-surface-raised px-4 shadow-xs focus-within:border-accent focus-within:shadow-focus sm:max-w-[560px]">
+          <SearchIcon size={16} className="shrink-0 text-fg-subtle" />
           <input
             type="search"
             autoComplete="off"
@@ -51,27 +51,27 @@ export function CategoryGuideList({ guides }: { guides: CategoryGuideRow[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            className="h-11 w-full min-w-0 bg-transparent text-sm text-ink placeholder-grey-400 focus:outline-none"
+            className="h-11 w-full min-w-0 bg-transparent text-sm text-fg-strong placeholder-fg-subtle focus:outline-none"
           />
         </div>
         {trimmed && (
-          <div className="text-xs text-grey-500">
+          <div className="text-xs text-fg-muted">
             {visible.length} of {guides.length}
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-grey-200 bg-white px-6 py-2 shadow-xs">
+      <div className="rounded-xl border border-border bg-surface-raised px-6 py-2 shadow-xs">
         {visible.map((g) => (
           <Link
             key={g.id}
             href={g.href}
-            className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-grey-100 py-3 text-sm text-grey-800 first:border-t-0 hover:text-cyan-700"
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border py-3 text-sm text-fg first:border-t-0 hover:text-accent-text"
           >
             <AudienceIcon audience={g.audience} />
             <span className="min-w-0 flex-1 truncate font-medium">{g.title}</span>
             {g.status !== "published" && <Badge tone="warning">Draft</Badge>}
-            <span className="flex basis-full flex-wrap gap-x-3.5 pl-[26px] text-xs text-grey-500 sm:basis-auto sm:pl-0">
+            <span className="flex basis-full flex-wrap gap-x-3.5 pl-[26px] text-xs text-fg-muted sm:basis-auto sm:pl-0">
               <span>
                 Created <time dateTime={g.createdIso}>{g.createdLabel}</time>
               </span>
@@ -83,7 +83,7 @@ export function CategoryGuideList({ guides }: { guides: CategoryGuideRow[] }) {
           </Link>
         ))}
         {visible.length === 0 && (
-          <p className="py-3 text-sm text-grey-500">
+          <p className="py-3 text-sm text-fg-muted">
             No articles match “{trimmed}”.
           </p>
         )}

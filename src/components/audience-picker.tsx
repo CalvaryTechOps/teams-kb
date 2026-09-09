@@ -54,8 +54,8 @@ export function AudiencePicker({
   ];
 
   return (
-    <fieldset className="rounded-lg border border-grey-300 bg-white px-3.5 py-3">
-      <legend className="px-1 text-sm font-medium text-ink">
+    <fieldset className="rounded-lg border border-border-strong bg-surface-raised px-3.5 py-3">
+      <legend className="px-1 text-sm font-medium text-fg-strong">
         Who can read this guide?
       </legend>
       <div className="flex flex-col gap-2.5">
@@ -73,19 +73,19 @@ export function AudiencePicker({
               className={radioClasses}
             />
             <span>
-              <span className="block text-sm font-medium text-ink">
+              <span className="block text-sm font-medium text-fg-strong">
                 {opt.label}
               </span>
-              <span className="block text-xs text-grey-500">{opt.detail}</span>
+              <span className="block text-xs text-fg-muted">{opt.detail}</span>
             </span>
           </label>
         ))}
       </div>
 
       {audience === "groups" && (
-        <div className="mt-3 border-t border-grey-200 pt-3">
+        <div className="mt-3 border-t border-border pt-3">
           {groups.length === 0 ? (
-            <p className="text-xs text-grey-500">
+            <p className="text-xs text-fg-muted">
               No other Teams have been synced yet.
             </p>
           ) : (
@@ -103,7 +103,7 @@ export function AudiencePicker({
       )}
 
       {hasPendingAllStaffRequest && (
-        <p className="mt-3 border-t border-grey-200 pt-3 text-xs text-warning">
+        <p className="mt-3 border-t border-border pt-3 text-xs text-warning">
           An all-staff request for this guide is already awaiting admin
           approval.
         </p>

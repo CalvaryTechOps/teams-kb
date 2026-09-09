@@ -41,22 +41,22 @@ export default async function DeletionRequestsPage() {
   return (
     <div>
       <h2 className="text-lg font-semibold">Guide deletion requests</h2>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-fg-muted">
         Owners asking for a guide to be removed. The guide is already hidden
         from everyone. Approving deletes it and its history permanently;
         rejecting restores it as a draft in its space.
       </p>
 
       {pending.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-sm text-gray-500">
+        <p className="mt-6 rounded-lg border border-border border-dashed p-6 text-sm text-fg-muted">
           Nothing waiting — owner requests will appear here.
         </p>
       ) : (
         <div className="mt-6 space-y-4">
           {pending.map((r) => (
-            <div key={r.req.id} className="rounded-lg border p-4">
+            <div key={r.req.id} className="rounded-lg border border-border p-4">
               <div className="font-medium">{r.req.guideTitle}</div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-fg-muted">
                 {r.req.spaceName} · requested by {r.requesterName} on{" "}
                 {r.req.createdAt.toLocaleDateString()}
               </div>
@@ -64,7 +64,7 @@ export default async function DeletionRequestsPage() {
                 <form action={approveGuideDeletion.bind(null, r.req.id)}>
                   <button
                     type="submit"
-                    className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+                    className="rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-surface-raised hover:bg-danger/90"
                   >
                     Approve — delete permanently
                   </button>
@@ -76,11 +76,11 @@ export default async function DeletionRequestsPage() {
                   <input
                     name="note"
                     placeholder="Reason (kept with the request)"
-                    className="w-full min-w-48 flex-1 rounded-md border px-3 py-1.5 text-sm"
+                    className="w-full min-w-48 flex-1 rounded-md border border-border px-3 py-1.5 text-sm"
                   />
                   <button
                     type="submit"
-                    className="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                    className="rounded-md border border-border px-3 py-1.5 text-sm text-fg hover:bg-surface"
                   >
                     Reject — restore as draft
                   </button>
@@ -93,11 +93,11 @@ export default async function DeletionRequestsPage() {
 
       {decided.length > 0 && (
         <section className="mt-10">
-          <h3 className="text-sm font-semibold text-gray-700">
+          <h3 className="text-sm font-semibold text-fg">
             Recently decided
           </h3>
           <table className="mt-2 w-full text-left text-sm">
-            <thead className="text-gray-500">
+            <thead className="text-fg-muted">
               <tr>
                 <th className="py-1 pr-4">Guide</th>
                 <th className="py-1 pr-4">Space</th>
@@ -108,12 +108,12 @@ export default async function DeletionRequestsPage() {
             </thead>
             <tbody>
               {decided.map((r) => (
-                <tr key={r.req.id} className="border-t">
+                <tr key={r.req.id} className="border-t border-border">
                   <td className="py-1.5 pr-4">
                     {r.guideSlug && r.spaceSlug ? (
                       <Link
                         href={`/spaces/${r.spaceSlug}/guides/${r.guideSlug}`}
-                        className="text-blue-600 hover:underline"
+                        className="text-accent-text hover:underline"
                       >
                         {r.req.guideTitle}
                       </Link>
@@ -124,16 +124,16 @@ export default async function DeletionRequestsPage() {
                   <td className="py-1.5 pr-4">{r.req.spaceName}</td>
                   <td className="py-1.5 pr-4">
                     {r.req.status === "approved" ? (
-                      <span className="text-red-600">deleted</span>
+                      <span className="text-danger">deleted</span>
                     ) : (
-                      <span className="text-green-700">restored</span>
+                      <span className="text-success">restored</span>
                     )}{" "}
-                    <span className="text-gray-500">
+                    <span className="text-fg-muted">
                       {r.req.decidedAt?.toLocaleDateString()}
                     </span>
                   </td>
                   <td className="py-1.5 pr-4">{r.deciderName ?? "—"}</td>
-                  <td className="py-1.5 text-gray-500">{r.req.note ?? "—"}</td>
+                  <td className="py-1.5 text-fg-muted">{r.req.note ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

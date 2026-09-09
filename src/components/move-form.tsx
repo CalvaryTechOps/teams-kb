@@ -24,9 +24,9 @@ export type MoveTargetSpace = {
 };
 
 const selectClasses =
-  "h-9 rounded-lg border border-grey-300 bg-white px-3 text-sm text-ink " +
-  "focus:border-cyan-400 focus:shadow-focus focus:outline-none " +
-  "disabled:cursor-not-allowed disabled:bg-grey-50 disabled:text-grey-500";
+  "h-9 rounded-lg border border-border-strong bg-surface-raised px-3 text-sm text-fg-strong " +
+  "focus:border-accent focus:shadow-focus focus:outline-none " +
+  "disabled:cursor-not-allowed disabled:bg-surface disabled:text-fg-muted";
 
 export function MoveForm({
   action,

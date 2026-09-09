@@ -15,7 +15,7 @@ const BlockNoteGuideEditor = dynamic(
     loading: () => (
       <div
         aria-busy
-        className="min-h-[480px] animate-pulse rounded-lg border border-grey-300 bg-white"
+        className="min-h-[480px] animate-pulse rounded-lg border border-border-strong bg-surface-raised"
       />
     ),
   },
