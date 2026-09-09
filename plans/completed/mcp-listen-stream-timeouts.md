@@ -1,8 +1,10 @@
 # Plan: Stop MCP `subscriptions/listen` streams from timing out the function
 
-**Status: implemented 2026-09-09 on `feat/mcp-listen-stream-timeouts`;
-awaiting Chris's local testing, then a PR.** Shared handler options live in
-`src/lib/mcp/handler.ts`, exercised by `src/lib/mcp/handler.test.ts`.
+**Status: complete — implemented on `feat/mcp-listen-stream-timeouts`
+(2026-09-09), tested by Chris on staging; awaiting the PR to `main`.**
+Shared handler options live in `src/lib/mcp/handler.ts`, exercised by
+`src/lib/mcp/handler.test.ts`. Open question 3's answer (Hatz AI is also a
+client) is reflected in the Admin → MCP help text.
 
 ## Problem
 
