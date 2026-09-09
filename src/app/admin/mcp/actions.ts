@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import {
   appSetting,
   oauthAccessToken,
@@ -38,7 +39,7 @@ export async function saveMcpSettings(formData: FormData) {
   });
   if (!result.ok) bounce({ error: result.error });
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     for (const w of result.writes) {
       if (w.value === null) {
         await tx.delete(appSetting).where(eq(appSetting.key, w.key));
@@ -59,7 +60,7 @@ export async function saveMcpSettings(formData: FormData) {
 
 export async function resetMcpSettings() {
   await requireAdmin();
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     for (const key of Object.values(MCP_SETTING_KEYS)) {
       await tx.delete(appSetting).where(eq(appSetting.key, key));
     }
@@ -88,7 +89,7 @@ export async function revokeClientGrants(formData: FormData) {
   const clientId = str(formData.get("clientId"));
   if (!clientId) bounce({ error: "Unknown client." });
   const now = new Date();
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     await tx
       .update(oauthRefreshToken)
       .set({ revoked: now })
@@ -108,7 +109,7 @@ export async function revokeGrant(formData: FormData) {
   const id = str(formData.get("grantId"));
   if (!id) bounce({ error: "Unknown grant." });
   const now = new Date();
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     await tx
       .update(oauthRefreshToken)
       .set({ revoked: now })

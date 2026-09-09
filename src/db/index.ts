@@ -1,35 +1,14 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 
-// Neon's serverless driver needs a WebSocket implementation in Node.
-neonConfig.webSocketConstructor = ws;
-
-// Neon's rule for this driver: a Pool/Client "must be connected, used and
-// closed within a single request handler". The pool itself lives at module
-// scope because `db` is imported everywhere, so instead we make sure no
-// connection outlives the invocation that opened it. Vercel freezes an idle
-// function between invocations; a WebSocket left open in the pool is closed
-// by the far side while frozen, and the pool would hand that dead client to
-// the next query ("Connection terminated unexpectedly", close code 1006).
+// The app's default handle uses Neon's HTTP driver: every query is one HTTPS
+// request, so there is no connection to keep alive, nothing to go stale while
+// Vercel freezes an idle function, and no WebSocket handshake to time out
+// under a burst of parallel renders. Neon recommends it for single queries
+// and it is safe to create once at module scope, which is how `db` is used.
 //
-// - maxUses: 1 destroys a client as soon as it is released, so the pool never
-//   holds an idle connection. A db.transaction() is one checkout, so all of
-//   its queries still share a single connection.
-// - connectionTimeoutMillis fails a hung WebSocket handshake fast instead of
-//   consuming the route's whole maxDuration. Neon compute can take a few
-//   seconds to wake from suspend, so keep this comfortably above ~5 s.
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  maxUses: 1,
-  connectionTimeoutMillis: 10_000,
-});
-
-// With maxUses: 1 there are no idle clients to error, but if one ever does,
-// log it rather than let it surface as an unhandled error event.
-pool.on("error", (err: Error) => {
-  console.error("db pool: idle client error", err);
-});
-
-export const db = drizzle(pool, { schema });
+// The HTTP driver cannot run interactive transactions. Anything that needs
+// `BEGIN … COMMIT` with dependent statements goes through `withTransaction`
+// in ./transaction.ts, which opens a WebSocket client for that call only.
+export const db = drizzle(neon(process.env.DATABASE_URL!), { schema });

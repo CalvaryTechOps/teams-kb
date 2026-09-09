@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import { guide, guideDeletionRequest, space } from "@/db/schema";
 import { requireAdmin } from "@/lib/permissions";
 import { pruneUnusedTags } from "@/lib/tags";
@@ -51,7 +52,7 @@ export async function approveGuideDeletion(requestId: string) {
   const access = await requireAdmin();
   const row = await pendingRequestOrBounce(requestId);
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     const decided = await tx
       .update(guideDeletionRequest)
       .set({
@@ -93,7 +94,7 @@ export async function rejectGuideDeletion(
   const row = await pendingRequestOrBounce(requestId);
   const note = String(formData.get("note") ?? "").trim() || null;
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     const decided = await tx
       .update(guideDeletionRequest)
       .set({

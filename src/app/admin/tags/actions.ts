@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, inArray, ne, or } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import { guide, guideTag, space, tag } from "@/db/schema";
 import { requireAdmin } from "@/lib/permissions";
 import { slugify } from "@/lib/slug";
@@ -58,7 +59,7 @@ export async function mergeTags(targetId: string, sourceIds: string[]) {
 
   const pages = await guidePagesForTags([...sources, targetId]);
 
-  const result = await db.transaction(async (tx) => {
+  const result = await withTransaction(async (tx) => {
     const [target] = await tx.select().from(tag).where(eq(tag.id, targetId));
     const sourceRows = await tx
       .select()
@@ -106,7 +107,7 @@ export async function renameTag(tagId: string, formData: FormData) {
 
   const pages = await guidePagesForTags([tagId]);
 
-  const outcome = await db.transaction(async (tx) => {
+  const outcome = await withTransaction(async (tx) => {
     const [existing] = await tx.select().from(tag).where(eq(tag.id, tagId));
     if (!existing) return { kind: "missing" as const };
     const [clash] = await tx
@@ -134,7 +135,7 @@ export async function renameTag(tagId: string, formData: FormData) {
 export async function deleteTag(tagId: string) {
   await requireAdmin();
 
-  const outcome = await db.transaction(async (tx) => {
+  const outcome = await withTransaction(async (tx) => {
     const [existing] = await tx.select().from(tag).where(eq(tag.id, tagId));
     if (!existing) return { kind: "missing" as const };
     const [used] = await tx

@@ -1,6 +1,7 @@
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import { guide, guideRevision } from "@/db/schema";
 import {
   CONTENT_VERSION,
@@ -33,7 +34,7 @@ export async function createGuideWithFirstRevision(
   input: CreateGuideInput,
 ): Promise<{ id: string; slug: string; revisionId: string }> {
   const slug = await uniqueGuideSlugIn(db, input.spaceId, slugify(input.title));
-  return db.transaction(async (tx) => {
+  return withTransaction(async (tx) => {
     const [g] = await tx
       .insert(guide)
       .values({
