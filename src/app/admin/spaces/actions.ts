@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import { category, m365Group, space } from "@/db/schema";
 import { graphConfigured } from "@/lib/graph";
 import { syncGroupRoster } from "@/lib/graph-sync";
@@ -94,7 +95,7 @@ export async function mergeSpace(sourceId: string, formData: FormData) {
   if (!target) redirect(INVENTORY);
 
   const movedPaths: string[] = [];
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     const categories = await tx
       .select({ id: category.id, slug: category.slug, spaceId: category.spaceId })
       .from(category)

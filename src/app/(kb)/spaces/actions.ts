@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray, isNull, max, ne } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import {
   allStaffRequest,
   category,
@@ -150,7 +151,7 @@ async function applyAudience(
     return;
   }
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     await tx.update(guide).set({ audience }).where(eq(guide.id, guideId));
     await tx
       .delete(guideAudienceGroup)
@@ -277,7 +278,7 @@ export async function saveGuide(input: SaveGuideInput, formData: FormData) {
     if (!guidePerms.canEdit) redirect(`/spaces/${s.slug}`);
     guideSlug = g.slug;
 
-    await db.transaction(async (tx) => {
+    await withTransaction(async (tx) => {
       // One pending submission per guide: a resubmission supersedes the
       // previous one so the queue never shows stale versions. (An owner's
       // direct publish leaves pendings alone — they still deserve review.)
@@ -385,7 +386,7 @@ async function pendingRevisionForReview(revisionId: string) {
 export async function approveRevision(revisionId: string) {
   const { access, rev, g, spaceSlug } = await pendingRevisionForReview(revisionId);
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     if (g.currentRevisionId) {
       await tx
         .update(guideRevision)
@@ -462,7 +463,7 @@ export async function publishLatestDraft(guideId: string) {
     .limit(1);
   if (!draft) redirect(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     if (row.g.currentRevisionId) {
       await tx
         .update(guideRevision)
@@ -544,7 +545,7 @@ export async function requestGuideDeletion(input: GuideRef) {
   const { access, s, g } = await ownedGuideOrBounce(input);
   if (g.status === "deleted") redirect(`/spaces/${s.slug}`);
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     await tx
       .update(guide)
       .set({ status: "deleted", searchText: null })
@@ -639,7 +640,7 @@ export async function moveGuide(input: GuideRef, formData: FormData) {
   const categoryId = cat?.id ?? null;
   if (target.id === s.id && categoryId === g.categoryId) redirect(back);
 
-  const moved = await db.transaction((tx) =>
+  const moved = await withTransaction((tx) =>
     moveGuideInTx(tx, g, { spaceId: target.id, categoryId }),
   );
 
@@ -663,7 +664,7 @@ export async function moveCategory(input: CategoryRef, formData: FormData) {
   const target = await targetSpaceOrNull(String(formData.get("spaceId") ?? ""));
   if (!target || target.id === s.id) redirect(back);
 
-  const result = await db.transaction((tx) => moveCategoryInTx(tx, cat, target.id));
+  const result = await withTransaction((tx) => moveCategoryInTx(tx, cat, target.id));
 
   revalidateMove({
     spaceSlugs: [s.slug, target.slug],
@@ -687,7 +688,7 @@ export async function moveGeneralGuides(spaceSlug: string, formData: FormData) {
   const cat = await categoryInSpaceOrNull(requestedCategory, target.id);
   if (requestedCategory && !cat) redirect(back);
 
-  const moved = await db.transaction((tx) =>
+  const moved = await withTransaction((tx) =>
     moveGeneralGuidesInTx(tx, s.id, {
       spaceId: target.id,
       categoryId: cat?.id ?? null,

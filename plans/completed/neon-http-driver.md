@@ -1,10 +1,22 @@
-# Plan (optional): Move the app's default database handle to Neon's HTTP driver
+# Plan: Move the app's default database handle to Neon's HTTP driver
 
-**Status: not started — optional, requested 2026-09-08. Only worth executing
-if page or MCP latency after the `db-pool-no-connection-reuse` plan is
-noticeably worse than before.** To implement, ask Claude to "execute the
-neon-http-driver plan". Resolve the open questions at the bottom first (or
-answer them when Claude asks).
+**Status: complete — implemented on `feat/neon-http-driver` (2026-09-09),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Executed to fix the 2026-09-09 production crashes: better-auth's init query
+timed out waiting for a WebSocket connection during bursts of parallel
+renders, and the unhandled rejection exited the function.
+
+Implementation notes: eleven files (the plan's ten plus
+`src/app/admin/theme/actions.ts`, added since) and 24 call sites moved to
+`withTransaction`; none were converted to `db.batch`. `src/lib/moves.ts`'s
+`Db` type became drizzle's driver-agnostic `PgDatabase<PgQueryResultHKT,
+typeof schema>` because a union of the HTTP database and the WebSocket
+transaction breaks `.returning()` overload resolution. Verified locally with
+lint, typecheck, tests, build, a script running both handles against the
+Neon `development` branch, and dev-server requests to `/sign-in`,
+`/.well-known/oauth-protected-resource` and `/api/auth/ok`; the signed-in
+flows in step 6 (guide save, admin actions, MCP `create_draft`) are left for
+Chris's manual pass.
 
 ## Problem
 

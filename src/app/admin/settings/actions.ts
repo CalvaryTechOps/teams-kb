@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import { appSetting } from "@/db/schema";
 import { requireAdmin } from "@/lib/permissions";
 import {
@@ -37,7 +38,7 @@ export async function saveSiteSettings(formData: FormData) {
     writes.push({ key, value: result.value });
   }
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     for (const w of writes) {
       if (w.value === null) {
         await tx.delete(appSetting).where(eq(appSetting.key, w.key));

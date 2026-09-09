@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import { allStaffRequest, guide, guideAudienceGroup, space } from "@/db/schema";
 import { requireAdmin } from "@/lib/permissions";
 
@@ -32,7 +33,7 @@ export async function approveAllStaffRequest(requestId: string) {
   const access = await requireAdmin();
   const row = await pendingRequestOrBounce(requestId);
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     await tx
       .update(allStaffRequest)
       .set({

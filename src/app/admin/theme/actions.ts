@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import { appSetting } from "@/db/schema";
 import { requireAdmin } from "@/lib/permissions";
 import { normalizeThemeInput, THEME_SETTING_KEYS } from "@/lib/theme";
@@ -29,7 +30,7 @@ export async function saveTheme(formData: FormData) {
   const result = normalizeThemeInput(formData);
   if (!result.ok) bounce({ error: result.error });
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     for (const w of result.writes) {
       if (w.value === null) {
         await tx.delete(appSetting).where(eq(appSetting.key, w.key));

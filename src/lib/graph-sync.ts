@@ -1,5 +1,6 @@
 import { and, eq, inArray, isNotNull, isNull, notExists, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { withTransaction } from "@/db/transaction";
 import {
   guide,
   guideAudienceGroup,
@@ -159,7 +160,7 @@ export async function syncGroupRoster(groupId: string): Promise<number> {
       role: "owner" as const,
     })),
   ];
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     await tx.delete(m365GroupMember).where(eq(m365GroupMember.groupId, groupId));
     if (rows.length > 0) {
       await tx.insert(m365GroupMember).values(rows).onConflictDoNothing();
@@ -278,7 +279,7 @@ export async function refreshUserGroups(
     })),
   ];
 
-  await db.transaction(async (tx) => {
+  await withTransaction(async (tx) => {
     await tx
       .delete(m365GroupMember)
       .where(eq(m365GroupMember.entraObjectId, entraObjectId));

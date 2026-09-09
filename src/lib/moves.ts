@@ -1,7 +1,8 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
 import { and, eq, isNull, notExists, sql } from "drizzle-orm";
-import { db } from "@/db";
+import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
+import type * as schema from "@/db/schema";
 import { category, guide, space } from "@/db/schema";
 
 // Primitives for moving content between spaces, shared by the in-KB move
@@ -9,7 +10,9 @@ import { category, guide, space } from "@/db/schema";
 // (src/app/admin/spaces/actions.ts). None of these check permissions — the
 // calling action does — and all take the transaction they run in.
 
-export type Db = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+// Driver-agnostic: accepts the HTTP `db` handle from src/db/index.ts as well as
+// the WebSocket transaction that `withTransaction` hands its callback.
+export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 /**
  * First free slug in a space, starting from `base` and suffixing -2, -3, …

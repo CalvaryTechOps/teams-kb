@@ -17,10 +17,13 @@ identity providers are not supported yet.
   own database branch, and a Vercel Cron triggers the nightly directory sync.
 - **Database: Neon Postgres** through the Neon Vercel integration
   (`DATABASE_URL` pooled for the app, `DATABASE_URL_UNPOOLED` for migrations).
-  The app's pool (`src/db/index.ts`) never reuses a connection across
-  invocations (`maxUses: 1`): Neon's serverless driver requires connections
-  to be opened and closed within one request handler, and a WebSocket kept
-  open in a frozen Vercel function is dead by the next request.
+  The app's default handle (`src/db/index.ts`) uses Neon's HTTP driver, so
+  each query is one HTTPS request with no connection to keep alive: Neon's
+  serverless driver requires WebSocket connections to be opened and closed
+  within one request handler, and one kept open in a frozen Vercel function
+  is dead by the next request. Interactive transactions go through
+  `withTransaction` (`src/db/transaction.ts`), which opens a WebSocket
+  client for that call only.
 - **Sign-in: Microsoft Entra ID via SAML** (an Enterprise application). There
   is no password login and no other identity provider.
 - **Directory: Microsoft Graph.** Groups and memberships are mirrored nightly
