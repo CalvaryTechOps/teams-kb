@@ -1,12 +1,12 @@
 # Plan: Toggle the left sidebar at any screen size
 
-**Status: implemented locally on `feat/sidebar-toggle` (2026-09-08);
-awaiting Chris's local testing, then push and PR.**
-Verified: lint, typecheck, tests and build pass. The signed-in UI paths need
-SAML SSO and were not clicked through, so the manual test plan below is
-still to be run. Open questions were answered by Chris before implementation
-(cookie persistence, default shown, collapse control in the sidebar header
-plus the two shortcuts).
+**Status: complete — implemented on `feat/sidebar-toggle` (2026-09-08),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Verified before the push: lint, typecheck, tests and build pass, and Chris
+ran the manual test plan below locally and on the staging deployment. Open
+questions were answered by Chris before implementation (cookie persistence,
+default shown, collapse control in the sidebar header plus the two
+shortcuts).
 
 ## Problem
 
