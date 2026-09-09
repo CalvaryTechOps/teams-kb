@@ -76,10 +76,10 @@ export default async function MoveCategoryPage({
         userName={session?.user.name ?? "Staff"}
       />
       <main className="px-14 py-10">
-        <h1 className="mb-1.5 text-3xl font-black tracking-tight text-ink">
+        <h1 className="mb-1.5 text-3xl font-black tracking-tight text-fg-strong">
           {isGeneral ? "Move all General guides" : `Move “${name}”`}
         </h1>
-        <p className="mb-6 text-sm text-grey-500">
+        <p className="mb-6 text-sm text-fg-muted">
           {isGeneral
             ? "Every uncategorized guide in this department moves to the department and category you choose."
             : "The category and every guide in it move to the department you choose. If that department already has a category with the same name, the guides join it."}
@@ -97,28 +97,28 @@ export default async function MoveCategoryPage({
             guides.length === 1 ? "Move 1 guide" : `Move ${guides.length} guides`
           }
         />
-        <p className="mt-3 text-xs text-grey-500">
+        <p className="mt-3 text-xs text-fg-muted">
           Department-audience guides become readable by the new department&apos;s
           members and stop being readable by members of {s.name}.
         </p>
 
         <section
           aria-label="Guides that will move"
-          className="mt-10 max-w-[720px] rounded-xl border border-grey-200 bg-white px-6 py-5 shadow-xs"
+          className="mt-10 max-w-[720px] rounded-xl border border-border bg-surface-raised px-6 py-5 shadow-xs"
         >
           <div className="mb-2 flex items-baseline justify-between">
-            <div className="font-bold text-ink">{name}</div>
-            <div className="text-xs text-grey-500">{guides.length}</div>
+            <div className="font-bold text-fg-strong">{name}</div>
+            <div className="text-xs text-fg-muted">{guides.length}</div>
           </div>
           <div className="flex flex-col">
             {guides.map((g) => (
               <Link
                 key={g.id}
                 href={guidePath(s.slug, g.slug)}
-                className="flex items-center justify-between gap-3 border-t border-grey-100 py-2.5 text-sm text-grey-800 hover:text-cyan-700"
+                className="flex items-center justify-between gap-3 border-t border-border py-2.5 text-sm text-fg hover:text-accent-text"
               >
                 <span className="truncate">{g.title}</span>
-                <span className="flex shrink-0 items-center gap-3 text-xs text-grey-500">
+                <span className="flex shrink-0 items-center gap-3 text-xs text-fg-muted">
                   {g.status !== "published" && (
                     <Badge tone="warning">
                       {g.status === "deleted" ? "Pending deletion" : "Draft"}
@@ -129,7 +129,7 @@ export default async function MoveCategoryPage({
               </Link>
             ))}
             {guides.length === 0 && (
-              <p className="border-t border-grey-100 py-2.5 text-sm text-grey-400">
+              <p className="border-t border-border py-2.5 text-sm text-fg-subtle">
                 Nothing here yet — only the empty category moves.
               </p>
             )}

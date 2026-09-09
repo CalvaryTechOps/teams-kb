@@ -96,7 +96,7 @@ describe("GuideContent", () => {
     expect(html).toContain("<thead><tr><th>Name</th><th>Role</th></tr></thead>");
     expect(html).toContain("<tbody><tr><th>Ada</th><td>Owner</td></tr>");
     expect(html).toContain(
-      '<th colSpan="2" style="background-color:#fbf3db;text-align:center">Everyone</th>',
+      '<th colSpan="2" style="background-color:var(--guide-bg-yellow);text-align:center">Everyone</th>',
     );
   });
 
@@ -138,10 +138,10 @@ describe("GuideContent", () => {
         { type: "link", href: "/spaces/x", content: [text("in")] },
       ]),
     ]);
-    expect(html).toContain('<p style="background-color:#ebeced;text-align:right">');
+    expect(html).toContain('<p style="background-color:var(--guide-bg-gray);text-align:right">');
     expect(html).toContain("<strong><em>bi</em></strong>");
     expect(html).toContain("<u>u</u><s>s</s><code>c</code>");
-    expect(html).toContain('<span style="color:#e03e3e">red</span>');
+    expect(html).toContain('<span style="color:var(--guide-text-red)">red</span>');
     expect(html).toContain('<a href="https://example.com" target="_blank" rel="noopener noreferrer">out</a>');
     expect(html).toContain('<a href="/spaces/x">in</a>');
   });
@@ -154,7 +154,7 @@ describe("GuideContent", () => {
       block("codeBlock", { language: "text" }, [text("plain")]),
       block("paragraph", {}, [text("line one\nline two")]),
     ]);
-    expect(html).toContain('<blockquote style="color:#0b6e99">wise</blockquote>');
+    expect(html).toContain('<blockquote style="color:var(--guide-text-blue)">wise</blockquote>');
     expect(html).toContain("<hr/>");
     expect(html).toContain('<pre><code class="language-bash">npm run dev\nnpm test</code></pre>');
     expect(html).toContain("<pre><code>plain</code></pre>");

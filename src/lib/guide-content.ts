@@ -35,7 +35,12 @@ export const COLOR_NAMES = [
 ] as const;
 export type ColorName = (typeof COLOR_NAMES)[number];
 
-/** Hex values BlockNote renders each palette name as (light theme). */
+/**
+ * Hex values BlockNote renders each palette name as (light theme). Pages
+ * render them through the `--guide-text-*` / `--guide-bg-*` variables in
+ * globals.css (which also carry a dark set); this table is the light source of
+ * truth and stays available to code that cannot use CSS variables.
+ */
 export const COLORS: Record<
   Exclude<ColorName, "default">,
   { text: string; background: string }

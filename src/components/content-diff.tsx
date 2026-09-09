@@ -7,15 +7,15 @@ import { blocksToLines, type GuideBlock } from "@/lib/guide-content";
 // the projection, so a formatting-only edit reads as "no content changes".
 
 const rowClasses = {
-  added: "bg-success-100/60 text-grey-800",
-  removed: "bg-danger-100/60 text-grey-600 line-through decoration-danger/40",
-  context: "text-grey-500",
+  added: "bg-success-soft/60 text-fg",
+  removed: "bg-danger-soft/60 text-fg-muted line-through decoration-danger/40",
+  context: "text-fg-muted",
 } as const;
 
 const prefixClasses = {
   added: "text-success",
   removed: "text-danger",
-  context: "text-grey-300",
+  context: "text-fg-subtle",
 } as const;
 
 const prefixes = { added: "+", removed: "−", context: " " } as const;
@@ -30,19 +30,19 @@ export function ContentDiff({
   const rows = computeDiffRows(blocksToLines(before), blocksToLines(after));
   if (!hasChanges(rows)) {
     return (
-      <p className="rounded-lg border border-grey-200 bg-grey-50 px-4 py-3 text-sm text-grey-500">
+      <p className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-fg-muted">
         No content changes — the text is identical to the published version.
       </p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-grey-200 bg-white py-1.5 font-mono text-xs leading-relaxed">
+    <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised py-1.5 font-mono text-xs leading-relaxed">
       {rows.map((row, i) =>
         row.kind === "skip" ? (
           <div
             key={i}
-            className="select-none border-y border-grey-100 bg-grey-50 px-4 py-1 text-center text-[11px] text-grey-400"
+            className="select-none border-y border-border bg-surface px-4 py-1 text-center text-[11px] text-fg-subtle"
           >
             {row.count} unchanged line{row.count === 1 ? "" : "s"}
           </div>

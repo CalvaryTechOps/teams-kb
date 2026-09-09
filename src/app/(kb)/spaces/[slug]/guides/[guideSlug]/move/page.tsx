@@ -92,10 +92,10 @@ export default async function MoveGuidePage({
         userName={session?.user.name ?? "Staff"}
       />
       <main className="px-14 py-10">
-        <h1 className="mb-1.5 text-3xl font-black tracking-tight text-ink">
+        <h1 className="mb-1.5 text-3xl font-black tracking-tight text-fg-strong">
           Move guide
         </h1>
-        <p className="mb-6 text-sm text-grey-500">
+        <p className="mb-6 text-sm text-fg-muted">
           {access.isAdmin
             ? "Choose the department this guide should live in, then a category there. Its history, tags and audience come along unchanged."
             : "Choose the category this guide should live in. Its history, tags and audience come along unchanged."}
@@ -109,7 +109,7 @@ export default async function MoveGuidePage({
           cancelHref={back}
         />
         {access.isAdmin && g.audience === "department" && (
-          <p className="mt-3 text-xs text-grey-500">
+          <p className="mt-3 text-xs text-fg-muted">
             This guide is visible to its department. Moving it to another
             department means that department&apos;s members can read it and
             members of {s.name} no longer can.
@@ -118,7 +118,7 @@ export default async function MoveGuidePage({
 
         <section
           aria-label="Preview"
-          className="mt-10 max-w-[720px] border-t border-grey-200 pt-8"
+          className="mt-10 max-w-[720px] border-t border-border pt-8"
         >
           <div className="mb-3.5 flex flex-wrap gap-2">
             <Badge tone="brand">{s.name}</Badge>
@@ -126,7 +126,7 @@ export default async function MoveGuidePage({
             {g.audience === "all_staff" && <Badge>All staff</Badge>}
             {g.status !== "published" && <Badge tone="warning">Draft</Badge>}
           </div>
-          <h2 className="text-4xl font-black leading-[1.15] tracking-tight text-ink">
+          <h2 className="text-4xl font-black leading-[1.15] tracking-tight text-fg-strong">
             {revision.title}
           </h2>
           <div className="prose-guide pt-6">

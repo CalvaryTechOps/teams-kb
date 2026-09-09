@@ -166,8 +166,8 @@ export default async function CategoryPage({
       <TopBar crumbs={crumbs} userName={userName} actions={actions} />
       <main className="px-14 py-10">
         <div className="flex items-end justify-between gap-6">
-          <h1 className="text-4xl font-black tracking-tight text-ink">{name}</h1>
-          <div className="text-[13px] text-grey-500">
+          <h1 className="text-4xl font-black tracking-tight text-fg-strong">{name}</h1>
+          <div className="text-[13px] text-fg-muted">
             {guides.length} article{guides.length === 1 ? "" : "s"}
           </div>
         </div>
@@ -175,7 +175,7 @@ export default async function CategoryPage({
           {guides.length > 0 ? (
             <CategoryGuideList guides={guides} />
           ) : (
-            <p className="text-sm text-grey-500">Nothing here yet.</p>
+            <p className="text-sm text-fg-muted">Nothing here yet.</p>
           )}
         </div>
       </main>
@@ -204,9 +204,9 @@ function CategoryNotice({
 }) {
   return (
     <main className="px-14 py-10">
-      <div className="mx-auto mt-10 max-w-md rounded-xl border border-grey-200 bg-white px-8 py-10 text-center shadow-xs">
-        <h1 className="text-2xl font-black tracking-tight text-ink">{title}</h1>
-        <p className="mt-2 text-sm text-grey-500">{text}</p>
+      <div className="mx-auto mt-10 max-w-md rounded-xl border border-border bg-surface-raised px-8 py-10 text-center shadow-xs">
+        <h1 className="text-2xl font-black tracking-tight text-fg-strong">{title}</h1>
+        <p className="mt-2 text-sm text-fg-muted">{text}</p>
         <ButtonLink href={`/spaces/${spaceSlug}`} variant="secondary" className="mt-6">
           Back to {spaceName}
         </ButtonLink>

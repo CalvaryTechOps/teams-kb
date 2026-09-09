@@ -10,7 +10,7 @@ export default async function AdminLayout({
 
   return (
     <div className="mx-auto max-w-5xl p-8">
-      <header className="mb-8 flex items-center gap-6 border-b pb-4">
+      <header className="mb-8 flex items-center gap-6 border-b border-border pb-4">
         <h1 className="text-xl font-bold">
           <Link href="/admin">Admin</Link>
         </h1>
@@ -36,10 +36,13 @@ export default async function AdminLayout({
           <Link href="/admin/settings" className="hover:underline">
             Settings
           </Link>
+          <Link href="/admin/theme" className="hover:underline">
+            Theme
+          </Link>
           <Link href="/admin/mcp" className="hover:underline">
             MCP
           </Link>
-          <Link href="/" className="text-gray-500 hover:underline">
+          <Link href="/" className="text-fg-muted hover:underline">
             ← Back to KB
           </Link>
         </nav>

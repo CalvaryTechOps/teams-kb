@@ -52,26 +52,26 @@ export default async function AllStaffRequestsPage() {
   return (
     <div>
       <h2 className="text-lg font-semibold">All-staff publish requests</h2>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-fg-muted">
         Owners asking for a guide to be visible to everyone. Approving flips
         the guide&apos;s audience to all staff immediately.
       </p>
 
       {pending.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-sm text-gray-500">
+        <p className="mt-6 rounded-lg border border-border border-dashed p-6 text-sm text-fg-muted">
           Nothing waiting — owner requests will appear here.
         </p>
       ) : (
         <div className="mt-6 space-y-4">
           {pending.map((r) => (
-            <div key={r.req.id} className="rounded-lg border p-4">
+            <div key={r.req.id} className="rounded-lg border border-border p-4">
               <Link
                 href={`/spaces/${r.spaceSlug}/guides/${r.guideSlug}`}
-                className="font-medium text-blue-600 hover:underline"
+                className="font-medium text-accent-text hover:underline"
               >
                 {r.guideTitle}
               </Link>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-fg-muted">
                 {r.spaceName} · requested by {r.requesterName} on{" "}
                 {r.req.createdAt.toLocaleDateString()}
                 {r.guideStatus !== "published" && " · guide not yet published"}
@@ -80,7 +80,7 @@ export default async function AllStaffRequestsPage() {
                 <form action={approveAllStaffRequest.bind(null, r.req.id)}>
                   <button
                     type="submit"
-                    className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+                    className="rounded-md bg-success px-3 py-1.5 text-sm font-medium text-surface-raised hover:bg-success/90"
                   >
                     Approve — publish to all staff
                   </button>
@@ -92,11 +92,11 @@ export default async function AllStaffRequestsPage() {
                   <input
                     name="note"
                     placeholder="Reason (shown to the owner)"
-                    className="w-full min-w-48 flex-1 rounded-md border px-3 py-1.5 text-sm"
+                    className="w-full min-w-48 flex-1 rounded-md border border-border px-3 py-1.5 text-sm"
                   />
                   <button
                     type="submit"
-                    className="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                    className="rounded-md border border-border px-3 py-1.5 text-sm text-fg hover:bg-surface"
                   >
                     Reject
                   </button>
@@ -109,11 +109,11 @@ export default async function AllStaffRequestsPage() {
 
       {decided.length > 0 && (
         <section className="mt-10">
-          <h3 className="text-sm font-semibold text-gray-700">
+          <h3 className="text-sm font-semibold text-fg">
             Recently decided
           </h3>
           <table className="mt-2 w-full text-left text-sm">
-            <thead className="text-gray-500">
+            <thead className="text-fg-muted">
               <tr>
                 <th className="py-1 pr-4">Guide</th>
                 <th className="py-1 pr-4">Decision</th>
@@ -123,27 +123,27 @@ export default async function AllStaffRequestsPage() {
             </thead>
             <tbody>
               {decided.map((r) => (
-                <tr key={r.req.id} className="border-t">
+                <tr key={r.req.id} className="border-t border-border">
                   <td className="py-1.5 pr-4">
                     <Link
                       href={`/spaces/${r.spaceSlug}/guides/${r.guideSlug}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-accent-text hover:underline"
                     >
                       {r.guideTitle}
                     </Link>
                   </td>
                   <td className="py-1.5 pr-4">
                     {r.req.status === "approved" ? (
-                      <span className="text-green-700">approved</span>
+                      <span className="text-success">approved</span>
                     ) : (
-                      <span className="text-red-600">rejected</span>
+                      <span className="text-danger">rejected</span>
                     )}{" "}
-                    <span className="text-gray-500">
+                    <span className="text-fg-muted">
                       {r.req.decidedAt?.toLocaleDateString()}
                     </span>
                   </td>
                   <td className="py-1.5 pr-4">{r.deciderName ?? "—"}</td>
-                  <td className="py-1.5 text-gray-500">{r.req.note ?? "—"}</td>
+                  <td className="py-1.5 text-fg-muted">{r.req.note ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

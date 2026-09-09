@@ -45,7 +45,7 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
       >
         {(visible) => (
           <table className="w-full text-left text-sm">
-            <thead className="text-gray-500">
+            <thead className="text-fg-muted">
               <tr>
                 <th className="w-8 py-2 pr-2">
                   <span className="sr-only">Select</span>
@@ -58,7 +58,7 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
             </thead>
             <tbody>
               {visible.map((t) => (
-                <tr key={t.id} className="border-t">
+                <tr key={t.id} className="border-t border-border">
                   <td className="py-2 pr-2">
                     <input
                       type="checkbox"
@@ -81,18 +81,18 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
                           required
                           maxLength={64}
                           aria-label={`New name for ${t.name}`}
-                          className="h-8 rounded-md border px-2 text-sm"
+                          className="h-8 rounded-md border border-border px-2 text-sm"
                         />
                         <button
                           type="submit"
-                          className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                          className="rounded-md bg-accent px-3 py-1 text-xs font-medium text-on-accent hover:bg-accent-strong"
                         >
                           Save
                         </button>
                         <button
                           type="button"
                           onClick={() => setRenaming(null)}
-                          className="text-xs text-gray-500 hover:underline"
+                          className="text-xs text-fg-muted hover:underline"
                         >
                           Cancel
                         </button>
@@ -101,19 +101,19 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
                       <span className="font-medium">{t.name}</span>
                     )}
                   </td>
-                  <td className="py-2 pr-4 font-mono text-xs text-gray-500">
+                  <td className="py-2 pr-4 font-mono text-xs text-fg-muted">
                     {t.slug}
                   </td>
                   <td className="py-2 pr-4">
                     {t.guideCount === 0 ? (
-                      <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                      <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-medium text-warning">
                         unused
                       </span>
                     ) : (
                       <Link
                         href={`/search?tag=${encodeURIComponent(t.slug)}`}
                         title={`Search guides tagged “${t.name}”`}
-                        className="text-blue-600 hover:underline"
+                        className="text-accent-text hover:underline"
                       >
                         {t.guideCount}
                       </Link>
@@ -125,7 +125,7 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
                         <button
                           type="button"
                           onClick={() => setRenaming(t.id)}
-                          className="text-blue-600 hover:underline"
+                          className="text-accent-text hover:underline"
                         >
                           Rename
                         </button>
@@ -137,7 +137,7 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
                         >
                           <button
                             type="submit"
-                            className="text-red-600 hover:underline"
+                            className="text-danger hover:underline"
                           >
                             Delete
                           </button>
@@ -153,11 +153,11 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
       </FilterableList>
 
       {sources.length > 0 && (
-        <div className="sticky bottom-0 flex flex-wrap items-center gap-3 rounded-lg border bg-white px-4 py-3 shadow-md">
+        <div className="sticky bottom-0 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 shadow-md">
           <span className="text-sm">
             Merge <strong>{sources.length}</strong> tag
             {sources.length === 1 ? "" : "s"}{" "}
-            <span className="text-gray-500">
+            <span className="text-fg-muted">
               ({sources.map((t) => t.name).join(", ")})
             </span>{" "}
             into
@@ -183,7 +183,7 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
             <button
               type="submit"
               disabled={!validTarget}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-border-strong"
             >
               Merge
             </button>
@@ -194,7 +194,7 @@ export function TagsTable({ tags }: { tags: PickableTag[] }) {
               setChecked(new Set());
               setTarget(null);
             }}
-            className="text-xs text-gray-500 hover:underline"
+            className="text-xs text-fg-muted hover:underline"
           >
             Clear selection
           </button>
@@ -241,10 +241,10 @@ function TargetPicker({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-9 w-full items-center justify-between rounded-md border bg-white px-3 text-sm"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface-raised px-3 text-sm"
         >
           <span className="font-medium">{value.name}</span>
-          <span className="text-xs text-gray-500">change</span>
+          <span className="text-xs text-fg-muted">change</span>
         </button>
       ) : (
         <input
@@ -261,23 +261,23 @@ function TargetPicker({
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
           onKeyDown={onKeyDown}
-          className="h-9 w-full rounded-md border px-3 text-sm"
+          className="h-9 w-full rounded-md border border-border px-3 text-sm"
         />
       )}
       {open && (
-        <ul className="absolute bottom-full left-0 z-10 mb-1 w-full overflow-hidden rounded-md border bg-white py-1 text-sm shadow-lg">
+        <ul className="absolute bottom-full left-0 z-10 mb-1 w-full overflow-hidden rounded-md border border-border bg-surface-raised py-1 text-sm shadow-lg">
           {options.length === 0 && (
-            <li className="px-3 py-1.5 text-xs text-gray-500">No matching tags.</li>
+            <li className="px-3 py-1.5 text-xs text-fg-muted">No matching tags.</li>
           )}
           {options.map((t) => (
             <li
               key={t.id}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => pick(t)}
-              className="flex cursor-pointer items-center justify-between gap-3 px-3 py-1.5 hover:bg-blue-50"
+              className="flex cursor-pointer items-center justify-between gap-3 px-3 py-1.5 hover:bg-accent-strong"
             >
               <span className="truncate">{t.name}</span>
-              <span className="shrink-0 text-xs text-gray-500">
+              <span className="shrink-0 text-xs text-fg-muted">
                 {t.guideCount} guide{t.guideCount === 1 ? "" : "s"}
               </span>
             </li>

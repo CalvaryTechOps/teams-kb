@@ -27,7 +27,7 @@ export function GroupsTable({ groups }: { groups: AdminGroupRow[] }) {
     >
       {(visible) => (
         <table className="w-full text-left text-sm">
-          <thead className="text-gray-500">
+          <thead className="text-fg-muted">
             <tr>
               <th className="py-2 pr-4">Group</th>
               <th className="py-2 pr-4">Mail</th>
@@ -37,14 +37,14 @@ export function GroupsTable({ groups }: { groups: AdminGroupRow[] }) {
           </thead>
           <tbody>
             {visible.map((g) => (
-              <tr key={g.id} className="border-t">
+              <tr key={g.id} className="border-t border-border">
                 <td className="py-2 pr-4">
                   <div className="font-medium">{g.displayName}</div>
                   {g.description && (
-                    <div className="text-xs text-gray-500">{g.description}</div>
+                    <div className="text-xs text-fg-muted">{g.description}</div>
                   )}
                 </td>
-                <td className="py-2 pr-4 text-gray-500">{g.mail ?? "—"}</td>
+                <td className="py-2 pr-4 text-fg-muted">{g.mail ?? "—"}</td>
                 <td className="py-2 pr-4">
                   <form
                     action={setDepartmentFlag.bind(null, g.id, !g.isDepartment)}
@@ -53,8 +53,8 @@ export function GroupsTable({ groups }: { groups: AdminGroupRow[] }) {
                       type="submit"
                       className={
                         g.isDepartment
-                          ? "rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800"
-                          : "rounded-full border px-3 py-1 text-xs text-gray-500 hover:bg-gray-50"
+                          ? "rounded-full bg-success-soft px-3 py-1 text-xs font-medium text-success"
+                          : "rounded-full border px-3 py-1 text-xs text-fg-muted hover:bg-surface"
                       }
                     >
                       {g.isDepartment ? "Department ✓" : "Make department"}
@@ -69,8 +69,8 @@ export function GroupsTable({ groups }: { groups: AdminGroupRow[] }) {
                       type="submit"
                       className={
                         g.isAdminGroup
-                          ? "rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800"
-                          : "rounded-full border px-3 py-1 text-xs text-gray-500 hover:bg-gray-50"
+                          ? "rounded-full bg-accent-soft-strong px-3 py-1 text-xs font-medium text-accent-text"
+                          : "rounded-full border px-3 py-1 text-xs text-fg-muted hover:bg-surface"
                       }
                     >
                       {g.isAdminGroup ? "Admin ✓" : "Make admin"}

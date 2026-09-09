@@ -26,7 +26,7 @@ export function AudienceIcon({
       role="img"
       aria-label={label}
       title={label}
-      className={`inline-flex shrink-0 text-grey-400 ${className}`}
+      className={`inline-flex shrink-0 text-fg-subtle ${className}`}
     >
       <Icon size={size} />
     </span>

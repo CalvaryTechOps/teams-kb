@@ -10,11 +10,13 @@ const buttonBase =
   "focus-visible:outline-none focus-visible:shadow-focus disabled:opacity-50 disabled:pointer-events-none";
 
 const buttonVariants = {
-  primary: "bg-cyan-400 text-ink hover:bg-cyan-600 hover:text-white",
+  primary: "bg-accent text-on-accent hover:bg-accent-strong",
   secondary:
-    "border border-grey-300 bg-white text-grey-800 hover:bg-grey-50",
-  ghost: "text-grey-600 hover:bg-grey-100",
-  danger: "bg-danger text-white hover:bg-danger/90",
+    "border border-border-strong bg-surface-raised text-fg hover:bg-surface",
+  ghost: "text-fg-muted hover:bg-surface-sunken",
+  // Label takes the raised-surface color: white on red in light mode, dark
+  // on the lighter dark-mode red, readable either way.
+  danger: "bg-danger text-surface-raised hover:bg-danger/90",
 } as const;
 
 const buttonSizes = {
@@ -68,20 +70,20 @@ export function ButtonLink({
 // quiet no-background tone for empty counts.
 const badgeTones = {
   brand: {
-    light: "bg-cyan-100 text-cyan-700",
-    dark: "bg-cyan-400/20 text-cyan-400",
+    light: "bg-accent-soft-strong text-accent-text",
+    dark: "bg-accent/20 text-accent",
   },
   neutral: {
-    light: "bg-grey-100 text-grey-600",
-    dark: "bg-white/10 text-grey-300",
+    light: "bg-surface-sunken text-fg-muted",
+    dark: "bg-sidebar-fg/10 text-sidebar-fg/80",
   },
-  muted: { light: "text-grey-500", dark: "text-grey-500" },
+  muted: { light: "text-fg-muted", dark: "text-sidebar-fg-subtle" },
   warning: {
-    light: "bg-warning-100 text-warning",
+    light: "bg-warning-soft text-warning",
     dark: "bg-warning/20 text-warning",
   },
   success: {
-    light: "bg-success-100 text-success",
+    light: "bg-success-soft text-success",
     dark: "bg-success/20 text-success",
   },
 } as const;
@@ -135,7 +137,7 @@ export function Avatar({
     <span
       style={{ width: size, height: size }}
       className={`flex shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-        onDark ? "bg-cyan-400 text-ink" : "bg-grey-100 text-ink"
+        onDark ? "bg-accent text-on-accent" : "bg-surface-sunken text-fg-strong"
       }`}
     >
       {initials || "?"}
@@ -153,7 +155,7 @@ export function MicroLabel({
 }) {
   return (
     <div
-      className={`text-[11px] font-medium uppercase tracking-[.09em] text-grey-500 ${className}`}
+      className={`text-[11px] font-medium uppercase tracking-[.09em] text-fg-muted ${className}`}
     >
       {children}
     </div>
@@ -183,25 +185,25 @@ export function Switch({
   const id = useId();
   const track = checked
     ? onDark
-      ? "bg-cyan-400/40"
-      : "bg-cyan-100"
+      ? "bg-accent/40"
+      : "bg-accent-soft-strong"
     : onDark
-      ? "bg-white/15"
-      : "bg-grey-200";
+      ? "bg-sidebar-fg/15"
+      : "bg-border";
   const knob = checked
     ? onDark
-      ? "translate-x-4 bg-cyan-400"
-      : "translate-x-4 bg-cyan-600"
+      ? "translate-x-4 bg-accent"
+      : "translate-x-4 bg-accent-strong"
     : onDark
-      ? "bg-grey-400"
-      : "bg-grey-0 shadow-xs";
+      ? "bg-sidebar-fg-muted"
+      : "bg-surface-raised shadow-xs";
   return (
     <label
       className={`inline-flex cursor-pointer select-none items-center gap-2 ${className}`}
     >
       <span
         id={id}
-        className={`text-[12px] font-medium ${onDark ? "text-grey-400" : "text-grey-600"}`}
+        className={`text-[12px] font-medium ${onDark ? "text-sidebar-fg-muted" : "text-fg-muted"}`}
       >
         {label}
       </span>

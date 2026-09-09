@@ -31,17 +31,17 @@ export default async function AdminGuidesPage() {
   return (
     <div>
       <h2 className="text-lg font-semibold">All guides</h2>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-fg-muted">
         Every guide in every space, including unpublished ones.
       </p>
 
       {guides.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-sm text-gray-500">
+        <p className="mt-6 rounded-lg border border-border border-dashed p-6 text-sm text-fg-muted">
           No guides yet.
         </p>
       ) : (
         <table className="mt-6 w-full text-left text-sm">
-          <thead className="text-gray-500">
+          <thead className="text-fg-muted">
             <tr>
               <th className="py-2 pr-4">Guide</th>
               <th className="py-2 pr-4">Space</th>
@@ -53,15 +53,15 @@ export default async function AdminGuidesPage() {
           </thead>
           <tbody>
             {guides.map((g) => (
-              <tr key={`${g.spaceSlug}/${g.slug}`} className="border-t">
+              <tr key={`${g.spaceSlug}/${g.slug}`} className="border-t border-border">
                 <td className="max-w-md py-2 pr-4">
                   {g.status === "deleted" ? (
                     // Hidden everywhere until an admin decides; no page to link to.
-                    <span className="text-gray-500">{g.title}</span>
+                    <span className="text-fg-muted">{g.title}</span>
                   ) : (
                     <Link
                       href={`/spaces/${g.spaceSlug}/guides/${g.slug}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-accent-text hover:underline"
                     >
                       {g.title}
                     </Link>
@@ -70,21 +70,21 @@ export default async function AdminGuidesPage() {
                 <td className="py-2 pr-4">{g.spaceName}</td>
                 <td className="py-2 pr-4">
                   {g.status === "published" ? (
-                    <span className="text-green-700">published</span>
+                    <span className="text-success">published</span>
                   ) : g.status === "deleted" ? (
                     <Link
                       href="/admin/deletion-requests"
-                      className="text-red-600 hover:underline"
+                      className="text-danger hover:underline"
                     >
                       pending deletion
                     </Link>
                   ) : (
-                    <span className="text-amber-600">{g.status}</span>
+                    <span className="text-warning">{g.status}</span>
                   )}
                 </td>
                 <td className="py-2 pr-4">{audienceLabels[g.audience]}</td>
-                <td className="py-2 pr-4 text-gray-500">{g.creatorName}</td>
-                <td className="py-2 text-gray-500">
+                <td className="py-2 pr-4 text-fg-muted">{g.creatorName}</td>
+                <td className="py-2 text-fg-muted">
                   {g.updatedAt.toLocaleDateString()}
                 </td>
               </tr>

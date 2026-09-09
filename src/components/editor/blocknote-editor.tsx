@@ -17,6 +17,7 @@ import {
   getDiagramSlashMenuItems,
 } from "@blocknote/diagram-block";
 import type { GuideBlock } from "@/lib/guide-content";
+import { useThemeMode } from "@/components/theme-provider";
 import { attachSubmitSync } from "./form-sync";
 import { guideSchema, type GuideSchema } from "./schema";
 import { uploadGuideFile } from "./upload";
@@ -43,6 +44,7 @@ export function BlockNoteGuideEditor({
   const hiddenRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const { mode } = useThemeMode();
   const editor = useCreateBlockNote({
     schema: guideSchema,
     initialContent:
@@ -79,7 +81,7 @@ export function BlockNoteGuideEditor({
   }, [editor]);
 
   return (
-    <div className="guide-editor overflow-hidden rounded-lg border border-grey-300 bg-white focus-within:border-cyan-400 focus-within:shadow-focus">
+    <div className="guide-editor overflow-hidden rounded-lg border border-border-strong bg-surface-raised focus-within:border-accent focus-within:shadow-focus">
       <input
         ref={hiddenRef}
         type="hidden"
@@ -88,7 +90,7 @@ export function BlockNoteGuideEditor({
       />
       <BlockNoteView
         editor={editor}
-        theme="light"
+        theme={mode}
         formattingToolbar={false}
         slashMenu={false}
         onChange={syncNow}
@@ -121,7 +123,7 @@ export function BlockNoteGuideEditor({
       {uploadError && (
         <p
           role="alert"
-          className="border-t border-grey-200 bg-danger-100 px-5 py-2 text-xs text-danger"
+          className="border-t border-border bg-danger-soft px-5 py-2 text-xs text-danger"
         >
           {uploadError}
         </p>

@@ -84,10 +84,10 @@ export default async function QueuePage({
         userName={session?.user.name ?? "Staff"}
       />
       <main className="px-14 py-10">
-        <h1 className="text-3xl font-black tracking-tight text-ink">
+        <h1 className="text-3xl font-black tracking-tight text-fg-strong">
           Approval queue
         </h1>
-        <p className="mt-1.5 text-sm text-grey-500">
+        <p className="mt-1.5 text-sm text-fg-muted">
           Submissions from {s.name} members. Approving publishes the revision;
           rejecting returns it to the author with your note.
         </p>
@@ -100,22 +100,22 @@ export default async function QueuePage({
             return (
               <section
                 key={rev.id}
-                className="rounded-xl border border-grey-200 bg-white shadow-xs"
+                className="rounded-xl border border-border bg-surface-raised shadow-xs"
               >
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-grey-200 px-6 py-4">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-6 py-4">
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/spaces/${s.slug}/guides/${guideSlug}?rev=draft`}
-                      className="font-bold text-ink hover:text-cyan-700"
+                      className="font-bold text-fg-strong hover:text-accent-text"
                     >
                       {rev.title}
                     </Link>
                     {current && rev.title !== current.title && (
-                      <div className="mt-0.5 text-xs text-grey-500">
+                      <div className="mt-0.5 text-xs text-fg-muted">
                         Renamed from “{current.title}”
                       </div>
                     )}
-                    <div className="mt-0.5 text-xs text-grey-500">
+                    <div className="mt-0.5 text-xs text-fg-muted">
                       v{rev.version} · {authorName} · submitted{" "}
                       {timeAgo(rev.createdAt)}
                     </div>
@@ -137,7 +137,7 @@ export default async function QueuePage({
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 border-t border-grey-200 bg-grey-50 px-6 py-3.5">
+                <div className="flex flex-wrap items-center gap-3 border-t border-border bg-surface px-6 py-3.5">
                   <form action={approveRevision.bind(null, rev.id)}>
                     <Button type="submit" size="sm">
                       <CheckIcon size={14} />
@@ -151,7 +151,7 @@ export default async function QueuePage({
                     <input
                       name="note"
                       placeholder="Why it's not ready (sent to the author)"
-                      className="h-8 min-w-64 flex-1 rounded-lg border border-grey-300 bg-white px-3 text-xs focus:border-cyan-400 focus:shadow-focus focus:outline-none"
+                      className="h-8 min-w-64 flex-1 rounded-lg border border-border-strong bg-surface-raised px-3 text-xs focus:border-accent focus:shadow-focus focus:outline-none"
                     />
                     <Button type="submit" variant="secondary" size="sm">
                       <XIcon size={14} />
@@ -164,9 +164,9 @@ export default async function QueuePage({
           })}
 
           {pending.length === 0 && (
-            <div className="rounded-xl border border-grey-200 bg-white px-6 py-10 text-center shadow-xs">
-              <p className="font-medium text-ink">Nothing waiting for review</p>
-              <p className="mt-1 text-sm text-grey-500">
+            <div className="rounded-xl border border-border bg-surface-raised px-6 py-10 text-center shadow-xs">
+              <p className="font-medium text-fg-strong">Nothing waiting for review</p>
+              <p className="mt-1 text-sm text-fg-muted">
                 Member submissions will appear here for approval.
               </p>
             </div>

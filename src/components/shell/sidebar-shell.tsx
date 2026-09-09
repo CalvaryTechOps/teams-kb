@@ -186,7 +186,7 @@ export function SidebarShell({
       <div className="flex min-h-screen">
         {drawerOpen && (
           <div
-            className="fixed inset-0 z-30 bg-ink/60 md:hidden"
+            className="fixed inset-0 z-30 bg-sidebar/60 md:hidden"
             onClick={() => setDrawerOpen(false)}
             aria-hidden
           />
@@ -229,7 +229,7 @@ export function SidebarToggle() {
       aria-label={label}
       aria-controls={SIDEBAR_ID}
       title={`${label} (${toggleShortcutLabel(isMac)})`}
-      className={`-ml-1 rounded-md p-1.5 text-grey-500 hover:bg-grey-100 hover:text-ink ${
+      className={`-ml-1 rounded-md p-1.5 text-fg-muted hover:bg-surface-sunken hover:text-fg-strong ${
         collapsed ? "" : "md:hidden"
       }`}
     >
@@ -249,7 +249,7 @@ export function SidebarClose() {
       onClick={hide}
       aria-label={label}
       title={`${label} (${toggleShortcutLabel(isMac)})`}
-      className="rounded-md p-1.5 text-grey-400 hover:bg-white/10 hover:text-white"
+      className="rounded-md p-1.5 text-sidebar-fg-muted hover:bg-sidebar-fg/10 hover:text-sidebar-fg"
     >
       <XIcon size={16} className="md:hidden" />
       <PanelLeftCloseIcon size={16} className="hidden md:block" />

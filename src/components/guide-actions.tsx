@@ -39,8 +39,8 @@ const COPIED_FOR_MS = 2000;
 
 const segment = buttonClasses({ variant: "secondary", size: "sm" });
 const menuItem =
-  "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-grey-800 " +
-  "hover:bg-grey-50 focus-visible:bg-grey-50 focus-visible:outline-none " +
+  "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-fg " +
+  "hover:bg-surface focus-visible:bg-surface focus-visible:outline-none " +
   "disabled:pointer-events-none disabled:opacity-50";
 
 export function GuideActions({
@@ -224,7 +224,7 @@ export function GuideActions({
           role="menu"
           aria-label="Guide actions"
           onKeyDown={onMenuKeyDown}
-          className="absolute right-0 top-full z-20 mt-1.5 w-[220px] overflow-hidden rounded-lg border border-grey-200 bg-white py-1.5 shadow-sm"
+          className="absolute right-0 top-full z-20 mt-1.5 w-[220px] overflow-hidden rounded-lg border border-border bg-surface-raised py-1.5 shadow-sm"
         >
           {EXPORT_FORMAT_ORDER.map((format) => (
             <button
@@ -236,14 +236,14 @@ export function GuideActions({
               onClick={() => void runExport(format)}
               className={menuItem}
             >
-              <DownloadIcon size={15} className="text-grey-500" />
+              <DownloadIcon size={15} className="text-fg-muted" />
               {busy === format
                 ? `Preparing ${EXPORT_FORMATS[format].label}…`
                 : `Download ${EXPORT_FORMATS[format].label}`}
             </button>
           ))}
           {(editHref || moveHref) && (
-            <div role="separator" className="my-1.5 border-t border-grey-200" />
+            <div role="separator" className="my-1.5 border-t border-border" />
           )}
           {editHref && (
             <Link
@@ -252,7 +252,7 @@ export function GuideActions({
               onClick={() => closeMenu()}
               className={menuItem}
             >
-              <PencilIcon size={15} className="text-grey-500" />
+              <PencilIcon size={15} className="text-fg-muted" />
               Edit guide
             </Link>
           )}
@@ -263,7 +263,7 @@ export function GuideActions({
               onClick={() => closeMenu()}
               className={menuItem}
             >
-              <ArrowRightIcon size={15} className="text-grey-500" />
+              <ArrowRightIcon size={15} className="text-fg-muted" />
               Move guide
             </Link>
           )}
@@ -271,8 +271,8 @@ export function GuideActions({
       )}
 
       {copyFallback && (
-        <div className="absolute right-0 top-full z-20 mt-1.5 w-[320px] rounded-lg border border-grey-200 bg-white p-3 shadow-sm">
-          <p className="mb-1.5 text-xs text-grey-600">
+        <div className="absolute right-0 top-full z-20 mt-1.5 w-[320px] rounded-lg border border-border bg-surface-raised p-3 shadow-sm">
+          <p className="mb-1.5 text-xs text-fg-muted">
             Couldn&apos;t reach the clipboard. Press ⌘/Ctrl+C to copy:
           </p>
           <input
@@ -284,7 +284,7 @@ export function GuideActions({
             onKeyDown={(e) => {
               if (e.key === "Escape") setCopyFallback(null);
             }}
-            className="h-8 w-full rounded-md border border-grey-300 px-2 text-xs text-grey-800 focus:outline-none focus:shadow-focus"
+            className="h-8 w-full rounded-md border border-border-strong px-2 text-xs text-fg focus:outline-none focus:shadow-focus"
           />
         </div>
       )}

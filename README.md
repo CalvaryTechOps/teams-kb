@@ -181,6 +181,17 @@ Admins can edit these without a deploy. Blank means "use the default".
 | Redirect note | "Redirects to your work sign-in" |
 | Account label (sidebar) | "Work account" |
 
+### Admin → Theme (stored in the database)
+
+The app is styled from 25 semantic color tokens (page and card backgrounds,
+text, accent, sidebar, status colors). Admins can set each one for light mode
+and for dark mode; the light defaults are the original design and any token
+left at its default follows the code. Body text must keep at least 4.5:1
+contrast on its background or the save is refused. Users switch modes with
+the sun/moon button in the top bar; the choice is a per-browser cookie
+(`kb-theme`) and defaults to light. "Dark mode available" (default on) hides
+the toggle and forces light when off.
+
 ### Admin → MCP (stored in the database)
 
 | Setting | Default |
@@ -241,6 +252,15 @@ Admins can edit these without a deploy. Blank means "use the default".
   without a cookie. Because SAML can't carry the provider's in-request OAuth
   state across the Entra round-trip, the sign-in card sends the user back to
   the authorize endpoint itself (`src/lib/oauth-resume.ts`).
+- **Theme**: components are styled only with the semantic color tokens in
+  `src/app/globals.css` (`surface`, `fg`, `accent`, `sidebar`, …), never the raw
+  grey/cyan ramp — `src/lib/theme-classes.test.ts` fails on any raw palette
+  class. Tailwind emits utilities as `var(--color-*)`, so the root layout
+  rethemes the whole app by injecting an unlayered `<style>` built from the
+  admin's saved palettes (`src/lib/theme.ts`), one block per mode selected by
+  `data-theme` on `<html>`. The mode comes from the `kb-theme` cookie, read
+  server-side so the first paint is right; the toggle sets the attribute and
+  cookie directly with no round trip. PDF/DOCX exports stay light.
 - **Typeface**: Metropolis (public domain, `src/fonts/LICENSE-Metropolis.txt`).
 
 ## Known tradeoffs

@@ -10,16 +10,16 @@ import { deleteSpace, mergeSpace, rehomeSpace } from "./actions";
 // categories or guides happens on the space page itself (admin-only icons).
 
 const healthClasses = {
-  healthy: "bg-green-100 text-green-800",
-  group_deleted: "bg-red-100 text-red-800",
-  unflagged: "bg-amber-100 text-amber-800",
+  healthy: "bg-success-soft text-success",
+  group_deleted: "bg-danger-soft text-danger",
+  unflagged: "bg-warning-soft text-warning",
 } as const;
 
 const selectClasses =
-  "h-8 rounded-md border border-gray-300 bg-white px-2 text-xs";
+  "h-8 rounded-md border border-border-strong bg-surface-raised px-2 text-xs";
 const inputClasses = selectClasses + " min-w-[180px]";
 const buttonClasses =
-  "h-8 rounded-md border px-3 text-xs font-medium hover:bg-gray-50 disabled:opacity-50";
+  "h-8 rounded-md border px-3 text-xs font-medium hover:bg-surface disabled:opacity-50";
 
 export default async function AdminSpacesPage() {
   const [rows, rehomeGroups] = await Promise.all([
@@ -34,7 +34,7 @@ export default async function AdminSpacesPage() {
   return (
     <div>
       <h2 className="text-lg font-semibold">Spaces</h2>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-fg-muted">
         One space per department. A space is <strong>orphaned</strong> when its
         Team was deleted in Microsoft 365 or the group was un-flagged as a
         department: nobody can author there, though published guides stay
@@ -52,7 +52,7 @@ export default async function AdminSpacesPage() {
       </p>
 
       {ordered.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-sm text-gray-500">
+        <p className="mt-6 rounded-lg border border-border border-dashed p-6 text-sm text-fg-muted">
           No spaces yet. Flag a group as a department on the Groups page.
         </p>
       ) : (
@@ -64,13 +64,13 @@ export default async function AdminSpacesPage() {
               <li
                 key={s.id}
                 className={`rounded-lg border p-4 ${
-                  isOrphaned(s.health) ? "border-amber-300 bg-amber-50/40" : ""
+                  isOrphaned(s.health) ? "border-warning bg-warning-soft/40" : ""
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <Link
                     href={`/spaces/${s.slug}`}
-                    className="font-medium text-blue-600 hover:underline"
+                    className="font-medium text-accent-text hover:underline"
                   >
                     {s.name}
                   </Link>
@@ -79,12 +79,12 @@ export default async function AdminSpacesPage() {
                   >
                     {SPACE_HEALTH_LABELS[s.health]}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-fg-muted">
                     {s.guideCount} guide{s.guideCount === 1 ? "" : "s"} ·{" "}
                     {s.categoryCount} categor{s.categoryCount === 1 ? "y" : "ies"}
                   </span>
                 </div>
-                <div className="mt-1 text-xs text-gray-500">
+                <div className="mt-1 text-xs text-fg-muted">
                   Group: {s.groupName}
                   {s.groupDeletedAt &&
                     ` — deleted ${s.groupDeletedAt.toLocaleDateString()}`}
@@ -97,11 +97,11 @@ export default async function AdminSpacesPage() {
                     choiceField="groupId"
                     className="flex flex-wrap items-center gap-2"
                   >
-                    <span className="text-xs font-medium text-gray-700">
+                    <span className="text-xs font-medium text-fg">
                       Re-home to
                     </span>
                     {rehomeGroups.length === 0 ? (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-fg-muted">
                         no unclaimed department groups — flag one on the Groups
                         page first
                       </span>
@@ -143,7 +143,7 @@ export default async function AdminSpacesPage() {
                       choiceField="targetId"
                       className="flex flex-wrap items-center gap-2"
                     >
-                      <span className="text-xs font-medium text-gray-700">
+                      <span className="text-xs font-medium text-fg">
                         Merge into
                       </span>
                       <select
@@ -178,7 +178,7 @@ export default async function AdminSpacesPage() {
                     >
                       <button
                         type="submit"
-                        className={`${buttonClasses} border-red-300 text-red-700 hover:bg-red-50`}
+                        className={`${buttonClasses} border-danger text-danger hover:bg-danger-soft`}
                       >
                         Delete empty space
                       </button>

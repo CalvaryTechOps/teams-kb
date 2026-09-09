@@ -135,10 +135,10 @@ export default async function EditGuidePage({
         userName={session?.user.name ?? "Staff"}
       />
       <main className="px-14 py-10">
-        <h1 className="mb-1.5 text-3xl font-black tracking-tight text-ink">
+        <h1 className="mb-1.5 text-3xl font-black tracking-tight text-fg-strong">
           Edit guide
         </h1>
-        <p className="mb-7 text-sm text-grey-500">
+        <p className="mb-7 text-sm text-fg-muted">
           Editing from v{latest.version}
           {latest.status === "draft"
             ? " (unpublished draft)"
@@ -150,7 +150,7 @@ export default async function EditGuidePage({
           . Saving creates a new revision.
         </p>
         {latest.status === "rejected" && latest.reviewNote && (
-          <p className="-mt-4 mb-7 max-w-[720px] rounded-lg border border-danger-100 bg-danger-100/50 px-4 py-2.5 text-sm text-grey-800">
+          <p className="-mt-4 mb-7 max-w-[720px] rounded-lg border border-danger-100 bg-danger-soft/50 px-4 py-2.5 text-sm text-fg">
             Reviewer note: “{latest.reviewNote}”
           </p>
         )}

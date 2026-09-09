@@ -23,7 +23,7 @@ export default async function AdminGroupsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">M365 groups</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-fg-muted">
             Flag a group as a <strong>Department</strong> to give it a space in
             the knowledgebase. Members of <strong>Admin</strong> groups are KB
             admins.
@@ -32,7 +32,7 @@ export default async function AdminGroupsPage() {
         <form action={syncNow}>
           <button
             type="submit"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-strong"
           >
             Sync from Entra now
           </button>
@@ -40,7 +40,7 @@ export default async function AdminGroupsPage() {
       </div>
 
       {groups.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-sm text-gray-500">
+        <p className="mt-6 rounded-lg border border-border border-dashed p-6 text-sm text-fg-muted">
           No groups synced yet. Click “Sync from Entra now” (requires the Graph
           env vars to be configured).
         </p>
