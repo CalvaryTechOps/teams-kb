@@ -2,6 +2,7 @@ import { createMcpHandler } from "@modelcontextprotocol/server";
 import { requireMcpAuth } from "@better-auth/mcp";
 import { auth } from "@/lib/auth";
 import { MCP_RESOURCE_URL, MCP_SCOPE, MCP_WRITE_SCOPE } from "@/lib/mcp/config";
+import { MCP_HANDLER_OPTIONS, MCP_LOG_BODY_LIMIT, jsonRpcMethods } from "@/lib/mcp/handler";
 import { buildKbServer } from "@/lib/mcp/server";
 import type { McpToolContext } from "@/lib/mcp/tools";
 import { getMcpSettings } from "@/lib/mcp-settings.server";
@@ -25,12 +26,36 @@ const mcpHandler = createMcpHandler(
     return buildKbServer(ctx);
   },
   {
-    // Accept 2025-era clients for now; tighten to "reject" once every
-    // client in use speaks 2026-07-28 (plan open question 1).
-    legacy: "stateless",
-    onerror: (err) => console.error("mcp handler", err),
+    // legacy mode and the subscription refusal live in src/lib/mcp/handler.ts.
+    ...MCP_HANDLER_OPTIONS,
+    onerror: (err) => {
+      // maxSubscriptions: 0 reports every refused listen stream here. That is
+      // the intended outcome, not a fault, and the request log already names
+      // the method, so keep it out of the error stream.
+      if (err.message.startsWith("subscriptions/listen refused")) return;
+      console.error("mcp handler", err);
+    },
   },
 );
+
+/**
+ * One info line per call naming its JSON-RPC method(s) and the OAuth client,
+ * so `vercel logs` can tell a tool call from a subscription stream (the
+ * platform's request log has no body). Reads a clone, never params, and
+ * never blocks the request: any failure is logged and swallowed.
+ */
+async function logRequestMethods(request: Request, clientId: string): Promise<void> {
+  try {
+    const length = Number(request.headers.get("content-length") ?? 0);
+    const methods =
+      length > MCP_LOG_BODY_LIMIT
+        ? ["(oversized)"]
+        : jsonRpcMethods(await request.clone().text());
+    console.info("mcp request", { methods, clientId });
+  } catch (err) {
+    console.warn("mcp request log skipped", err);
+  }
+}
 
 function jsonRpcError(status: number, message: string): Response {
   return Response.json(
@@ -62,6 +87,8 @@ export const POST = requireMcpAuth(
           : "";
     const scopes = scope.split(" ").filter(Boolean);
     const toolContext: McpToolContext = { access, settings, appUrl, scopes };
+
+    await logRequestMethods(request, clientId);
 
     return mcpHandler.fetch(request, {
       authInfo: {

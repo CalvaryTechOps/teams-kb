@@ -2,6 +2,7 @@ import "server-only";
 import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { MCP_MAX_MARKDOWN_BYTES, MCP_MAX_TITLE_LENGTH } from "./config";
+import { MCP_SERVER_CAPABILITIES } from "./handler";
 import {
   GENERAL_CATEGORY,
   createDraft,
@@ -52,7 +53,7 @@ function fail(message: string): CallToolResult {
 export function buildKbServer(ctx: McpToolContext): McpServer {
   const server = new McpServer(
     { name: SERVER_NAME, version: SERVER_VERSION },
-    { instructions: ctx.settings.instructions },
+    { instructions: ctx.settings.instructions, capabilities: MCP_SERVER_CAPABILITIES },
   );
 
   server.registerTool(

@@ -1,9 +1,8 @@
 # Plan: Stop MCP `subscriptions/listen` streams from timing out the function
 
-**Status: not started — requested 2026-09-08.**
-To implement, ask Claude to "execute the mcp-listen-stream-timeouts plan".
-Resolve the open questions at the bottom first (or answer them when Claude
-asks).
+**Status: implemented 2026-09-09 on `feat/mcp-listen-stream-timeouts`;
+awaiting Chris's local testing, then a PR.** Shared handler options live in
+`src/lib/mcp/handler.ts`, exercised by `src/lib/mcp/handler.test.ts`.
 
 ## Problem
 
