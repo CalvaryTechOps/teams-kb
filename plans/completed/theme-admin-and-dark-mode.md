@@ -1,8 +1,11 @@
 # Plan: Admin-managed theme with light and dark modes
 
-**Status: implemented on `feat/theme-admin-dark-mode` (2026-09-09); awaiting
-Chris's local testing.** Lint, typecheck, tests and build pass. Open
-questions were answered by Chris before implementation (see bottom).
+**Status: complete — implemented on `feat/theme-admin-dark-mode`
+(2026-09-09), tested by Chris locally and on staging; awaiting the PR to
+`main`.** Verified before the push: lint, typecheck, tests and build pass,
+and Chris ran the manual test plan below locally and on the staging
+deployment. Open questions were answered by Chris before implementation
+(see bottom).
 
 Deviations from the design, decided during implementation:
 
