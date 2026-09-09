@@ -8,3 +8,8 @@ export const GENERAL_CATEGORY_NAME = "General";
 export function categoryPath(spaceSlug: string, categorySlug: string): string {
   return `/spaces/${spaceSlug}/categories/${categorySlug}`;
 }
+
+/** The category's edit page (rename, move, delete); General only ever moves. */
+export function categoryEditPath(spaceSlug: string, categorySlug: string): string {
+  return `${categoryPath(spaceSlug, categorySlug)}/edit`;
+}

@@ -156,6 +156,36 @@ export async function deleteSpaceIfEmpty(tx: Db, spaceId: string): Promise<boole
   return deleted.length > 0;
 }
 
+/**
+ * Delete a category only if no guide of any status references it — drafts,
+ * archived and deletion-pending included, since `guide.category_id` is
+ * `on delete set null` and a raw delete would quietly re-home them to
+ * General. One statement, so a guide filed between the page's check and the
+ * click keeps the category. Returns whether a row was deleted.
+ */
+export async function deleteCategoryIfEmpty(
+  tx: Db,
+  categoryId: string,
+  spaceId: string,
+): Promise<boolean> {
+  const deleted = await tx
+    .delete(category)
+    .where(
+      and(
+        eq(category.id, categoryId),
+        eq(category.spaceId, spaceId),
+        notExists(
+          tx
+            .select({ one: sql`1` })
+            .from(guide)
+            .where(eq(guide.categoryId, category.id)),
+        ),
+      ),
+    )
+    .returning({ id: category.id });
+  return deleted.length > 0;
+}
+
 export function guidePath(spaceSlug: string, guideSlug: string): string {
   return `/spaces/${spaceSlug}/guides/${guideSlug}`;
 }

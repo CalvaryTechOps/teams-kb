@@ -31,8 +31,14 @@ import {
   resolveGuidePermissions,
   type UserAccess,
 } from "@/lib/permissions";
-import { GENERAL_CATEGORY_SLUG } from "@/lib/categories";
 import {
+  categoryEditPath,
+  categoryPath,
+  GENERAL_CATEGORY_SLUG,
+} from "@/lib/categories";
+import { renameConflict } from "@/lib/category-rename";
+import {
+  deleteCategoryIfEmpty,
   guidePath,
   moveCategoryInTx,
   moveGeneralGuidesInTx,
@@ -659,7 +665,7 @@ export async function moveCategory(input: CategoryRef, formData: FormData) {
     .from(category)
     .where(and(eq(category.spaceId, s.id), eq(category.slug, input.categorySlug)));
   if (!cat) notFound();
-  const back = `/spaces/${s.slug}#${cat.slug}`;
+  const back = categoryEditPath(s.slug, cat.slug);
 
   const target = await targetSpaceOrNull(String(formData.get("spaceId") ?? ""));
   if (!target || target.id === s.id) redirect(back);
@@ -673,14 +679,14 @@ export async function moveCategory(input: CategoryRef, formData: FormData) {
       guidePath(target.slug, m.newSlug),
     ]),
   });
-  redirect(`/spaces/${target.slug}#${cat.slug}`);
+  redirect(categoryPath(target.slug, cat.slug));
 }
 
 /** "Move all General guides": every uncategorized guide of a space (plan Q6). */
 export async function moveGeneralGuides(spaceSlug: string, formData: FormData) {
   await requireAdmin();
   const s = await spaceBySlugOr404(spaceSlug);
-  const back = `/spaces/${s.slug}#${GENERAL_CATEGORY_SLUG}`;
+  const back = categoryEditPath(s.slug, GENERAL_CATEGORY_SLUG);
 
   const target = await targetSpaceOrNull(String(formData.get("spaceId") ?? ""));
   if (!target || target.id === s.id) redirect(back);
@@ -703,4 +709,79 @@ export async function moveGeneralGuides(spaceSlug: string, formData: FormData) {
     ]),
   });
   redirect(`/spaces/${target.slug}`);
+}
+
+// ---------------------------------------------------------------------------
+// Editing categories (plans/edit-categories.md). Owners and admins rename a
+// category and delete an empty one from its edit page; moving stays admin-
+// only above. Refused renames bounce back to the edit page with an `error`
+// code the page turns into a one-line notice.
+// ---------------------------------------------------------------------------
+
+/** The category named by `ref`, once the caller may approve in its space. */
+async function ownedCategoryOr404(input: CategoryRef) {
+  const access = await requireAccess();
+  const s = await spaceBySlugOr404(input.spaceSlug);
+  if (!spacePermissions(access, s.groupId).canApprove) {
+    redirect(categoryPath(s.slug, input.categorySlug));
+  }
+  const [cat] = await db
+    .select()
+    .from(category)
+    .where(and(eq(category.spaceId, s.id), eq(category.slug, input.categorySlug)));
+  if (!cat) notFound();
+  return { s, cat };
+}
+
+/**
+ * Rename a category. The name is display text; the slug is its address.
+ * `address=keep` (the default) changes only the name so every existing link
+ * keeps working; `address=change` re-slugs, and the category page's
+ * not-found notice covers old bookmarks. Either way the new name may not
+ * slugify the same as another category in the space (plan Q2).
+ */
+export async function renameCategory(input: CategoryRef, formData: FormData) {
+  const { s, cat } = await ownedCategoryOr404(input);
+  const editPage = categoryEditPath(s.slug, cat.slug);
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) redirect(editPage);
+  const candidate = slugify(name);
+  const newSlug = formData.get("address") === "change" ? candidate : cat.slug;
+  if (name === cat.name && newSlug === cat.slug) redirect(categoryPath(s.slug, cat.slug));
+
+  const others = await db
+    .select({ slug: category.slug, name: category.name })
+    .from(category)
+    .where(and(eq(category.spaceId, s.id), ne(category.id, cat.id)));
+  const conflict = renameConflict(candidate, others);
+  if (conflict) redirect(`${editPage}?error=${conflict}`);
+
+  await db
+    .update(category)
+    .set({ name, slug: newSlug })
+    .where(eq(category.id, cat.id));
+
+  // The name shows on the space page, in the sidebar and in breadcrumbs;
+  // those read per request, so the space and category paths are enough.
+  revalidateMove({ spaceSlugs: [s.slug] });
+  revalidatePath(categoryPath(s.slug, cat.slug));
+  if (newSlug !== cat.slug) revalidatePath(categoryPath(s.slug, newSlug));
+  redirect(categoryPath(s.slug, newSlug));
+}
+
+/**
+ * Delete a category that holds no guide in any status. The edit page only
+ * offers the button when the list is empty; the single-statement primitive
+ * guards the race, and a category that turns out non-empty simply stays,
+ * with the edit page now listing what's in it.
+ */
+export async function deleteCategory(input: CategoryRef) {
+  const { s, cat } = await ownedCategoryOr404(input);
+  const deleted = await deleteCategoryIfEmpty(db, cat.id, s.id);
+  if (!deleted) redirect(categoryEditPath(s.slug, cat.slug));
+
+  revalidateMove({ spaceSlugs: [s.slug] });
+  revalidatePath(categoryPath(s.slug, cat.slug));
+  redirect(`/spaces/${s.slug}`);
 }
