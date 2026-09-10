@@ -4,7 +4,7 @@ import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { APP_TITLE } from "@/lib/branding";
 import { space } from "@/db/schema";
-import { Badge } from "@/components/ui";
+import { Badge, Button } from "@/components/ui";
 import { SearchIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { TagPicker } from "@/components/tag-picker";
@@ -133,32 +133,39 @@ export default async function SearchPage({
               </option>
             ))}
           </select>
-          {/* Tag filter: OR-ed, posts one `tag` param per slug and re-runs the
-              search on every change. Sits inside the form so q/space persist. */}
-          <div className="basis-full max-w-[480px]">
-            <label
-              htmlFor="tag-filter"
-              className="mb-1.5 block text-xs font-medium text-fg-muted"
-            >
-              Filter by tag
-            </label>
-            <TagPicker
-              key={activeTags.map((t) => t.slug).join(",")}
-              allTags={allTags}
-              defaultSelected={activeTags.map((t) => t.name)}
-              name="tag"
-              inputId="tag-filter"
-              allowCreate={false}
-              repeatedField
-              fieldValue="slug"
-              submitFormOnChange
-              placeholder={
-                activeTags.length > 0
-                  ? "Add another tag…"
-                  : "Any tag — guides matching any of them are shown"
-              }
-              hint={null}
-            />
+          {/* Second row: the tag filter (OR-ed, one `tag` param per slug) and
+              the submit button. Tags and the department select only hold
+              values — the form submits on Enter in the query box or via this
+              button. The button also matters for Enter: with two text inputs
+              and no submit button, browsers refuse implicit submission. */}
+          <div className="flex basis-full items-end gap-3">
+            <div className="w-full max-w-[480px]">
+              <label
+                htmlFor="tag-filter"
+                className="mb-1.5 block text-xs font-medium text-fg-muted"
+              >
+                Filter by tag
+              </label>
+              <TagPicker
+                key={activeTags.map((t) => t.slug).join(",")}
+                allTags={allTags}
+                defaultSelected={activeTags.map((t) => t.name)}
+                name="tag"
+                inputId="tag-filter"
+                allowCreate={false}
+                repeatedField
+                fieldValue="slug"
+                placeholder={
+                  activeTags.length > 0
+                    ? "Add another tag…"
+                    : "Any tag — guides matching any of them are shown"
+                }
+                hint={null}
+              />
+            </div>
+            <Button type="submit" size="lg" className="shrink-0">
+              Search
+            </Button>
           </div>
         </form>
 

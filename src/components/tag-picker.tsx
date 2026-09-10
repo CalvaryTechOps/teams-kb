@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { PlusIcon, XIcon } from "@/components/icons";
 import {
   MAX_TAGS,
@@ -25,8 +25,8 @@ import { slugify } from "@/lib/slug";
 //
 // The same component doubles as a *filter* (search page): `allowCreate=false`
 // limits it to existing tags, `repeatedField` posts one hidden input per tag
-// (`?tag=a&tag=b`), `fieldValue="slug"` posts slugs, and
-// `submitFormOnChange` re-runs the enclosing GET form on every change.
+// (`?tag=a&tag=b`) and `fieldValue="slug"` posts slugs. The picker only holds
+// the filter values; the enclosing form decides when to submit.
 
 type Option =
   | { kind: "existing"; tag: PickableTag }
@@ -40,7 +40,6 @@ export function TagPicker({
   allowCreate = true,
   repeatedField = false,
   fieldValue = "name",
-  submitFormOnChange = false,
   placeholder,
   hint,
 }: {
@@ -56,8 +55,6 @@ export function TagPicker({
   repeatedField?: boolean;
   /** Post the tag's display name or its slug. */
   fieldValue?: "name" | "slug";
-  /** Call the enclosing form's requestSubmit() whenever the selection changes. */
-  submitFormOnChange?: boolean;
   placeholder?: string;
   /** Helper text under the box; `null` hides it. Defaults to authoring guidance. */
   hint?: string | null;
@@ -81,21 +78,6 @@ export function TagPicker({
   const activeIndex = Math.min(active, Math.max(options.length - 1, 0));
   const showList = open && !full;
 
-  // Filter mode: re-run the search after a *user* change. The flag is set only
-  // by the handlers below and consumed once the hidden inputs have rendered,
-  // so mounting (including Strict Mode's double effect) never submits.
-  const submitPending = useRef(false);
-  useEffect(() => {
-    if (!submitPending.current) return;
-    submitPending.current = false;
-    inputRef.current?.form?.requestSubmit();
-  }, [selected]);
-
-  function updateSelected(next: (s: string[]) => string[]) {
-    if (submitFormOnChange) submitPending.current = true;
-    setSelected(next);
-  }
-
   function fieldValueFor(tagName: string): string {
     if (fieldValue === "name") return tagName;
     return (
@@ -104,7 +86,7 @@ export function TagPicker({
   }
 
   function pick(opt: Option) {
-    updateSelected((s) =>
+    setSelected((s) =>
       addTag(s, opt.kind === "existing" ? opt.tag.name : opt.name),
     );
     setQuery("");
@@ -113,7 +95,7 @@ export function TagPicker({
   }
 
   function remove(tagName: string) {
-    updateSelected((s) => s.filter((n) => n !== tagName));
+    setSelected((s) => s.filter((n) => n !== tagName));
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -144,7 +126,7 @@ export function TagPicker({
         break;
       case "Backspace":
         if (!query && selected.length > 0) {
-          updateSelected((s) => s.slice(0, -1));
+          setSelected((s) => s.slice(0, -1));
         }
         break;
     }

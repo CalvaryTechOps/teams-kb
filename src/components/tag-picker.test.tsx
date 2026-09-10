@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { TagPicker } from "./tag-picker";
+import { Button } from "./ui";
 
 const allTags = [
   { id: "1", name: "MFA", slug: "mfa", guideCount: 3 },
@@ -36,7 +37,6 @@ describe("TagPicker", () => {
           allowCreate={false}
           repeatedField
           fieldValue="slug"
-          submitFormOnChange
           hint={null}
         />
       </form>,
@@ -46,6 +46,30 @@ describe("TagPicker", () => {
     ].map((m) => m[1]);
     expect(values).toEqual(["mfa", "two-step"]);
     expect(html).not.toContain("Pick an existing tag");
+  });
+
+  it("leaves submission to the search form's button", () => {
+    // The search form holds two text inputs (query + this combobox). Without
+    // a submit button browsers refuse implicit submission, so Enter in the
+    // query box would do nothing; the button is what makes Enter work.
+    const html = renderToStaticMarkup(
+      <form action="/search">
+        <input type="search" name="q" />
+        <TagPicker
+          allTags={allTags}
+          defaultSelected={["mfa"]}
+          name="tag"
+          allowCreate={false}
+          repeatedField
+          fieldValue="slug"
+          hint={null}
+        />
+        <Button type="submit">Search</Button>
+      </form>,
+    );
+    expect(html.match(/type="submit"/g)).toHaveLength(1);
+    // Only picked tags post; the combobox itself carries no name.
+    expect(html).not.toMatch(/role="combobox"[^>]*name=/);
   });
 
   it("disables the input at the tag cap", () => {
