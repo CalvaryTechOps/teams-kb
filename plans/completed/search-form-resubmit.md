@@ -1,7 +1,7 @@
 # Plan: Submit the search form explicitly (Enter or a Search button)
 
-**Status: implemented on `feat/search-form-resubmit` (2026-09-10), awaiting
-Chris's local testing and a PR to `main`.**
+**Status: complete — implemented on `feat/search-form-resubmit` (2026-09-10),
+tested by Chris on staging; awaiting the PR to `main`.**
 Lint, typecheck, tests and build pass. The open questions from the first
 draft were answered by Chris on 2026-09-10 (see "Decisions" below). One
 deviation from the design: the Search button uses the `lg` size (48px) with
