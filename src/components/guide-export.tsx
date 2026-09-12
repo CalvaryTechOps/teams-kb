@@ -114,16 +114,51 @@ function footerTypst(title: string, strLit: (s: string) => string) {
 }
 
 /**
+ * Mermaid's config is page-global and `initialize` replaces it wholesale. The
+ * guide page's MermaidDiagram applies the page theme (dark mode included) on
+ * every mount, while the diagram block's exporters apply their own options
+ * only once per page load — so an export rendered after a later page
+ * initialize would inherit the page's theme and, without SVG-text labels,
+ * lose its labels in Typst. Re-applying the export options right before each
+ * render keeps exports deterministic; the page re-initializes on its next
+ * effect run.
+ */
+async function withExportMermaidConfig<T>(render: () => Promise<T>): Promise<T> {
+  const [{ default: mermaid }, { defaultMermaidOptions }] = await Promise.all([
+    import("mermaid"),
+    import("@blocknote/diagram-block"),
+  ]);
+  mermaid.initialize({
+    ...defaultMermaidOptions,
+    startOnLoad: false,
+    suppressErrorRendering: true,
+  });
+  return render();
+}
+
+/**
  * Everything the PDF export needs besides the compiler: the exporter module,
  * the guide schema's Typst mappings (the defaults plus our overrides) and the
  * per-document options — PDF metadata and the running footer.
  */
 async function typstSetup(guide: ExportableGuide) {
-  const [typst, { diagramBlockMapping }] = await Promise.all([
+  const [typst, { createDiagramBlockMapping }, { renderDiagramToSVG }] = await Promise.all([
     import("@blocknote/xl-pdf-exporter"),
     import("@blocknote/diagram-block/typst-exporter"),
+    import("@blocknote/diagram-block"),
   ]);
   const { typstDefaultSchemaMappings, strLit } = typst;
+  // What the package's default mapping does, minus the once-only Mermaid
+  // init: labels render in the exporter's own font list (body font, then the
+  // emoji font) so they match the document.
+  const diagram: ReturnType<typeof createDiagramBlockMapping> = (block, exporter) => {
+    const { fontFamilies } = exporter as unknown as { fontFamilies: string[] };
+    const fontFamily = `${fontFamilies.map((f) => `"${f}"`).join(", ")}, sans-serif`;
+    return createDiagramBlockMapping({
+      renderDiagram: (source) =>
+        withExportMermaidConfig(() => renderDiagramToSVG(source, { fontFamily })),
+    })(block, exporter);
+  };
   const { paragraph } = typstDefaultSchemaMappings.blockMapping;
   const metaParagraph: typeof paragraph = (block, ...rest) =>
     block.id === META_ID ? metaTypst(guide, strLit) : paragraph(block, ...rest);
@@ -133,7 +168,7 @@ async function typstSetup(guide: ExportableGuide) {
       ...typstDefaultSchemaMappings.blockMapping,
       paragraph: metaParagraph,
       // Vector SVG in a tagged figure with the Mermaid source as alt text.
-      diagram: diagramBlockMapping,
+      diagram,
     },
   };
   const options = {
@@ -171,6 +206,14 @@ async function toPdf(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> 
     const [first] = result.compileErrors;
     throw new Error(first ? `PDF compile failed: ${first.message}` : "PDF compile failed");
   }
+  if (result.compileWarnings.length) {
+    // E.g. "image contains foreign object" when a diagram came out with HTML
+    // labels — a symptom worth seeing in the console when a PDF looks wrong.
+    console.info(
+      "PDF compiler warnings:",
+      result.compileWarnings.map((w) => w.message),
+    );
+  }
   if (result.pdfUA.declared === false && result.pdfUA.reason === "nonconforming") {
     // Still a tagged, accessible PDF — just without the PDF/UA-1 claim.
     // Typical cause: a level-3 heading right after the level-1 title. Not
@@ -184,12 +227,17 @@ async function toPdf(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> 
 }
 
 async function toDocx(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {
-  const [{ DOCXExporter, docxDefaultSchemaMappings }, { diagramBlockMapping }, { Paragraph, TextRun }] =
-    await Promise.all([
-      import("@blocknote/xl-docx-exporter"),
-      import("@blocknote/diagram-block/docx-exporter"),
-      import("docx"),
-    ]);
+  const [
+    { DOCXExporter, docxDefaultSchemaMappings },
+    { createDiagramBlockMapping },
+    { renderDiagramToImage },
+    { Paragraph, TextRun },
+  ] = await Promise.all([
+    import("@blocknote/xl-docx-exporter"),
+    import("@blocknote/diagram-block/docx-exporter"),
+    import("@blocknote/diagram-block"),
+    import("docx"),
+  ]);
   const { paragraph } = docxDefaultSchemaMappings.blockMapping;
   const exporter = new DOCXExporter(
     guideSchema,
@@ -206,7 +254,10 @@ async function toDocx(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob>
                 ],
               })
             : paragraph(block, ...rest),
-        diagram: diagramBlockMapping,
+        // Rasterized PNG, rendered under the export config like the PDF's.
+        diagram: createDiagramBlockMapping({
+          renderDiagram: (source) => withExportMermaidConfig(() => renderDiagramToImage(source)),
+        }),
       },
     },
     { resolveFileUrl },
