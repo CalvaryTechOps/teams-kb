@@ -1,5 +1,6 @@
 "use client";
 
+import type { MermaidConfig } from "mermaid";
 import { useEffect, useId, useState } from "react";
 import { useThemeMode } from "@/components/theme-provider";
 
@@ -7,6 +8,27 @@ import { useThemeMode } from "@/components/theme-provider";
 // render, so this is the one part of a guide body that renders client-side.
 // The source shows as a code block until the SVG is ready (and stays if the
 // diagram is invalid), so the page is never blank without JavaScript.
+
+/**
+ * Labels as SVG text, not Mermaid's default HTML-in-`<foreignObject>` labels.
+ * Mermaid's config is page-global and `initialize` replaces it wholesale, so
+ * this page's call must agree with the exporters on this point: the PDF
+ * export embeds the SVG in Typst, whose renderer drops foreign objects (the
+ * labels vanish), and Safari refuses to draw foreignObject SVGs to the canvas
+ * the DOCX export rasterizes with. Mirrors `defaultMermaidOptions` from
+ * @blocknote/diagram-block — copied rather than imported so the guide page
+ * does not pull the editor packages in; mermaid-diagram.test.ts keeps the two
+ * in sync. Raw HTML inside a label shows as literal tags this way, matching
+ * the editor preview. (The cast, as in the library: `MermaidConfig` does not
+ * declare `htmlLabels` for every diagram type that honours it at runtime.)
+ */
+export const MERMAID_LABEL_OPTIONS = {
+  htmlLabels: false,
+  flowchart: { htmlLabels: false },
+  class: { htmlLabels: false },
+  state: { htmlLabels: false },
+  er: { htmlLabels: false },
+} as MermaidConfig;
 
 export function MermaidDiagram({ source }: { source: string }) {
   const [svg, setSvg] = useState<string | null>(null);
@@ -22,6 +44,7 @@ export function MermaidDiagram({ source }: { source: string }) {
       try {
         const mermaid = (await import("mermaid")).default;
         mermaid.initialize({
+          ...MERMAID_LABEL_OPTIONS,
           startOnLoad: false,
           suppressErrorRendering: true,
           securityLevel: "strict",

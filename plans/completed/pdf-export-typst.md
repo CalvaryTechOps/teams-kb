@@ -1,7 +1,25 @@
 # Plan: Move PDF export to BlockNote's Typst exporter
 
-**Status: not started (planned 2026-09-12, deferred from the
-dependency-audit-2026-09 plan).** Decide Q1 before starting the spike.
+**Status: complete — implemented on `feat/pdf-export-typst` (2026-09-12),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Planned 2026-09-12, deferred from the dependency-audit-2026-09 plan. Lint,
+typecheck, tests and `next build` passed before the push. Spike results: Turbopack emits the compiler
+as `/_next/static/media/blocknote_typst_wasm_bg.<hash>.wasm` (25.9 MB) from
+the glue's own `import.meta.url` pattern, so the `public/` fallback (Q3) was
+not needed; the fonts ship as separate base64 JS chunks loaded on the first
+export. Compiling the test document in Node took ~0.2 s and produced a
+declared PDF/UA-1 with no compiler warnings. Staging confirmed the first
+export downloads the compiler once and later exports are much faster.
+
+Note from implementation: the first staging test lost diagram labels in the
+PDF. Mermaid's config is page-global and `initialize` replaces it wholesale;
+the guide page's own MermaidDiagram left Mermaid's default HTML labels on,
+and whenever its call came after the diagram block's once-only init, labels
+rendered as `<foreignObject>`, which Typst drops. Fixed on our side: the page
+spreads the block's `defaultMermaidOptions` (SVG text labels, copied with a
+test pinning the copy), and the PDF/DOCX diagram mappings re-apply the export
+config before each render via `createDiagramBlockMapping({ renderDiagram })`,
+so exports never inherit the page theme either. Compiler warnings are logged.
 
 ## Context
 
@@ -120,9 +138,13 @@ Facts checked against 0.54.2:
    (then cached by the browser), versus ~8 MB today. Staff export
    occasionally, mostly on office networks. Recommended: yes — the
    alternative is keeping deprecated code until BlockNote deletes it.
+   Answer: take the recommendation.
 2. **Surface PDF/UA violations to the author?** Recommended: not now; log
    them, revisit if anyone asks for conformant PDFs.
+   Answer: take the recommendation
 3. **wasm hosting.** Recommended: Turbopack-emitted asset if it works in
    the spike; `public/` copy only as fallback.
+   Answer: take the recommendation
 4. **Timing.** BlockNote says "a few releases". Recommended: start when the
    dependency-audit PR has merged, before the next BlockNote bump.
+   Answer: take the recommendation
