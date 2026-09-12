@@ -1,8 +1,8 @@
 # Plan: Permanent short links (`/a/{shortId}`) and printable QR codes for guides
 
-**Status: implemented 2026-09-12 on `feat/guide-permalinks`, awaiting
-Chris's local testing.** Open questions below are answered. Verified before
-the commit: lint, typecheck, 195 unit tests and `next build` pass; the
+**Status: complete — implemented on `feat/guide-permalinks` (2026-09-12),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Open questions below are answered. Verified before the commit: lint, typecheck, 195 unit tests and `next build` pass; the
 backfill migration ran against the `development` Neon branch (7 guides, all
 ids distinct and well-formed). Signed-in UI paths need SAML SSO and were not
 clicked through. Notes from implementation, where the code differs from the
