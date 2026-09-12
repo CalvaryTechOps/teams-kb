@@ -1,8 +1,10 @@
 # Plan: TypeScript 6.0
 
-**Status: not started (planned 2026-09-12, deferred from the
-dependency-audit-2026-09 plan). No blocker; do this before
-`plans/typescript-7.md`.**
+**Status: implemented on `feat/typescript-6` (2026-09-12), awaiting local
+testing and a push. Typecheck, lint, tests and `next build` all pass on
+6.0.3; no code changes were needed and Next did not rewrite
+`tsconfig.json`. Editor pick-up of the workspace TypeScript version is the
+one step still to confirm by hand. Do this before `plans/typescript-7.md`.**
 
 ## Context
 
