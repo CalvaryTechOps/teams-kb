@@ -15,6 +15,13 @@ import { guideSchema, type GuideSchema } from "@/components/editor/schema";
 //
 // The @blocknote/xl-* exporters are dual-licensed GPL-3.0 OR PROPRIETARY and
 // used here under GPL-3.0, matching this project's licence.
+//
+// PDF still goes through the react-pdf exporter. BlockNote 0.54.1 moved it to
+// the `/react-pdf` subpath and deprecated it in favour of a Typst-based,
+// PDF/UA-tagged exporter (`@blocknote/xl-pdf-exporter` root) that compiles in
+// a ~26 MB wasm engine shipped to the browser. Switching is a separate
+// decision (see plans/dependency-audit-2026-09.md); until then the diagram
+// mapping the old subpath used to provide is reproduced inline in toPdf.
 
 export type ExportableGuide = {
   title: string;
@@ -87,14 +94,23 @@ function documentFor(guide: ExportableGuide): SchemaBlock[] {
  */
 const resolveFileUrl = async (url: string) => url;
 
+/** Diagrams are rasterized in CSS pixels; react-pdf lays out in points. */
+const PIXELS_PER_POINT = 0.75;
+const DIAGRAM_MAX_WIDTH_POINTS = 400;
+
 async function toPdf(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {
-  const [{ PDFExporter, pdfDefaultSchemaMappings }, { diagramBlockMapping }, reactPdf] =
-    await Promise.all([
-      import("@blocknote/xl-pdf-exporter"),
-      import("@blocknote/diagram-block/pdf-exporter"),
-      import("@react-pdf/renderer"),
-    ]);
-  const { Text } = reactPdf;
+  const [
+    { PDFExporter, pdfDefaultSchemaMappings },
+    { renderDiagramToImage, getDiagramExporterDictionary },
+    { exportImageToDataURL, plainContentToString },
+    reactPdf,
+  ] = await Promise.all([
+    import("@blocknote/xl-pdf-exporter/react-pdf"),
+    import("@blocknote/diagram-block"),
+    import("@blocknote/core"),
+    import("@react-pdf/renderer"),
+  ]);
+  const { Text, View, Image: PdfImage } = reactPdf;
   const { paragraph } = pdfDefaultSchemaMappings.blockMapping;
   const exporter = new PDFExporter(
     guideSchema,
@@ -110,7 +126,31 @@ async function toPdf(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> 
           ) : (
             paragraph(block, ...rest)
           ),
-        diagram: diagramBlockMapping,
+        // What @blocknote/diagram-block/pdf-exporter did up to 0.54.0: render
+        // the Mermaid source to a PNG in the browser and embed it, or show the
+        // editor's "invalid diagram" placeholder (never the parser message).
+        diagram: async (block, exporter) => {
+          const source = plainContentToString(block.content);
+          if (!source.trim()) return <View />;
+          const result = await renderDiagramToImage(source);
+          if (result.error !== undefined) {
+            const { invalid_diagram } = getDiagramExporterDictionary(exporter);
+            return (
+              <View style={{ alignItems: "center" }}>
+                <Text style={{ color: "#999999" }}>{invalid_diagram(source.split("\n")[0])}</Text>
+              </View>
+            );
+          }
+          return (
+            <PdfImage
+              src={exportImageToDataURL(result.image)}
+              style={{
+                width: Math.min(result.image.width * PIXELS_PER_POINT, DIAGRAM_MAX_WIDTH_POINTS),
+                alignSelf: "center",
+              }}
+            />
+          );
+        },
       },
     },
     { resolveFileUrl },
