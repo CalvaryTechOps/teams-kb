@@ -11,8 +11,11 @@ import { describe, expect, it } from "vitest";
 
 const SRC = fileURLToPath(new URL("..", import.meta.url));
 
-/** PDF/DOCX exports are always light: they may keep literal colors. */
-const ALLOW = new Set(["components/guide-export.tsx"]);
+/**
+ * PDF/DOCX exports and printed QR labels are ink on paper, never themed:
+ * they may keep literal colors.
+ */
+const ALLOW = new Set(["components/guide-export.tsx", "components/qr-label.tsx"]);
 
 const UTILITIES = "bg|text|border|placeholder|divide|ring|outline|fill|stroke|decoration|from|via|to";
 const RAW_PALETTE =

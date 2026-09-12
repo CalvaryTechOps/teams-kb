@@ -9,6 +9,7 @@ import {
   type GuideBlock,
 } from "@/lib/guide-content";
 import { uniqueGuideSlugIn } from "@/lib/moves";
+import { generateShortId } from "@/lib/short-id";
 import { slugify } from "@/lib/slug";
 
 // The one way a guide comes into existence. Shared by the browser's new-guide
@@ -32,8 +33,9 @@ export type CreateGuideInput = {
 
 export async function createGuideWithFirstRevision(
   input: CreateGuideInput,
-): Promise<{ id: string; slug: string; revisionId: string }> {
+): Promise<{ id: string; slug: string; shortId: string; revisionId: string }> {
   const slug = await uniqueGuideSlugIn(db, input.spaceId, slugify(input.title));
+  const shortId = await unusedShortId(db);
   return withTransaction(async (tx) => {
     const [g] = await tx
       .insert(guide)
@@ -41,6 +43,7 @@ export async function createGuideWithFirstRevision(
         spaceId: input.spaceId,
         categoryId: input.categoryId ?? null,
         slug,
+        shortId,
         title: input.title,
         createdBy: input.authorId,
       })
@@ -68,6 +71,27 @@ export async function createGuideWithFirstRevision(
         })
         .where(eq(guide.id, g!.id));
     }
-    return { id: g!.id, slug, revisionId: rev!.id };
+    return { id: g!.id, slug, shortId, revisionId: rev!.id };
   });
+}
+
+const SHORT_ID_ATTEMPTS = 5;
+
+/**
+ * A random short id no guide holds yet, checked the same way the slug is
+ * (before the transaction). At ~14 million ids a hit is rare and a second
+ * draw resolves it; a concurrent insert of the same id in the gap before
+ * commit fails on guide_short_id_idx and the user simply retries.
+ */
+async function unusedShortId(handle: typeof db): Promise<string> {
+  for (let i = 0; i < SHORT_ID_ATTEMPTS; i++) {
+    const candidate = generateShortId();
+    const taken = await handle
+      .select({ id: guide.id })
+      .from(guide)
+      .where(eq(guide.shortId, candidate))
+      .limit(1);
+    if (taken.length === 0) return candidate;
+  }
+  throw new Error("Could not find an unused short id");
 }

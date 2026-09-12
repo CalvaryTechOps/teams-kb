@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { APP_TITLE } from "@/lib/branding";
+import { APP_TITLE, APP_URL } from "@/lib/branding";
 import {
   allStaffRequest,
   category,
@@ -16,7 +16,7 @@ import {
   user,
 } from "@/db/schema";
 import { Badge, Button, ButtonLink, MicroLabel } from "@/components/ui";
-import { PencilIcon } from "@/components/icons";
+import { PencilIcon, QrCodeIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { GuideContent } from "@/components/guide-content";
 import { GuideActions } from "@/components/guide-actions";
@@ -26,6 +26,7 @@ import {
   requireAccess,
   resolveGuidePermissions,
 } from "@/lib/permissions";
+import { permalinkPath, permalinkUrl, qrLabelPath } from "@/lib/short-id";
 import { timeAgo } from "@/lib/time";
 import {
   categoryPath,
@@ -325,7 +326,8 @@ export default async function GuidePage({
               <span>{readingMinutes(revision.content)} min read</span>
             </div>
             <GuideActions
-              path={`/spaces/${s.slug}/guides/${g.slug}`}
+              permalinkPath={permalinkPath(g.shortId)}
+              qrHref={qrLabelPath(g.shortId)}
               title={revision.title}
               blocks={revision.content}
               updatedAt={revision.createdAt}
@@ -376,6 +378,22 @@ export default async function GuidePage({
                     ? `Shared with ${audienceGroups.map((r) => r.name).join(", ") || "specific teams"}.`
                     : "Visible to the department."}
               </p>
+            </div>
+            <div className="border-t border-border pt-5">
+              <MicroLabel className="mb-2.5">Permanent link</MicroLabel>
+              <p className="break-all font-mono text-[12px] leading-relaxed text-fg">
+                {permalinkUrl(APP_URL, g.shortId)}
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-fg-muted">
+                Keeps working if this guide is moved or renamed.
+              </p>
+              <Link
+                href={qrLabelPath(g.shortId)}
+                className="mt-2.5 inline-flex items-center gap-1.5 text-[13px] text-accent-text hover:text-accent-strong"
+              >
+                <QrCodeIcon size={14} />
+                Print QR code
+              </Link>
             </div>
           </div>
         </aside>

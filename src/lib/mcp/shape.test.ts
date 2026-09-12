@@ -4,6 +4,7 @@ import { guideUrl, isGuideId, toGuideMetadata, type GuideMetadataRow } from "./s
 const row: GuideMetadataRow = {
   id: "0f6b1e3e-9c1b-4a3a-8f1a-2d3c4b5a6f70",
   slug: "reset-a-badge",
+  shortId: "7kq4x",
   title: "Reset a badge",
   audience: "all_staff",
   publishedAt: new Date("2026-08-01T12:00:00Z"),
@@ -22,6 +23,7 @@ describe("toGuideMetadata", () => {
       title: "Reset a badge",
       slug: "reset-a-badge",
       url: "https://kb.example.com/spaces/facilities/guides/reset-a-badge",
+      permanentUrl: "https://kb.example.com/a/7kq4x",
       space: { slug: "facilities", name: "Facilities" },
       category: { slug: "access", name: "Building access" },
       tags: ["badges", "doors"],

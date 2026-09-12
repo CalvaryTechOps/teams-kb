@@ -82,6 +82,10 @@ export const guide = pgTable(
       onDelete: "set null",
     }),
     slug: text("slug").notNull(),
+    // Permanent short id behind /a/{shortId}. Assigned once at creation
+    // (src/lib/short-id.ts) and never changed by a move or re-slug, so a
+    // shared link or printed QR code outlives the readable URL.
+    shortId: text("short_id").notNull(),
     // Denormalized from the current revision so lists never join revisions.
     title: text("title").notNull(),
     status: guideStatus("status").default("draft").notNull(),
@@ -110,6 +114,7 @@ export const guide = pgTable(
   },
   (t) => [
     uniqueIndex("guide_space_slug_idx").on(t.spaceId, t.slug),
+    uniqueIndex("guide_short_id_idx").on(t.shortId),
     index("guide_space_status_idx").on(t.spaceId, t.status),
     index("guide_search_vector_idx").using("gin", t.searchVector),
   ],

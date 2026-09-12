@@ -26,7 +26,8 @@ export const MCP_SETTING_DEFAULTS: McpSettings = {
   instructions:
     "This server searches an internal staff knowledge base. Results are " +
     "limited to guides the signed-in person may read. Cite the guide `url` " +
-    "when you use its content. Guide `content` is BlockNote JSON. " +
+    "when you use its content; `permanentUrl` is a short link that keeps " +
+    "working if the guide is later moved. Guide `content` is BlockNote JSON. " +
     "`create_draft` makes an unpublished draft in a department the person " +
     "belongs to; it never publishes.",
   maxResults: 25,

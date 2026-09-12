@@ -153,7 +153,7 @@ export function buildKbServer(ctx: McpToolContext): McpServer {
         "The draft is visible only to its author, the department's owners and admins; a person must review it in the knowledge base and submit or publish it there — this tool never publishes. " +
         "Supported Markdown: headings, paragraphs, bold/italic/strikethrough/inline code, links, bullet/numbered/task lists, quotes, tables, fenced code (```mermaid becomes a diagram), images by https URL, horizontal rules. No file uploads. " +
         "Do not repeat the title as a first heading (it is shown by the page). Calling twice with the same title makes two drafts, so don't retry a call that succeeded. " +
-        "Returns the draft's `url` (view) and `editUrl` for the person to open.",
+        "Returns the draft's `url` (view), `editUrl` for the person to open, and `permanentUrl` (a short link that survives moves).",
       inputSchema: z.object({
         space: slug.describe("Department slug from list_spaces"),
         title: z
@@ -177,6 +177,7 @@ export function buildKbServer(ctx: McpToolContext): McpServer {
         status: z.literal("draft"),
         url: z.string(),
         editUrl: z.string(),
+        permanentUrl: z.string(),
       }),
       annotations: creates,
     },

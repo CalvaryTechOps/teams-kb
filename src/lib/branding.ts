@@ -15,3 +15,11 @@ export const BUILT_BY =
 
 /** Optional logo image (absolute URL or /public path). Blank = text wordmark. */
 export const LOGO_URL = process.env.NEXT_PUBLIC_LOGO_URL?.trim() || null;
+
+/**
+ * Public base URL of this deployment, for absolute links built on the
+ * server (permalinks, QR codes, MCP citations). No trailing slash.
+ */
+export const APP_URL = (
+  process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000"
+).replace(/\/+$/, "");

@@ -16,6 +16,7 @@ import { searchGuides, stripHighlight } from "@/lib/guide-search";
 import { createGuideWithFirstRevision } from "@/lib/guide-writes";
 import { clampLimit, type McpSettings } from "@/lib/mcp-settings";
 import { canAuthorInSpace, visibleGuidesWhere } from "@/lib/permissions";
+import { permalinkUrl } from "@/lib/short-id";
 import type { UserAccess } from "@/lib/user-access";
 import { MCP_WRITE_SCOPE } from "./config";
 import { markdownToGuideContent } from "./markdown";
@@ -52,6 +53,7 @@ function publishedVisible(access: UserAccess): SQL {
 const metadataSelect = {
   id: guide.id,
   slug: guide.slug,
+  shortId: guide.shortId,
   title: guide.title,
   audience: guide.audience,
   publishedAt: guide.publishedAt,
@@ -284,6 +286,7 @@ export type CreatedDraft = {
   category: { slug: string; name: string } | null;
   url: string;
   editUrl: string;
+  permanentUrl: string;
   revision: { version: 1 };
   blockCount: number;
 };
@@ -378,6 +381,7 @@ export async function createDraft(
       category: cat ? { slug: cat.slug, name: cat.name } : null,
       url,
       editUrl: `${url}/edit`,
+      permanentUrl: permalinkUrl(ctx.appUrl, created.shortId),
       revision: { version: 1 },
       blockCount: converted.content.length,
     },

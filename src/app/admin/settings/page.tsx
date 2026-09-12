@@ -7,9 +7,9 @@ import {
 import { getSiteSettingsDetailed } from "@/lib/site-settings.server";
 import { resetSiteSetting, saveSiteSettings } from "./actions";
 
-// Site copy that differs per organization: sign-in page text and the account
-// label. Deployment-wide names (app title, credit line, logo) are env vars —
-// see README "Configuration".
+// Site copy that differs per organization: sign-in page text, the account
+// label and the QR label caption. Deployment-wide names (app title, credit
+// line, logo) are env vars — see README "Configuration".
 
 export default async function SettingsPage({
   searchParams,
@@ -25,8 +25,8 @@ export default async function SettingsPage({
     <div className="max-w-2xl">
       <h2 className="text-lg font-semibold">Site text</h2>
       <p className="mt-1 text-sm text-fg-muted">
-        Sign-in page copy and the account label shown in the sidebar. Leave a
-        field blank to use the default. The app title, credit line and logo are
+        Sign-in page copy, the account label shown in the sidebar and the
+        caption on printed QR labels. Leave a field blank to use the default. The app title, credit line and logo are
         set per deployment with environment variables.
       </p>
 
