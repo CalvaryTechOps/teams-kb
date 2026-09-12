@@ -1,7 +1,52 @@
 # Plan: Dependency audit and update, September 2026
 
-**Status: in progress on `feat/dependency-updates-2026-09` (started 2026-09-12).**
-Open questions at the bottom are answered (recommendations taken).
+**Status: implemented on `feat/dependency-updates-2026-09` (2026-09-12),
+awaiting Chris's local sign-in and export tests before staging.**
+Open questions are answered (recommendations taken). Final tree: `npm audit`
+0 vulnerabilities, lint and `tsc --noEmit` clean, 195 tests passing, `next
+build` passing, migration 0011 applied to the `development` Neon branch.
+Where execution differed from the steps below:
+
+- **Step 3.** `npm install` recorded the override but left the nested
+  esbuild 0.18 in place, flagged invalid. Deleting that lockfile entry and
+  the nested folder, then reinstalling, resolved it. The cosmetic
+  `npm ls esbuild` note about vite's optional peer range did *not* go away
+  (vite 8 wants `^0.27 || ^0.28`); it is harmless and will clear with
+  vitest 5.
+- **Step 4.** The `@better-auth/cli generate` cross-check was skipped: the
+  CLI refuses configs that import `server-only`. Verified on the
+  development DB instead: `issuer` is nullable, the old unique index is
+  gone, the new `(provider_id, account_id)` index exists, the four
+  existing account rows keep their issuer values. Discovery documents,
+  JWKS and the MCP 401 were checked with curl against `next start`.
+  **Still to do by Chris in a browser:** existing-user sign-in, the
+  new-account path (delete your own `account` row on the development
+  branch, sign in again, expect a row with `issuer` NULL), and one MCP
+  authorize + token exchange.
+- **Step 5.** `@types/react` 19.3.0 typechecks clean against React 19.2.8;
+  no pin was needed.
+- **Step 6.** BlockNote 0.54.1 changed the PDF exporter's public API in a
+  patch release, which the release notes did not say. The react-pdf
+  `PDFExporter` moved to `@blocknote/xl-pdf-exporter/react-pdf` for a
+  deprecation window; the package root is now a Typst-based PDF/UA
+  exporter that ships a ~26 MB wasm engine to the browser; and
+  `@blocknote/diagram-block/pdf-exporter` was removed (only a
+  `typst-exporter` mapping remains). `src/components/guide-export.tsx`
+  now imports the `/react-pdf` subpath and reproduces the removed diagram
+  mapping inline (Mermaid → PNG in the browser, capped at 400pt, or the
+  editor's invalid-diagram placeholder). Two new transitive packages
+  (`xl-typst-exporter`, `xl-typst-compiler`) are installed but not
+  bundled. The DOCX bullet-symbol change did not affect the export test.
+  **Follow-up decision for a later plan:** move PDF export to the Typst
+  exporter (accessible, tagged PDFs; large download) before BlockNote
+  removes the react-pdf one. **Still to do by Chris:** export a guide
+  with a diagram as PDF and DOCX and open both.
+- **Step 7.** No code changes were needed; `AGENTS.md` did not change.
+- **Cosmetic, for the record.** `npm ls` lists six packages as
+  "extraneous" (`@img/sharp-wasm32` and its emnapi/napi-rs wasm runtime).
+  They are sharp's optional wasm fallback, present in the lockfile on
+  `main` as well; npm labels them that way because they target the
+  wasm32 CPU, and `npm prune` leaves them alone. Nothing to do.
 
 ## Audit report
 
