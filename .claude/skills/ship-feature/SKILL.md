@@ -64,11 +64,21 @@ It does NOT merge, touch `staging`, or open the PR unless asked (see step 7).
 
 7. **Report** the branch, the commit, and the compare link
    `https://github.com/CalvaryTechOps/teams-kb/pull/new/<branch>`.
-   Open the PR with `gh pr create` only if Chris asked for that in the
-   same message ("…and open the PR"); the PR body then summarises the plan's
-   Problem and Design in a few lines, links `plans/completed/<name>.md`, and
-   ends with the PR attribution line from the system reminder. Merging is
-   always Chris's step: every Vercel build runs the migrations itself.
+
+8. **Draft the PR description** in the same reply, in a fenced code block
+   so Chris can copy it straight into GitHub. One short paragraph in plain
+   prose (no headers, no bullets) written from the plan and the diff: what a
+   user can now do, the one or two design decisions a reviewer should know
+   about (a new table or migration, a new route, a permission rule, a
+   setting), and how it was verified — lint, typecheck, tests, build, and
+   staging. Then a line linking the plan, `plans/completed/<name>.md`, and
+   the PR attribution line from the session's system reminder (currently
+   `🤖 Generated with [Claude Code](https://claude.com/claude-code)`).
+   Suggest a PR title as well: the feature commit's subject line usually
+   works. Open the PR with `gh pr create` only if Chris asked for that in
+   the same message ("…and open the PR") — then use the same title and
+   body. Merging is always Chris's step: every Vercel build runs the
+   migrations itself.
 
 ## After the merge
 
