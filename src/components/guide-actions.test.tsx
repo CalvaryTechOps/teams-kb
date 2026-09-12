@@ -4,8 +4,8 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { GuideBlock } from "@/lib/guide-content";
 
-// The split button's contract: what "Copy link" copies, when "Edit guide"
-// appears, and that choosing a download reaches the (lazily loaded) exporter
+// The split button's contract: what "Copy link" copies (the permalink), that
+// the QR label item is always there, when "Edit guide" appears, and that choosing a download reaches the (lazily loaded) exporter
 // with the right format. The exporter itself is mocked here and covered by
 // guide-export.test.ts.
 
@@ -45,7 +45,8 @@ function mount(props: Partial<React.ComponentProps<typeof GuideActions>> = {}) {
   act(() => {
     root.render(
       <GuideActions
-        path="/spaces/mp/guides/correct-an-email"
+        permalinkPath="/a/7kq4x"
+        qrHref="/a/7kq4x/qr"
         title="How to correct an email address"
         blocks={BLOCKS}
         updatedAt={UPDATED}
@@ -99,7 +100,7 @@ afterEach(() => {
 });
 
 describe("GuideActions", () => {
-  it("copies the canonical absolute URL and confirms briefly", async () => {
+  it("copies the absolute permalink and confirms briefly", async () => {
     vi.useFakeTimers();
     const writeText = vi.fn(async () => {});
     Object.defineProperty(navigator, "clipboard", {
@@ -111,9 +112,7 @@ describe("GuideActions", () => {
     await act(async () => {
       byText("Copy link")!.click();
     });
-    expect(writeText).toHaveBeenCalledWith(
-      "https://kb.example.org/spaces/mp/guides/correct-an-email",
-    );
+    expect(writeText).toHaveBeenCalledWith("https://kb.example.org/a/7kq4x");
     expect(byText("Copied")).toBeDefined();
 
     act(() => {
@@ -133,14 +132,20 @@ describe("GuideActions", () => {
       byText("Copy link")!.click();
     });
     const input = container.querySelector<HTMLInputElement>("input[readonly]");
-    expect(input?.value).toBe("https://kb.example.org/spaces/mp/guides/correct-an-email");
+    expect(input?.value).toBe("https://kb.example.org/a/7kq4x");
   });
 
-  it("lists the three downloads, and Edit guide only for editors", () => {
+  it("lists the three downloads and the QR label, and Edit guide only for editors", () => {
     mount();
     click(chevron());
     expect(menu()).not.toBeNull();
-    expect(items()).toEqual(["Download PDF", "Download DOCX", "Download Markdown"]);
+    expect(items()).toEqual([
+      "Download PDF",
+      "Download DOCX",
+      "Download Markdown",
+      "Print QR code",
+    ]);
+    expect(byText("Print QR code")?.getAttribute("href")).toBe("/a/7kq4x/qr");
     expect(chevron().getAttribute("aria-expanded")).toBe("true");
 
     mount({ editHref: "/spaces/mp/guides/correct-an-email/edit" });
@@ -148,6 +153,7 @@ describe("GuideActions", () => {
       "Download PDF",
       "Download DOCX",
       "Download Markdown",
+      "Print QR code",
       "Edit guide",
     ]);
     expect(byText("Edit guide")?.getAttribute("href")).toBe(
@@ -162,6 +168,7 @@ describe("GuideActions", () => {
       "Download PDF",
       "Download DOCX",
       "Download Markdown",
+      "Print QR code",
       "Move guide",
     ]);
     expect(byText("Move guide")?.getAttribute("href")).toBe(
@@ -176,6 +183,7 @@ describe("GuideActions", () => {
       "Download PDF",
       "Download DOCX",
       "Download Markdown",
+      "Print QR code",
       "Edit guide",
       "Move guide",
     ]);

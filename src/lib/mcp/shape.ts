@@ -1,3 +1,5 @@
+import { permalinkUrl } from "@/lib/short-id";
+
 // The JSON an agent receives for a guide. Pure so it can be unit-tested and
 // so tools.ts (queries) stays free of formatting. v1 returns metadata plus
 // the raw BlockNote document; readable projections are a future version.
@@ -5,6 +7,7 @@
 export type GuideMetadataRow = {
   id: string;
   slug: string;
+  shortId: string;
   title: string;
   audience: "department" | "groups" | "all_staff";
   publishedAt: Date | null;
@@ -21,6 +24,8 @@ export type GuideMetadata = {
   slug: string;
   /** Absolute guide page URL, for citations. */
   url: string;
+  /** Absolute /a/{shortId} link that keeps working after the guide moves. */
+  permanentUrl: string;
   space: { slug: string; name: string };
   category: { slug: string; name: string } | null;
   tags: string[];
@@ -44,6 +49,7 @@ export function toGuideMetadata(
     title: row.title,
     slug: row.slug,
     url: guideUrl(appUrl, row.spaceSlug, row.slug),
+    permanentUrl: permalinkUrl(appUrl, row.shortId),
     space: { slug: row.spaceSlug, name: row.spaceName },
     category:
       row.categorySlug && row.categoryName

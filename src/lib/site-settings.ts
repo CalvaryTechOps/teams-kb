@@ -9,6 +9,7 @@ export const SETTING_DEFAULTS = {
   "signin.button_label": "Sign In",
   "signin.redirect_note": "Redirects to your work sign-in",
   "account.label": "Work account",
+  "qr.caption": "Scan to open this guide",
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
@@ -43,6 +44,11 @@ export const SETTING_META: Record<
   "account.label": {
     label: "Account label",
     help: "Shown under the user's name in the sidebar.",
+    multiline: false,
+  },
+  "qr.caption": {
+    label: "QR label caption",
+    help: "Printed under the QR code on a guide's label, e.g. “Scan for the how-to”.",
     multiline: false,
   },
 };

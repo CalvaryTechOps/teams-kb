@@ -409,3 +409,8 @@ body {
 .guide-editor .bn-inline-content a {
   color: var(--color-accent-text);
 }
+
+/* Printed QR labels (src/app/(print)): a plain sheet with the label centred. */
+@page {
+  margin: 0.5in;
+}

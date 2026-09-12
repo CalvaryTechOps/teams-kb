@@ -16,6 +16,7 @@ import {
   DownloadIcon,
   LinkIcon,
   PencilIcon,
+  QrCodeIcon,
 } from "@/components/icons";
 import { buttonClasses } from "@/components/ui";
 import type { GuideBlock } from "@/lib/guide-content";
@@ -26,9 +27,11 @@ import {
 } from "@/lib/export-formats";
 
 // Split button at the end of a guide's metadata row: "Copy link" as the main
-// action, a chevron opening Download PDF / DOCX / Markdown and — for people
-// who may edit — "Edit guide", the same target and permission as the header
-// button, plus "Move guide" for owners and admins. Hand-rolled menu (no menu primitive exists in the app yet) with the
+// action — it copies the permanent /a/{shortId} link, which survives moves
+// and renames (plans/guide-permalinks.md) — a chevron opening Download PDF /
+// DOCX / Markdown, "Print QR code", and — for people who may edit — "Edit
+// guide", the same target and permission as the header button, plus "Move
+// guide" for owners and admins. Hand-rolled menu (no menu primitive exists in the app yet) with the
 // usual keyboard contract: arrows move, Home/End jump, Escape closes and
 // returns focus, clicking or tabbing away closes.
 //
@@ -44,7 +47,8 @@ const menuItem =
   "disabled:pointer-events-none disabled:opacity-50";
 
 export function GuideActions({
-  path,
+  permalinkPath,
+  qrHref,
   title,
   blocks,
   updatedAt,
@@ -52,8 +56,10 @@ export function GuideActions({
   editHref,
   moveHref,
 }: {
-  /** Canonical guide path (no query string) — what "Copy link" copies. */
-  path: string;
+  /** Permanent site-relative link ("/a/{shortId}") — what "Copy link" copies. */
+  permalinkPath: string;
+  /** The printable QR label page for this guide. */
+  qrHref: string;
   title: string;
   /** The revision being viewed; exports use exactly what's on screen. */
   blocks: GuideBlock[];
@@ -115,7 +121,7 @@ export function GuideActions({
   };
 
   const copyLink = async () => {
-    const url = new URL(path, window.location.origin).href;
+    const url = new URL(permalinkPath, window.location.origin).href;
     setError(null);
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
@@ -242,6 +248,15 @@ export function GuideActions({
                 : `Download ${EXPORT_FORMATS[format].label}`}
             </button>
           ))}
+          <Link
+            href={qrHref}
+            role="menuitem"
+            onClick={() => closeMenu()}
+            className={menuItem}
+          >
+            <QrCodeIcon size={15} className="text-fg-muted" />
+            Print QR code
+          </Link>
           {(editHref || moveHref) && (
             <div role="separator" className="my-1.5 border-t border-border" />
           )}

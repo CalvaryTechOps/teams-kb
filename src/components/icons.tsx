@@ -221,3 +221,14 @@ export function MoonIcon({ size, className }: IconProps) {
     </svg>
   );
 }
+
+export function QrCodeIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <rect x="3" y="3" width="6" height="6" rx="1" />
+      <rect x="15" y="3" width="6" height="6" rx="1" />
+      <rect x="3" y="15" width="6" height="6" rx="1" />
+      <path d="M15 15h2v2h-2zM19 15h2M15 19h2M19 19h2v2" />
+    </svg>
+  );
+}

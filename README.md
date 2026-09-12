@@ -4,7 +4,9 @@ A staff knowledge base for organizations on Microsoft 365. Each Teams-enabled
 group becomes a department with its own space of guides; group members draft,
 group owners approve and publish, and an admin group runs the whole thing.
 Guides can be shared with specific groups or with everyone who can sign in,
-and any guide can be copied as a link or downloaded as PDF, DOCX or Markdown.
+and any guide can be shared by a permanent short link (`/a/{id}`, which keeps
+working when a guide moves), printed as a QR label to tape to equipment, or
+downloaded as PDF, DOCX or Markdown.
 Staff can also connect an AI agent over the Model Context Protocol and let it
 search and read the guides they can see (read-only).
 
@@ -183,6 +185,7 @@ Admins can edit these without a deploy. Blank means "use the default".
 | Sign-in button | "Sign In" |
 | Redirect note | "Redirects to your work sign-in" |
 | Account label (sidebar) | "Work account" |
+| QR label caption | "Scan to open this guide" |
 
 ### Admin → Theme (stored in the database)
 
@@ -200,7 +203,7 @@ the toggle and forces light when off.
 | Setting | Default |
 | --- | --- |
 | Enabled | on — when off, MCP tools answer 503 while sign-in and token refresh keep working |
-| Instructions for agents | A short note that results are limited to what the person may read, to cite the guide `url`, that `content` is BlockNote JSON, and that `create_draft` never publishes |
+| Instructions for agents | A short note that results are limited to what the person may read, to cite the guide `url` (with `permanentUrl` as the move-proof short link), that `content` is BlockNote JSON, and that `create_draft` never publishes |
 | Max results per call | 25 (1–100) |
 | Allow agents to create drafts | off — enables the `create_draft` tool; reading is unaffected |
 
@@ -225,6 +228,14 @@ the toggle and forces light when off.
 - **Site text** (`app_setting`) is read once per request with defaults from
   `src/lib/site-settings.ts`; a database outage falls back to the defaults so
   the sign-in page always renders.
+- **Permalinks**: every guide gets a five-character `guide.short_id`
+  (`src/lib/short-id.ts`) at creation that never changes. `/a/{shortId}`
+  (`src/app/(kb)/a/`) looks it up, applies the same permission rules as the
+  guide page, and answers with a temporary redirect to today's readable URL —
+  so "Copy link", MCP `permanentUrl` and printed QR codes survive moves and
+  renames. `/a/{shortId}/qr` (`src/app/(print)/`, no app shell) renders a
+  printable label with the code as server-side SVG (`qrcode`, error
+  correction Q) plus the title, department and typed-fallback URL.
 - **Exports** run in the browser (`src/components/guide-export.tsx`, loaded
   only when a download is chosen): `@blocknote/xl-pdf-exporter` and
   `@blocknote/xl-docx-exporter` with the diagram block's own mappings, and
@@ -268,6 +279,10 @@ the toggle and forces light when off.
 
 ## Known tradeoffs
 
+- A permalink to a published guide the visitor may not read says which
+  department owns it, so they know whom to ask. Only staff can sign in, so
+  that is a feature; unpublished guides still read as "not found" to anyone
+  who may not see them.
 - Guide media uploads go straight to Vercel Blob as public, unguessable URLs —
   anyone holding a URL can view the file. Upgrade path: serve through an
   auth-checked `/api/files/*` proxy (no schema change).
