@@ -3,7 +3,8 @@
 **Status: implemented locally on `feat/vitest-5` (2026-09-12), awaiting
 Chris's local testing and a push. Vitest 5.0.0 and `@types/node` 24.13.4
 installed; no test edits were needed for `clearMocks: true`; lint, tsc,
-195 tests and `next build` all pass.**
+195 tests and `next build` all pass. Follow-up on the same branch:
+`isolate: false` adopted per Vitest's run-time hint (see Context).**
 
 ## Context
 
@@ -24,6 +25,12 @@ against `src/`):
 - `-t` filter separator is now ` > `; `bench` moved off the top-level
   import (unused here); deprecated entry points removed (unused).
 - Fake timers now also mock `Temporal`; irrelevant unless a test uses them.
+- Vitest 5 prints a hint that `isolate: false` (reuse workers across
+  files) would be faster. Adopted 2026-09-12: the suite passes with
+  `--no-isolate --maxWorkers=1 --sequence.shuffle.files` and under
+  `vitest doctor`, so no file relies on per-file mock or module reset.
+  The trade-off is documented in `vitest.config.mts`; `doctor` also
+  measured `pool: 'threads'` as slightly faster still, left for later.
 - The Vite config-loader warning printed on every run ("ESM syntax in a
   file loaded as CommonJS (vitest.config.ts)") is fixed by renaming to
   `vitest.config.mts`; the `tsconfig.json` `include` already lists `**/*.mts`.
