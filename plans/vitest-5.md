@@ -1,7 +1,9 @@
 # Plan: Vitest 5 and `@types/node` 24
 
-**Status: not started (planned 2026-09-12, deferred from the
-dependency-audit-2026-09 plan). No blocker; can start any time.**
+**Status: implemented locally on `feat/vitest-5` (2026-09-12), awaiting
+Chris's local testing and a push. Vitest 5.0.0 and `@types/node` 24.13.4
+installed; no test edits were needed for `clearMocks: true`; lint, tsc,
+195 tests and `next build` all pass.**
 
 ## Context
 
