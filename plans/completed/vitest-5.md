@@ -1,9 +1,10 @@
 # Plan: Vitest 5 and `@types/node` 24
 
-**Status: implemented locally on `feat/vitest-5` (2026-09-12), awaiting
-Chris's local testing and a push. Vitest 5.0.0 and `@types/node` 24.13.4
-installed; no test edits were needed for `clearMocks: true`; lint, tsc,
-195 tests and `next build` all pass. Follow-up on the same branch:
+**Status: complete — implemented on `feat/vitest-5` (2026-09-12),
+tested by Chris locally and on staging; awaiting the PR to `main`.
+Vitest 5.0.0 and `@types/node` 24.13.4 installed; no test edits were
+needed for `clearMocks: true`; lint, tsc, 195 tests and `next build` all
+pass. Follow-up on the same branch:
 `isolate: false` adopted per Vitest's run-time hint (see Context).**
 
 ## Context
