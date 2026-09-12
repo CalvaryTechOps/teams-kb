@@ -1,10 +1,11 @@
 # Plan: TypeScript 6.0
 
-**Status: implemented on `feat/typescript-6` (2026-09-12), awaiting local
-testing and a push. Typecheck, lint, tests and `next build` all pass on
-6.0.3; no code changes were needed and Next did not rewrite
-`tsconfig.json`. Editor pick-up of the workspace TypeScript version is the
-one step still to confirm by hand. Do this before `plans/typescript-7.md`.**
+**Status: complete — implemented on `feat/typescript-6` (2026-09-12),
+tested by Chris locally and on staging; awaiting the PR to `main`.
+Typecheck, lint, tests and `next build` all pass on 6.0.3; no code changes
+were needed and Next did not rewrite `tsconfig.json`. The staging Vercel
+build's TypeScript step ran with no diagnostics or deprecation notices.
+Do this before `plans/typescript-7.md`.**
 
 ## Context
 
