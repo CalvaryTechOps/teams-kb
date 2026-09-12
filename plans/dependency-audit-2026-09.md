@@ -1,7 +1,16 @@
 # Plan: Dependency audit and update, September 2026
 
-**Status: implemented on `feat/dependency-updates-2026-09` (2026-09-12),
-awaiting Chris's local sign-in and export tests before staging.**
+**Status: implemented on `feat/dependency-updates-2026-09` and tested
+locally by Chris (2026-09-12); pushed to staging for the MCP OAuth check.**
+Local results: the new-user sign-in path creates a user and an account row
+with `issuer` NULL while existing accounts keep theirs; PDF and DOCX export
+(including a diagram) look right. Deleting only the account row of an
+existing user is *not* a valid test: better-auth's account-linking rules
+(unchanged since 1.7.2) refuse to attach a SAML login to an existing user
+whose row is not email-verified, and the sign-in page does not surface the
+`error=account_not_linked` it sends back. MCP cannot be exercised locally
+(Vercel protection bypass does not cover the connector), so it is checked
+on staging.
 Open questions are answered (recommendations taken). Final tree: `npm audit`
 0 vulnerabilities, lint and `tsc --noEmit` clean, 195 tests passing, `next
 build` passing, migration 0011 applied to the `development` Neon branch.
