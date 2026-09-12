@@ -48,8 +48,11 @@ export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
-    // Added in better-auth 1.7: SSO account binding key is (issuer, accountId).
-    issuer: text("issuer").notNull(),
+    // better-auth 1.7.0 keyed accounts on (issuer, accountId) and required
+    // this column; 1.7.3 went back to the 1.6 key (providerId, accountId) and
+    // no longer writes it. Kept nullable so rows written under 1.7.0–1.7.2
+    // stay intact; nothing reads it.
+    issuer: text("issuer"),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
@@ -69,7 +72,8 @@ export const account = pgTable(
   },
   (table) => [
     index("account_userId_idx").on(table.userId),
-    uniqueIndex("account_issuer_accountId_idx").on(table.issuer, table.accountId),
+    // better-auth looks accounts up by (providerId, accountId) on every sign-in.
+    index("account_providerId_accountId_idx").on(table.providerId, table.accountId),
   ],
 );
 
