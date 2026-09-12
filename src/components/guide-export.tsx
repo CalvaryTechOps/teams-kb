@@ -9,19 +9,20 @@ import { guideSchema, type GuideSchema } from "@/components/editor/schema";
 // Turns a stored guide into a downloadable PDF, DOCX or Markdown file, in the
 // browser. Client-only by construction: the diagram mappings render Mermaid
 // with the DOM, and the schema pulls the editor packages in. GuideActions
-// reaches this module through a dynamic import so none of it — least of all
-// the ~8 MB PDF exporter with its embedded fonts — ships with the guide page;
-// each format's exporter is imported on demand below for the same reason.
+// reaches this module through a dynamic import so none of it ships with the
+// guide page; each format's exporter is imported on demand below for the same
+// reason.
+//
+// PDF goes through BlockNote's Typst exporter: blocks become Typst markup
+// (pure, unit-tested via guideToTypst below), which the Typst compiler built to
+// wasm turns into a tagged PDF entirely in the browser, declared PDF/UA-1 when
+// the document conforms. The first export per page load downloads the ~26 MB
+// compiler plus the bundled fonts (Inter, Geist Mono, NewCM Math, Noto Color
+// Emoji); later exports reuse them. See plans/pdf-export-typst.md for the
+// trade-offs against the deprecated react-pdf exporter this replaced.
 //
 // The @blocknote/xl-* exporters are dual-licensed GPL-3.0 OR PROPRIETARY and
 // used here under GPL-3.0, matching this project's licence.
-//
-// PDF still goes through the react-pdf exporter. BlockNote 0.54.1 moved it to
-// the `/react-pdf` subpath and deprecated it in favour of a Typst-based,
-// PDF/UA-tagged exporter (`@blocknote/xl-pdf-exporter` root) that compiles in
-// a ~26 MB wasm engine shipped to the browser. Switching is a separate
-// decision (see plans/dependency-audit-2026-09.md); until then the diagram
-// mapping the old subpath used to provide is reproduced inline in toPdf.
 
 export type ExportableGuide = {
   title: string;
@@ -94,78 +95,92 @@ function documentFor(guide: ExportableGuide): SchemaBlock[] {
  */
 const resolveFileUrl = async (url: string) => url;
 
-/** Diagrams are rasterized in CSS pixels; react-pdf lays out in points. */
-const PIXELS_PER_POINT = 0.75;
-const DIAGRAM_MAX_WIDTH_POINTS = 400;
+/** Typst markup for the byline paragraph: 10pt, grey — the DOCX rendering's twin. */
+function metaTypst(guide: ExportableGuide, strLit: (s: string) => string) {
+  return `#text(size: 10pt, fill: rgb("#${META_COLOR}"))[#${strLit(metaLine(guide))}]`;
+}
+
+/**
+ * Running footer: "<title> · Page N of M", centred, small and grey. Page
+ * numbers are only known at layout time, hence `#context`; Typst tags the
+ * footer as a pagination artifact so it stays out of the reading order.
+ */
+function footerTypst(title: string, strLit: (s: string) => string) {
+  return (
+    `#align(center)[#text(size: 9pt, fill: rgb("#${META_COLOR}"))[` +
+    `#context [#${strLit(title)} · Page #counter(page).display() of #counter(page).final().first()]` +
+    `]]`
+  );
+}
+
+/**
+ * Everything the PDF export needs besides the compiler: the exporter module,
+ * the guide schema's Typst mappings (the defaults plus our overrides) and the
+ * per-document options — PDF metadata and the running footer.
+ */
+async function typstSetup(guide: ExportableGuide) {
+  const [typst, { diagramBlockMapping }] = await Promise.all([
+    import("@blocknote/xl-pdf-exporter"),
+    import("@blocknote/diagram-block/typst-exporter"),
+  ]);
+  const { typstDefaultSchemaMappings, strLit } = typst;
+  const { paragraph } = typstDefaultSchemaMappings.blockMapping;
+  const metaParagraph: typeof paragraph = (block, ...rest) =>
+    block.id === META_ID ? metaTypst(guide, strLit) : paragraph(block, ...rest);
+  const mappings = {
+    ...typstDefaultSchemaMappings,
+    blockMapping: {
+      ...typstDefaultSchemaMappings.blockMapping,
+      paragraph: metaParagraph,
+      // Vector SVG in a tagged figure with the Mermaid source as alt text.
+      diagram: diagramBlockMapping,
+    },
+  };
+  const options = {
+    title: guide.title,
+    // Required alongside the title for the PDF/UA-1 claim; guides are English.
+    lang: "en",
+    author: guide.author,
+    footer: footerTypst(guide.title, strLit),
+  };
+  return { typst, mappings, options };
+}
+
+/**
+ * The pure half of the PDF export — the Typst source the compiler is fed —
+ * exposed so tests can check the document without loading the wasm engine.
+ */
+export async function guideToTypst(guide: ExportableGuide): Promise<string> {
+  const { typst, mappings, options } = await typstSetup(guide);
+  const exporter = new typst.TypstExporter(guideSchema, mappings, { resolveFileUrl });
+  return exporter.toTypst(documentFor(guide), options);
+}
 
 async function toPdf(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {
-  const [
-    { PDFExporter, pdfDefaultSchemaMappings },
-    { renderDiagramToImage, getDiagramExporterDictionary },
-    { exportImageToDataURL, plainContentToString },
-    reactPdf,
-  ] = await Promise.all([
-    import("@blocknote/xl-pdf-exporter/react-pdf"),
-    import("@blocknote/diagram-block"),
-    import("@blocknote/core"),
-    import("@react-pdf/renderer"),
-  ]);
-  const { Text, View, Image: PdfImage } = reactPdf;
-  const { paragraph } = pdfDefaultSchemaMappings.blockMapping;
-  const exporter = new PDFExporter(
-    guideSchema,
-    {
-      ...pdfDefaultSchemaMappings,
-      blockMapping: {
-        ...pdfDefaultSchemaMappings.blockMapping,
-        paragraph: (block, ...rest) =>
-          block.id === META_ID ? (
-            <Text style={{ fontSize: 10, color: `#${META_COLOR}` }}>
-              {metaLine(guide)}
-            </Text>
-          ) : (
-            paragraph(block, ...rest)
-          ),
-        // What @blocknote/diagram-block/pdf-exporter did up to 0.54.0: render
-        // the Mermaid source to a PNG in the browser and embed it, or show the
-        // editor's "invalid diagram" placeholder (never the parser message).
-        diagram: async (block, exporter) => {
-          const source = plainContentToString(block.content);
-          if (!source.trim()) return <View />;
-          const result = await renderDiagramToImage(source);
-          if (result.error !== undefined) {
-            const { invalid_diagram } = getDiagramExporterDictionary(exporter);
-            return (
-              <View style={{ alignItems: "center" }}>
-                <Text style={{ color: "#999999" }}>{invalid_diagram(source.split("\n")[0])}</Text>
-              </View>
-            );
-          }
-          return (
-            <PdfImage
-              src={exportImageToDataURL(result.image)}
-              style={{
-                width: Math.min(result.image.width * PIXELS_PER_POINT, DIAGRAM_MAX_WIDTH_POINTS),
-                alignSelf: "center",
-              }}
-            />
-          );
-        },
-      },
-    },
-    { resolveFileUrl },
-  );
-  const { title } = guide;
-  const footer = (
-    <Text
-      style={{ fontSize: 9, color: "#6b7b81", textAlign: "center" }}
-      render={({ pageNumber, totalPages }) =>
-        `${title} · Page ${pageNumber} of ${totalPages}`
-      }
-    />
-  );
-  const pdfDocument = await exporter.toReactPDFDocument(doc, { footer });
-  return reactPdf.pdf(pdfDocument).toBlob();
+  const { typst, mappings, options } = await typstSetup(guide);
+  // Defaults for fonts and wasm: both load from the package's own files (the
+  // fonts as base64 chunks, the wasm as a bundler-emitted asset) on the first
+  // export and stay cached for the page's lifetime. A fresh exporter per
+  // export, as the package asks: an instance accumulates image assets.
+  const exporter = new typst.PDFExporter(guideSchema, mappings, { resolveFileUrl });
+  const result = await exporter.toPDF(doc, options);
+  if (result.error) {
+    // Our markup plus bundled fonts always compile, so a failure here is the
+    // environment (wasm/font load, an image that would not decode), never the
+    // author's content — Mermaid that does not parse renders a placeholder.
+    const [first] = result.compileErrors;
+    throw new Error(first ? `PDF compile failed: ${first.message}` : "PDF compile failed");
+  }
+  if (result.pdfUA.declared === false && result.pdfUA.reason === "nonconforming") {
+    // Still a tagged, accessible PDF — just without the PDF/UA-1 claim.
+    // Typical cause: a level-3 heading right after the level-1 title. Not
+    // surfaced to authors yet (plans/pdf-export-typst.md, Q2).
+    console.info(
+      "PDF exported without the PDF/UA-1 claim:",
+      result.pdfUA.violations.map((v) => v.message),
+    );
+  }
+  return result.blob;
 }
 
 async function toDocx(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {

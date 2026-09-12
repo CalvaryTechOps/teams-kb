@@ -240,8 +240,10 @@ the toggle and forces light when off.
   only when a download is chosen): `@blocknote/xl-pdf-exporter` and
   `@blocknote/xl-docx-exporter` with the diagram block's own mappings, and
   BlockNote's lossy Markdown conversion. Media is fetched directly from Blob
-  rather than through BlockNote's default CORS proxy. PDFs use the exporter's
-  bundled Inter, since react-pdf can't load the site's WOFF2 Metropolis.
+  rather than through BlockNote's default CORS proxy. PDFs are compiled by
+  Typst (the official compiler built to wasm, ~26 MB fetched on the first
+  export per page load and then cached): tagged, PDF/UA-1 when the document
+  conforms, vector diagrams, text in the exporter's bundled Inter.
 - **MCP** (`src/app/api/mcp/route.ts`, `src/lib/mcp/`): the app is both the
   OAuth 2.1 authorization server and the protected resource, via better-auth's
   `@better-auth/mcp` plugin (plus `jwt` for signing keys and `@better-auth/cimd`

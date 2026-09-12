@@ -1,11 +1,12 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import { parseGuideContent } from "@/lib/guide-content";
-import { exportFilename, guideToBlob, metaLine } from "./guide-export";
+import { exportFilename, guideToBlob, guideToTypst, metaLine } from "./guide-export";
 
-// Conversion contract for the downloads. Markdown and DOCX run headless here;
-// PDF rendering needs a real browser (fonts, layout) and is covered by the
-// manual test plan in plans/guide-export-menu.md.
+// Conversion contract for the downloads. Markdown and DOCX run headless here,
+// and so does the PDF's pure half — the Typst source the compiler is fed. The
+// compile itself (a 26 MB wasm engine) and the diagram rendering need a real
+// browser and are covered by the manual test plan in plans/pdf-export-typst.md.
 
 let counter = 0;
 const id = () => `block-${++counter}`;
@@ -135,5 +136,38 @@ describe("guide export", () => {
     expect(xml).toContain("Last edited Sep 3, 2026 by Chris Adams");
     expect(xml).toMatch(/<w:sz w:val="20"\/>/);
     expect(xml).toMatch(/<w:color w:val="6b7b81"\/>/i);
+  });
+
+  it("writes Typst for the PDF with metadata, footer, title, byline and every text block", async () => {
+    const typst = await guideToTypst({
+      title: 'Fix an "email"',
+      blocks: parse(TEXT_BLOCKS),
+      ...META,
+    });
+    // PDF metadata and language (both needed for the PDF/UA-1 claim), and
+    // the running footer with a page counter. Quotes in the title are escaped.
+    expect(typst).toContain('#set document(title: "Fix an \\"email\\"", author: "Chris Adams")');
+    expect(typst).toMatch(/#set text\(.*lang: "en"\)/);
+    expect(typst).toContain(
+      'footer: [#align(center)[#text(size: 9pt, fill: rgb("#6b7b81"))[#context [#"Fix an \\"email\\"" · Page #counter(page).display() of #counter(page).final().first()]]]]',
+    );
+    // Body opens with the title as H1, the 10pt grey byline, then the rule.
+    const body = typst.slice(typst.indexOf("#heading(level: 1"));
+    expect(body).toContain('#heading(level: 1, outlined: true)[#"Fix an \\"email\\""]');
+    expect(body).toContain(
+      '#text(size: 10pt, fill: rgb("#6b7b81"))[#"Last edited Sep 3, 2026 by Chris Adams"]',
+    );
+    expect(body.indexOf("Last edited")).toBeLessThan(body.indexOf("#line(length: 100%"));
+    // Every text block made it through the default mappings.
+    expect(body).toContain('#heading(level: 2, outlined: true)[#"Steps"]');
+    expect(body).toContain('#strong("Contacts")');
+    expect(body).toContain('#link("https://example.org/mp")[#"in MP"]');
+    expect(body).toContain("#list(");
+    expect(body).toContain("#enum(\n  start: 3,");
+    expect(body).toContain("#list(marker: _cb-checked");
+    expect(body).toContain('#quote(block: true)[#"Be kind."]');
+    expect(body).toContain('#raw("select 1;", block: true, lang: "sql")');
+    expect(body).toContain("#table(");
+    expect(body).toContain('#strong[#"Field"]');
   });
 });

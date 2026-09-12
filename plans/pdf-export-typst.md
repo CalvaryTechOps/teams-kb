@@ -1,7 +1,14 @@
 # Plan: Move PDF export to BlockNote's Typst exporter
 
-**Status: not started (planned 2026-09-12, deferred from the
-dependency-audit-2026-09 plan).** Decide Q1 before starting the spike.
+**Status: implemented on `feat/pdf-export-typst` (2026-09-12), awaiting
+Chris's local/staging test.** Planned 2026-09-12, deferred from the
+dependency-audit-2026-09 plan. Spike results: Turbopack emits the compiler
+as `/_next/static/media/blocknote_typst_wasm_bg.<hash>.wasm` (25.9 MB) from
+the glue's own `import.meta.url` pattern, so the `public/` fallback (Q3) was
+not needed; the fonts ship as separate base64 JS chunks loaded on the first
+export. Compiling the test document in Node took ~0.2 s and produced a
+declared PDF/UA-1 with no compiler warnings. Manual browser check (step 5)
+still to do.
 
 ## Context
 
@@ -120,9 +127,13 @@ Facts checked against 0.54.2:
    (then cached by the browser), versus ~8 MB today. Staff export
    occasionally, mostly on office networks. Recommended: yes — the
    alternative is keeping deprecated code until BlockNote deletes it.
+   Answer: take the recommendation.
 2. **Surface PDF/UA violations to the author?** Recommended: not now; log
    them, revisit if anyone asks for conformant PDFs.
+   Answer: take the recommendation
 3. **wasm hosting.** Recommended: Turbopack-emitted asset if it works in
    the spike; `public/` copy only as fallback.
+   Answer: take the recommendation
 4. **Timing.** BlockNote says "a few releases". Recommended: start when the
    dependency-audit PR has merged, before the next BlockNote bump.
+   Answer: take the recommendation

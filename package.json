@@ -26,7 +26,6 @@
     "@mantine/hooks": "^9.6.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "@neondatabase/serverless": "^1.1.0",
-    "@react-pdf/renderer": "4.9.0",
     "@vercel/blob": "^2.8.0",
     "better-auth": "^1.7.1",
     "diff": "^9.0.0",
