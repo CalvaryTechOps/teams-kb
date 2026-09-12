@@ -1,7 +1,7 @@
 # Plan: Dependency audit and update, September 2026
 
-**Status: implemented on `feat/dependency-updates-2026-09` and tested
-locally by Chris (2026-09-12); pushed to staging for the MCP OAuth check.**
+**Status: complete — implemented on `feat/dependency-updates-2026-09` (2026-09-12),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
 Local results: the new-user sign-in path creates a user and an account row
 with `issuer` NULL while existing accounts keep theirs; PDF and DOCX export
 (including a diagram) look right. Deleting only the account row of an
