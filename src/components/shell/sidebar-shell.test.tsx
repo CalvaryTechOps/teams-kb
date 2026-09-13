@@ -40,6 +40,11 @@ describe("SidebarShell", () => {
     expect(html).not.toContain("inert");
   });
 
+  it("never prints: the column and the drawer scrim are print:hidden", () => {
+    const cls = wrapperClass(render(false));
+    expect(cls).toContain("print:hidden");
+  });
+
   it("paints the collapsed column straight from the cookie", () => {
     const html = render(true);
     const cls = wrapperClass(html);

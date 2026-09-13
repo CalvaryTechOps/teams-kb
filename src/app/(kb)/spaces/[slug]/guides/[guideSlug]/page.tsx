@@ -205,11 +205,11 @@ export default async function GuidePage({
           ) : undefined
         }
       />
-      <main className="grid grid-cols-1 gap-10 px-12 py-10 lg:grid-cols-[minmax(0,720px)_232px]">
+      <main className="grid grid-cols-1 gap-10 px-12 py-10 lg:grid-cols-[minmax(0,720px)_232px] print:block print:p-0">
         <article>
           {latestUnpublished &&
             (hasNewerUnpublished || pendingBeforeFirstPublish) && (
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg">
+              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg print:hidden">
                 {pendingBeforeFirstPublish ? (
                   <span>
                     v{latestUnpublished.version} is awaiting owner approval
@@ -263,7 +263,7 @@ export default async function GuidePage({
             )}
 
           {showRejected && latestRejected && (
-            <div className="mb-5 rounded-lg border border-danger-100 bg-danger-soft/50 px-4 py-3 text-sm text-fg">
+            <div className="mb-5 rounded-lg border border-danger-100 bg-danger-soft/50 px-4 py-3 text-sm text-fg print:hidden">
               <div className="flex flex-wrap items-center gap-3">
                 <span>
                   Submission v{latestRejected.version} was rejected
@@ -289,16 +289,20 @@ export default async function GuidePage({
           )}
 
           {pendingAllStaff.length > 0 && (
-            <div className="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3 text-sm text-fg">
+            <div className="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3 text-sm text-fg print:hidden">
               An all-staff publish request for this guide is awaiting admin
               approval. Until then it keeps its current audience.
             </div>
           )}
 
           <div className="mb-3.5 flex flex-wrap gap-2">
-            <Badge tone="brand">{s.name}</Badge>
-            {row.categoryName && <Badge>{row.categoryName}</Badge>}
-            {g.audience === "all_staff" && <Badge>All staff</Badge>}
+            <Badge tone="brand" className="print:hidden">{s.name}</Badge>
+            {row.categoryName && (
+              <Badge className="print:hidden">{row.categoryName}</Badge>
+            )}
+            {g.audience === "all_staff" && (
+              <Badge className="print:hidden">All staff</Badge>
+            )}
             {g.status !== "published" && (
               <Badge tone="warning">
                 {isPending ? "Pending approval" : "Draft"}
@@ -324,6 +328,9 @@ export default async function GuidePage({
               </span>
               <span aria-hidden>·</span>
               <span>{readingMinutes(revision.content)} min read</span>
+              <span className="hidden basis-full print:block">
+                Permanent link: {permalinkUrl(APP_URL, g.shortId)}
+              </span>
             </div>
             <GuideActions
               permalinkPath={permalinkPath(g.shortId)}
@@ -350,7 +357,7 @@ export default async function GuidePage({
           </div>
         </article>
 
-        <aside className="hidden lg:block">
+        <aside className="hidden lg:block print:hidden">
           <div className="sticky top-[76px] flex flex-col gap-6">
             {tags.length > 0 && (
               <div>

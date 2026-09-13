@@ -200,7 +200,7 @@ export function GuideActions({
   };
 
   return (
-    <div ref={rootRef} className="relative shrink-0" onBlur={onBlur}>
+    <div ref={rootRef} className="relative shrink-0 print:hidden" onBlur={onBlur}>
       <div className="flex">
         <button
           type="button"

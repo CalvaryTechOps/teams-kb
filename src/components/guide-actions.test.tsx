@@ -195,6 +195,14 @@ describe("GuideActions", () => {
     expect(document.activeElement?.textContent?.trim()).toBe("Move guide");
   });
 
+  it("is hidden when printed, popovers included", () => {
+    mount();
+    const root = container.firstElementChild!;
+    expect(root.className).toContain("print:hidden");
+    expect(root.contains(byText("Copy link")!)).toBe(true);
+    expect(root.contains(chevron())).toBe(true);
+  });
+
   it("closes on Escape (returning focus) and on an outside click", () => {
     mount();
     click(chevron());

@@ -186,7 +186,7 @@ export function SidebarShell({
       <div className="flex min-h-screen">
         {drawerOpen && (
           <div
-            className="fixed inset-0 z-30 bg-sidebar/60 md:hidden"
+            className="fixed inset-0 z-30 bg-sidebar/60 md:hidden print:hidden"
             onClick={() => setDrawerOpen(false)}
             aria-hidden
           />
@@ -198,7 +198,7 @@ export function SidebarShell({
         <div
           id={SIDEBAR_ID}
           inert={visible === false}
-          className={`fixed inset-y-0 left-0 z-40 shrink-0 transition-[width,transform] duration-200 motion-reduce:transition-none md:sticky md:top-0 md:h-dvh md:overflow-hidden ${
+          className={`fixed inset-y-0 left-0 z-40 shrink-0 print:hidden transition-[width,transform] duration-200 motion-reduce:transition-none md:sticky md:top-0 md:h-dvh md:overflow-hidden ${
             drawerOpen ? "translate-x-0" : "-translate-x-full"
           } ${collapsed ? "md:w-0" : "md:w-[268px]"} md:translate-x-0`}
         >
