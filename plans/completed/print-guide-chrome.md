@@ -1,10 +1,12 @@
 # Plan: Print a guide without the app chrome
 
-**Status: implemented 2026-09-13 on `feat/print-guide-chrome`, awaiting
-Chris's local print-preview check (step 7). Open questions answered
+**Status: complete — implemented on `feat/print-guide-chrome` (2026-09-13),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Open questions answered
 2026-09-13, all per the recommendations: the Draft/Pending badge still
 prints, a print-only permanent-link line sits under the byline, page-break
-hints are in `globals.css`, dark-mode printing stays out of scope.**
+hints are in `globals.css`, dark-mode printing stays out of scope. Verified
+before the push: tests, lint, typecheck and build all clean.
 
 ## Problem
 
