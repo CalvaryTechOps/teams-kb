@@ -142,6 +142,16 @@ export function DownloadIcon({ size, className }: IconProps) {
   );
 }
 
+export function PrinterIcon({ size, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+      <path d="M6 9V3h12v6" />
+      <rect x="6" y="14" width="12" height="8" rx="1" />
+    </svg>
+  );
+}
+
 export function FileTextIcon({ size, className }: IconProps) {
   return (
     <svg {...base(size, className)}>

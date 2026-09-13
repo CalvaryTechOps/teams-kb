@@ -16,6 +16,7 @@ import {
   DownloadIcon,
   LinkIcon,
   PencilIcon,
+  PrinterIcon,
   QrCodeIcon,
 } from "@/components/icons";
 import { buttonClasses } from "@/components/ui";
@@ -28,8 +29,10 @@ import {
 
 // Split button at the end of a guide's metadata row: "Copy link" as the main
 // action — it copies the permanent /a/{shortId} link, which survives moves
-// and renames (plans/guide-permalinks.md) — a chevron opening Download PDF /
-// DOCX / Markdown, "Print QR code", and — for people who may edit — "Edit
+// and renames (plans/guide-permalinks.md) — a chevron opening "Print guide"
+// first (the browser's print dialog; the page hides its chrome on paper, see
+// plans/print-guide-chrome.md, so this beats a PDF export for a paper copy),
+// then Download PDF / DOCX / Markdown, "Print QR code", and — for people who may edit — "Edit
 // guide", the same target and permission as the header button, plus "Move
 // guide" for owners and admins. Hand-rolled menu (no menu primitive exists in the app yet) with the
 // usual keyboard contract: arrows move, Home/End jump, Escape closes and
@@ -232,6 +235,18 @@ export function GuideActions({
           onKeyDown={onMenuKeyDown}
           className="absolute right-0 top-full z-20 mt-1.5 w-[220px] overflow-hidden rounded-lg border border-border bg-surface-raised py-1.5 shadow-sm"
         >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              closeMenu();
+              window.print();
+            }}
+            className={menuItem}
+          >
+            <PrinterIcon size={15} className="text-fg-muted" />
+            Print guide
+          </button>
           {EXPORT_FORMAT_ORDER.map((format) => (
             <button
               key={format}

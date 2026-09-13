@@ -157,3 +157,12 @@ hairline border below it remains as the separator before the body.
    here unless Chris prints from dark mode; if so, it deserves its own item
    in `plans/housekeeping.md` or a follow-up plan.
    Answer: let's skip this for now, we will create a new plan only if this becomes an issue.
+
+## Follow-on (2026-09-13)
+
+After checking the printout Chris asked for a **"Print guide"** item at the
+top of the split-button menu, above Download PDF, to steer people towards
+printing the page (now clean on paper) rather than exporting a PDF. Done in
+`guide-actions.tsx`: a `menuitem` button that closes the menu and calls
+`window.print()`, with a new `PrinterIcon` in `icons.tsx`. Covered in
+`guide-actions.test.tsx`.
