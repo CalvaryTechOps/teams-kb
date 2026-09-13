@@ -410,7 +410,26 @@ body {
   color: var(--color-accent-text);
 }
 
-/* Printed QR labels (src/app/(print)): a plain sheet with the label centred. */
+/* ── Print ──
+   Page margins for everything that goes to paper: QR labels
+   (src/app/(print)) and guide pages, whose screen chrome is hidden with
+   `print:` utilities (plans/print-guide-chrome.md). The body rules keep a
+   heading with the section it introduces and stop images, code blocks,
+   tables and diagrams from being cut across two pages. */
 @page {
   margin: 0.5in;
+}
+@media print {
+  .prose-guide h1,
+  .prose-guide h2,
+  .prose-guide h3 {
+    break-after: avoid;
+  }
+  .prose-guide figure,
+  .prose-guide img,
+  .prose-guide pre,
+  .prose-guide table,
+  .prose-guide .guide-diagram {
+    break-inside: avoid;
+  }
 }

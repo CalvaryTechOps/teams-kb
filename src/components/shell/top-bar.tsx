@@ -18,7 +18,7 @@ export function TopBar({
   userName: string;
 }) {
   return (
-    <div className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-border bg-surface-raised px-4 md:px-8">
+    <div className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-border bg-surface-raised px-4 md:px-8 print:hidden">
       <SidebarToggle />
       <nav className="flex min-w-0 flex-1 items-center gap-2 text-[13px] text-fg-muted">
         {crumbs.map((crumb, i) => {

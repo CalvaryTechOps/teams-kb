@@ -5,7 +5,8 @@ import { createRoot, type Root } from "react-dom/client";
 import type { GuideBlock } from "@/lib/guide-content";
 
 // The split button's contract: what "Copy link" copies (the permalink), that
-// the QR label item is always there, when "Edit guide" appears, and that choosing a download reaches the (lazily loaded) exporter
+// "Print guide" leads the menu and reaches window.print, that the QR label
+// item is always there, when "Edit guide" appears, and that choosing a download reaches the (lazily loaded) exporter
 // with the right format. The exporter itself is mocked here and covered by
 // guide-export.test.ts.
 
@@ -135,11 +136,23 @@ describe("GuideActions", () => {
     expect(input?.value).toBe("https://kb.example.org/a/7kq4x");
   });
 
-  it("lists the three downloads and the QR label, and Edit guide only for editors", () => {
+  it("opens the print dialog from the first item and closes the menu", () => {
+    const print = vi.fn();
+    Object.defineProperty(window, "print", { configurable: true, value: print });
+    mount();
+    click(chevron());
+    expect(document.activeElement?.textContent?.trim()).toBe("Print guide");
+    click(byText("Print guide")!);
+    expect(print).toHaveBeenCalledTimes(1);
+    expect(menu()).toBeNull();
+  });
+
+  it("lists Print guide, the three downloads and the QR label, and Edit guide only for editors", () => {
     mount();
     click(chevron());
     expect(menu()).not.toBeNull();
     expect(items()).toEqual([
+      "Print guide",
       "Download PDF",
       "Download DOCX",
       "Download Markdown",
@@ -150,6 +163,7 @@ describe("GuideActions", () => {
 
     mount({ editHref: "/spaces/mp/guides/correct-an-email/edit" });
     expect(items()).toEqual([
+      "Print guide",
       "Download PDF",
       "Download DOCX",
       "Download Markdown",
@@ -165,6 +179,7 @@ describe("GuideActions", () => {
     mount({ moveHref: "/spaces/mp/guides/correct-an-email/move" });
     click(chevron());
     expect(items()).toEqual([
+      "Print guide",
       "Download PDF",
       "Download DOCX",
       "Download Markdown",
@@ -180,6 +195,7 @@ describe("GuideActions", () => {
       moveHref: "/spaces/mp/guides/correct-an-email/move",
     });
     expect(items()).toEqual([
+      "Print guide",
       "Download PDF",
       "Download DOCX",
       "Download Markdown",
@@ -195,10 +211,18 @@ describe("GuideActions", () => {
     expect(document.activeElement?.textContent?.trim()).toBe("Move guide");
   });
 
+  it("is hidden when printed, popovers included", () => {
+    mount();
+    const root = container.firstElementChild!;
+    expect(root.className).toContain("print:hidden");
+    expect(root.contains(byText("Copy link")!)).toBe(true);
+    expect(root.contains(chevron())).toBe(true);
+  });
+
   it("closes on Escape (returning focus) and on an outside click", () => {
     mount();
     click(chevron());
-    expect(document.activeElement?.textContent?.trim()).toBe("Download PDF");
+    expect(document.activeElement?.textContent?.trim()).toBe("Print guide");
 
     key(menu()!, "Escape");
     expect(menu()).toBeNull();
@@ -215,11 +239,11 @@ describe("GuideActions", () => {
     click(chevron());
     const m = menu()!;
     key(m, "ArrowDown");
-    expect(document.activeElement?.textContent?.trim()).toBe("Download DOCX");
+    expect(document.activeElement?.textContent?.trim()).toBe("Download PDF");
     key(m, "End");
     expect(document.activeElement?.textContent?.trim()).toBe("Edit guide");
     key(m, "ArrowDown");
-    expect(document.activeElement?.textContent?.trim()).toBe("Download PDF");
+    expect(document.activeElement?.textContent?.trim()).toBe("Print guide");
     key(m, "ArrowUp");
     expect(document.activeElement?.textContent?.trim()).toBe("Edit guide");
   });
