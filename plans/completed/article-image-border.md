@@ -2,7 +2,8 @@
 
 **Status: complete — implemented on `feat/article-image-border`
 (2026-09-15), tested by Chris locally (staging skipped for a CSS-only
-change); awaiting the PR to `main`.** Open questions answered
+change), merged to `main` via PR #29 (2026-09-15) and live in
+production.** Open questions answered
 2026-09-15, all per the recommendations: video loses the border too, the
 8px radius goes as well, nothing replaces the border in dark mode.
 Verified before the commit: lint, typecheck, tests and build.
