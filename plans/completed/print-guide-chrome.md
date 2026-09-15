@@ -1,7 +1,8 @@
 # Plan: Print a guide without the app chrome
 
 **Status: complete — implemented on `feat/print-guide-chrome` (2026-09-13),
-tested by Chris locally and on staging; awaiting the PR to `main`.**
+tested by Chris locally and on staging, merged to `main` via PR #28
+(2026-09-13) and live in production.**
 Open questions answered
 2026-09-13, all per the recommendations: the Draft/Pending badge still
 prints, a print-only permanent-link line sits under the byline, page-break

@@ -256,8 +256,6 @@ body {
 }
 .prose-guide img {
   max-width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
   margin: 18px 0;
 }
 .prose-guide hr {
@@ -341,8 +339,6 @@ body {
 .prose-guide figure video {
   max-width: 100%;
   margin: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
 }
 .prose-guide figure audio {
   width: 100%;

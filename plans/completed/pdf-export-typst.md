@@ -1,7 +1,8 @@
 # Plan: Move PDF export to BlockNote's Typst exporter
 
 **Status: complete — implemented on `feat/pdf-export-typst` (2026-09-12),
-tested by Chris locally and on staging; awaiting the PR to `main`.**
+tested by Chris locally and on staging, merged to `main` via PR #27
+(2026-09-12) and live in production.**
 Planned 2026-09-12, deferred from the dependency-audit-2026-09 plan. Lint,
 typecheck, tests and `next build` passed before the push. Spike results: Turbopack emits the compiler
 as `/_next/static/media/blocknote_typst_wasm_bg.<hash>.wasm` (25.9 MB) from
