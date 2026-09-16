@@ -42,7 +42,8 @@ resume a plan from that folder, and prefer the code over it where they differ.
 - **Ship** by pushing the feature branch and opening a PR to `main`. When
   Chris says staging passed ("ship it", "clean house and push the
   feature"), use the `ship-feature` skill: it moves the plan to
-  `plans/completed/`, marks it complete, commits that on the feature branch
-  and pushes the branch. Merging is the only manual step: every Vercel
-  build (previews, staging, production) runs `drizzle-kit migrate` itself,
-  and each preview gets its own Neon DB branch via the Neon integration.
+  `plans/completed/`, marks it complete, commits that on the feature
+  branch, pushes the branch and opens the PR with `gh`. Merging is the only
+  manual step: every Vercel build (previews, staging, production) runs
+  `drizzle-kit migrate` itself, and each preview gets its own Neon DB
+  branch via the Neon integration.

@@ -2,6 +2,10 @@
 // /api/upload token route (server) so both sides enforce the same rules.
 // Raster images, common audio and web video only — SVG stays out because it
 // can carry scripts, and anything not in this list is refused.
+//
+// A second writer follows the same rules and pathname shape: the copy route
+// (/api/upload/import, src/lib/image-import.ts) that fetches an externally
+// hosted image into the store on an author's request.
 
 export type UploadKind = "image" | "audio" | "video";
 
