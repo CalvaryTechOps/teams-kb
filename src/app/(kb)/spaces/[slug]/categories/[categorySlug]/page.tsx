@@ -22,6 +22,7 @@ import {
   categoryEditPath,
   GENERAL_CATEGORY_NAME,
   GENERAL_CATEGORY_SLUG,
+  newGuidePath,
 } from "@/lib/categories";
 import { guidePath } from "@/lib/moves";
 
@@ -161,7 +162,7 @@ export default async function CategoryPage({
           Edit category
         </ButtonLink>
       )}
-      <ButtonLink href={`/spaces/${s.slug}/new`} size="sm">
+      <ButtonLink href={newGuidePath(s.slug, categorySlug)} size="sm">
         <PlusIcon size={14} />
         New guide
       </ButtonLink>

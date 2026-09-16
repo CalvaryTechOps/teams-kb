@@ -13,3 +13,14 @@ export function categoryPath(spaceSlug: string, categorySlug: string): string {
 export function categoryEditPath(spaceSlug: string, categorySlug: string): string {
   return `${categoryPath(spaceSlug, categorySlug)}/edit`;
 }
+
+/**
+ * The New Guide form. Given a category slug (other than General) the form
+ * opens with that category preselected; the page resolves the slug itself
+ * and falls back to General for anything it does not recognise.
+ */
+export function newGuidePath(spaceSlug: string, categorySlug?: string): string {
+  const base = `/spaces/${spaceSlug}/new`;
+  if (!categorySlug || categorySlug === GENERAL_CATEGORY_SLUG) return base;
+  return `${base}?category=${encodeURIComponent(categorySlug)}`;
+}

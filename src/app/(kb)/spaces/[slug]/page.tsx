@@ -25,6 +25,7 @@ import {
   categoryPath,
   GENERAL_CATEGORY_NAME,
   GENERAL_CATEGORY_SLUG,
+  newGuidePath,
 } from "@/lib/categories";
 import { CATEGORY_CARD_LIMIT, mostRecent } from "@/lib/category-list";
 import { AudienceIcon } from "@/components/audience-icon";
@@ -143,7 +144,7 @@ export default async function SpacePage({
                   Review queue{pendingCount > 0 ? ` (${pendingCount})` : ""}
                 </ButtonLink>
               )}
-              <ButtonLink href={`/spaces/${s.slug}/new`} size="sm">
+              <ButtonLink href={newGuidePath(s.slug)} size="sm">
                 <PlusIcon size={14} />
                 New guide
               </ButtonLink>
