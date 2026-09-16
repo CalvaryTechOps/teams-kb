@@ -47,3 +47,7 @@ resume a plan from that folder, and prefer the code over it where they differ.
   manual step: every Vercel build (previews, staging, production) runs
   `drizzle-kit migrate` itself, and each preview gets its own Neon DB
   branch via the Neon integration.
+- **After the merge**, when Chris says so ("I merged it", "clean up after
+  the merge"), use the `cleanup-after-merge` skill: it verifies on origin
+  that the branch is merged, switches to `main`, pulls, and deletes the
+  merged feature branch. Never run it on a branch whose PR is still open.

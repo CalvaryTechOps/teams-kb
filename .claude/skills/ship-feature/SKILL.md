@@ -95,7 +95,10 @@ It does NOT merge or touch `staging`. Merging is always Chris's step.
 
 ## After the merge
 
-Nothing to do here: the plan already lives in `plans/completed/`. If Chris
-later asks to note the PR number or "live in production", edit the status
-sentence in place (earlier plans read "merged to `main` via PR #N and live
-in production").
+Nothing more for this skill: the plan already lives in `plans/completed/`.
+Once Chris has merged the PR and says so, the `cleanup-after-merge` skill
+verifies the merge on origin, switches to `main`, pulls and deletes the
+feature branch. If Chris later asks to note the PR number or "live in
+production", edit the status sentence in place (earlier plans read "merged
+to `main` via PR #N and live in production") — on a feature branch, never
+directly on `main`.
