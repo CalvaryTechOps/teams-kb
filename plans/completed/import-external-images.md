@@ -1,7 +1,8 @@
 # Plan: Copy externally hosted guide images to Vercel Blob
 
-**Status: implemented on `feat/import-external-images` (2026-09-16),
-awaiting Chris's local test.** Open questions answered 2026-09-16: old KB
+**Status: complete — implemented on `feat/import-external-images`
+(2026-09-16), tested by Chris locally and on staging; awaiting the PR to
+`main`.** Open questions answered 2026-09-16: old KB
 images are public; images only; external SVGs are neither offered nor
 copied; notice bar under the editor; 10 MB cap. Verified before the commit:
 tests, lint, typecheck, build.
