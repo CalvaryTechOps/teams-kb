@@ -6,6 +6,7 @@ import { category, space } from "@/db/schema";
 import { GuideForm } from "@/components/guide-form";
 import { TopBar } from "@/components/shell/top-bar";
 import { audienceTargetGroups } from "@/lib/audience";
+import { categoryPath, GENERAL_CATEGORY_SLUG } from "@/lib/categories";
 import { listTagsWithCounts } from "@/lib/tags";
 import {
   getSession,
@@ -13,10 +14,18 @@ import {
   resolveGuidePermissions,
 } from "@/lib/permissions";
 
+// `?category=<slug>` (set by a category page's "New guide" button) opens the
+// form with that category preselected and points Cancel back at the category.
+// Anything else — no param, the reserved General slug, an unknown or
+// foreign slug, a repeated param — falls back to General, the form's default.
 export default async function NewGuidePage({
   params,
+  searchParams,
 }: PageProps<"/spaces/[slug]/new">) {
-  const { slug } = await params;
+  const [{ slug }, { category: categoryParam }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const access = await requireAccess();
   const session = await getSession();
 
@@ -32,7 +41,7 @@ export default async function NewGuidePage({
 
   const [categories, allTags, targetGroups] = await Promise.all([
     db
-      .select({ id: category.id, name: category.name })
+      .select({ id: category.id, name: category.name, slug: category.slug })
       .from(category)
       .where(eq(category.spaceId, s.id))
       .orderBy(asc(category.sortOrder), asc(category.name)),
@@ -40,12 +49,26 @@ export default async function NewGuidePage({
     perms.canApprove ? audienceTargetGroups(s.groupId) : Promise.resolve([]),
   ]);
 
+  const preselected =
+    typeof categoryParam === "string" &&
+    categoryParam !== "" &&
+    categoryParam !== GENERAL_CATEGORY_SLUG
+      ? categories.find((c) => c.slug === categoryParam)
+      : undefined;
+
+  const cancelHref = preselected
+    ? categoryPath(s.slug, preselected.slug)
+    : `/spaces/${s.slug}`;
+
   return (
     <>
       <TopBar
         crumbs={[
           { label: APP_TITLE, href: "/" },
           { label: s.name, href: `/spaces/${s.slug}` },
+          ...(preselected
+            ? [{ label: preselected.name, href: cancelHref }]
+            : []),
           { label: "New guide" },
         ]}
         userName={session?.user.name ?? "Staff"}
@@ -59,7 +82,8 @@ export default async function NewGuidePage({
           categories={categories}
           allTags={allTags}
           canApprove={perms.canApprove}
-          cancelHref={`/spaces/${s.slug}`}
+          cancelHref={cancelHref}
+          defaults={preselected ? { categoryId: preselected.id } : undefined}
           audience={
             perms.canApprove
               ? {
