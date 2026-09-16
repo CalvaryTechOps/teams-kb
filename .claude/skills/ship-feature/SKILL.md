@@ -1,16 +1,17 @@
 ---
 name: ship-feature
-description: Wrap up a feature after it passed staging — move its plan to plans/completed, mark it complete, commit that housekeeping on the feature branch and push the branch to origin so the PR can be opened. Use when the user says "ship it", "clean house and push the feature", "staging passed, wrap it up", "ready to merge", or similar.
+description: Wrap up a feature after it passed staging — move its plan to plans/completed, mark it complete, commit that housekeeping on the feature branch, push the branch to origin and open the PR to main with gh. Use when the user says "ship it", "clean house and push the feature", "staging passed, wrap it up", "ready to merge", or similar.
 ---
 
 # Ship a feature that passed staging
 
 Chris has tested the current feature branch locally and on staging and is
-ready to open the PR to `main`. This skill does the housekeeping that should
-ride along in that PR: the plan moves to `plans/completed/`, its status says
-it passed staging, and the feature branch (not `staging`) is pushed.
+ready for the PR to `main`. This skill does the housekeeping that should
+ride along in that PR — the plan moves to `plans/completed/`, its status
+says it passed staging — then pushes the feature branch (not `staging`) and
+opens the PR with `gh`.
 
-It does NOT merge, touch `staging`, or open the PR unless asked (see step 7).
+It does NOT merge or touch `staging`. Merging is always Chris's step.
 
 ## Steps
 
@@ -62,23 +63,35 @@ It does NOT merge, touch `staging`, or open the PR unless asked (see step 7).
    feature branch — `staging` already has the feature, and `main` is
    touched by merging the PR, never directly.
 
-7. **Report** the branch, the commit, and the compare link
-   `https://github.com/CalvaryTechOps/teams-kb/pull/new/<branch>`.
-
-8. **Draft the PR description** in the same reply, in a fenced code block
-   so Chris can copy it straight into GitHub. One short paragraph in plain
-   prose (no headers, no bullets) written from the plan and the diff: what a
-   user can now do, the one or two design decisions a reviewer should know
-   about (a new table or migration, a new route, a permission rule, a
-   setting), and how it was verified — lint, typecheck, tests, build, and
-   staging. Then a line linking the plan, `plans/completed/<name>.md`, and
-   the PR attribution line from the session's system reminder (currently
+7. **Write the PR description** from the plan and the diff. One short
+   paragraph in plain prose (no headers, no bullets): what a user can now
+   do, the one or two design decisions a reviewer should know about (a new
+   table or migration, a new route, a permission rule, a setting), and how
+   it was verified — lint, typecheck, tests, build, and staging. Then a
+   line linking the plan, `plans/completed/<name>.md`, and the PR
+   attribution line from the session's system reminder (currently
    `🤖 Generated with [Claude Code](https://claude.com/claude-code)`).
-   Suggest a PR title as well: the feature commit's subject line usually
-   works. Open the PR with `gh pr create` only if Chris asked for that in
-   the same message ("…and open the PR") — then use the same title and
-   body. Merging is always Chris's step: every Vercel build runs the
-   migrations itself.
+   The title is the feature commit's subject line unless a better one is
+   obvious.
+
+8. **Open the PR** to `main` with `gh` (authenticated with a PAT that can
+   open PRs; `gh auth status` if in doubt). Pass the body through a file so
+   the Markdown survives quoting:
+
+   ```
+   gh pr create --base main --head <branch> --title "<title>" --body-file <tmpfile>
+   ```
+
+   If a PR for the branch already exists (`gh pr view <branch>` succeeds),
+   update its title and body with `gh pr edit` instead of creating a second
+   one. If `gh` fails (expired token, network), fall back to reporting the
+   compare link `https://github.com/CalvaryTechOps/teams-kb/pull/new/<branch>`
+   with the title and body in a fenced code block so Chris can open it by
+   hand — never leave the feature pushed with no PR and no instructions.
+
+9. **Report** the branch, the housekeeping commit, and the PR URL. Merging
+   is Chris's step: every Vercel build runs the migrations itself. Say if
+   the PR carries a migration, so the merge can be timed.
 
 ## After the merge
 
