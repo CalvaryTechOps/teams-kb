@@ -1,7 +1,8 @@
 # Plan: Remove the Download PDF and Download Markdown exports
 
-**Status: implemented on `feat/remove-pdf-markdown-export` (2026-09-16),
-awaiting Chris's local browser check (step 7) and staging.** Lint, typecheck,
+**Status: complete — implemented on `feat/remove-pdf-markdown-export`
+(2026-09-16), tested by Chris locally and on staging; awaiting the PR to
+`main`.** Lint, typecheck,
 230 tests and a fresh `next build` pass; the build emits no `.wasm` file and
 no Typst chunk. Before → after: lockfile 958 → 955 packages
 (`xl-pdf-exporter`, `xl-typst-compiler`, `xl-typst-exporter` gone);
