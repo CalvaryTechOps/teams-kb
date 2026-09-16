@@ -6,7 +6,7 @@ group owners approve and publish, and an admin group runs the whole thing.
 Guides can be shared with specific groups or with everyone who can sign in,
 and any guide can be shared by a permanent short link (`/a/{id}`, which keeps
 working when a guide moves), printed as a QR label to tape to equipment, or
-downloaded as PDF, DOCX or Markdown.
+downloaded as DOCX.
 Staff can also connect an AI agent over the Model Context Protocol and let it
 search and read the guides they can see (read-only).
 
@@ -240,13 +240,11 @@ the toggle and forces light when off.
   printable label with the code as server-side SVG (`qrcode`, error
   correction Q) plus the title, department and typed-fallback URL.
 - **Exports** run in the browser (`src/components/guide-export.tsx`, loaded
-  only when a download is chosen): `@blocknote/xl-pdf-exporter` and
-  `@blocknote/xl-docx-exporter` with the diagram block's own mappings, and
-  BlockNote's lossy Markdown conversion. Media is fetched directly from Blob
-  rather than through BlockNote's default CORS proxy. PDFs are compiled by
-  Typst (the official compiler built to wasm, ~26 MB fetched on the first
-  export per page load and then cached): tagged, PDF/UA-1 when the document
-  conforms, vector diagrams, text in the exporter's bundled Inter.
+  only when a download is chosen): `@blocknote/xl-docx-exporter` with the
+  diagram block's own mapping. Media is fetched directly from Blob rather
+  than through BlockNote's default CORS proxy. For a paper or PDF copy, use
+  "Print guide": the page hides its chrome on paper and the browser's Save as
+  PDF does the rest.
 - **MCP** (`src/app/api/mcp/route.ts`, `src/lib/mcp/`): the app is both the
   OAuth 2.1 authorization server and the protected resource, via better-auth's
   `@better-auth/mcp` plugin (plus `jwt` for signing keys and `@better-auth/cimd`
@@ -279,7 +277,7 @@ the toggle and forces light when off.
   admin's saved palettes (`src/lib/theme.ts`), one block per mode selected by
   `data-theme` on `<html>`. The mode comes from the `kb-theme` cookie, read
   server-side so the first paint is right; the toggle sets the attribute and
-  cookie directly with no round trip. PDF/DOCX exports stay light.
+  cookie directly with no round trip. DOCX exports stay light.
 - **Typeface**: Metropolis (public domain, `src/fonts/LICENSE-Metropolis.txt`).
 
 ## Known tradeoffs

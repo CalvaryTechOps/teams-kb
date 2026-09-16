@@ -12,10 +12,9 @@ import { useThemeMode } from "@/components/theme-provider";
 /**
  * Labels as SVG text, not Mermaid's default HTML-in-`<foreignObject>` labels.
  * Mermaid's config is page-global and `initialize` replaces it wholesale, so
- * this page's call must agree with the exporters on this point: the PDF
- * export embeds the SVG in Typst, whose renderer drops foreign objects (the
- * labels vanish), and Safari refuses to draw foreignObject SVGs to the canvas
- * the DOCX export rasterizes with. Mirrors `defaultMermaidOptions` from
+ * this page's call must agree with the DOCX exporter on this point: Safari
+ * refuses to draw foreignObject SVGs to the canvas the export rasterizes
+ * with (the labels vanish). Mirrors `defaultMermaidOptions` from
  * @blocknote/diagram-block — copied rather than imported so the guide page
  * does not pull the editor packages in; mermaid-diagram.test.ts keeps the two
  * in sync. Raw HTML inside a label shows as literal tags this way, matching

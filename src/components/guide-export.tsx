@@ -6,20 +6,13 @@ import { slugify } from "@/lib/slug";
 import { EXPORT_FORMATS, type ExportFormat } from "@/lib/export-formats";
 import { guideSchema, type GuideSchema } from "@/components/editor/schema";
 
-// Turns a stored guide into a downloadable PDF, DOCX or Markdown file, in the
-// browser. Client-only by construction: the diagram mappings render Mermaid
-// with the DOM, and the schema pulls the editor packages in. GuideActions
-// reaches this module through a dynamic import so none of it ships with the
-// guide page; each format's exporter is imported on demand below for the same
-// reason.
-//
-// PDF goes through BlockNote's Typst exporter: blocks become Typst markup
-// (pure, unit-tested via guideToTypst below), which the Typst compiler built to
-// wasm turns into a tagged PDF entirely in the browser, declared PDF/UA-1 when
-// the document conforms. The first export per page load downloads the ~26 MB
-// compiler plus the bundled fonts (Inter, Geist Mono, NewCM Math, Noto Color
-// Emoji); later exports reuse them. See plans/pdf-export-typst.md for the
-// trade-offs against the deprecated react-pdf exporter this replaced.
+// Turns a stored guide into a downloadable DOCX file, in the browser — an
+// editable Word copy for people without KB access, the one thing "Print
+// guide" cannot give. Client-only by construction: the diagram mapping
+// renders Mermaid with the DOM, and the schema pulls the editor packages in.
+// GuideActions reaches this module through a dynamic import so none of it
+// ships with the guide page; the exporter itself is imported on demand below
+// for the same reason.
 //
 // The @blocknote/xl-* exporters are dual-licensed GPL-3.0 OR PROPRIETARY and
 // used here under GPL-3.0, matching this project's licence.
@@ -32,7 +25,7 @@ export type ExportableGuide = {
   author: string;
 };
 
-/** Grey used for the byline in PDF/DOCX (the page's text-grey-500). */
+/** Grey used for the byline in DOCX (the page's text-grey-500). */
 const META_COLOR = "6b7b81";
 const META_ID = "guide-meta";
 const RULE_ID = "guide-title-rule";
@@ -53,8 +46,8 @@ type SchemaBlock = Block<
 >;
 
 /**
- * The body never contains the guide's title, so every export opens with it
- * as a level-1 heading, a small byline (last edit date and author), then a
+ * The body never contains the guide's title, so the export opens with it as
+ * a level-1 heading, a small byline (last edit date and author), then a
  * rule — the hairline under the title on the page. Stored GuideBlocks are
  * structurally BlockNote Blocks for our schema (guide-content.ts is the
  * source of truth for that shape), hence the single cast here.
@@ -74,9 +67,8 @@ function documentFor(guide: ExportableGuide): SchemaBlock[] {
     content: [{ type: "text", text: title, styles: {} }],
     children: [],
   };
-  // A plain paragraph; PDF and DOCX swap in a 10pt grey rendering for this
-  // block by id (see the paragraph mapping overrides), Markdown has no sizes
-  // so it stays italic text.
+  // A plain paragraph; the DOCX mapping swaps in a 10pt grey rendering for
+  // this block by id (see the paragraph mapping override in toDocx).
   const meta = {
     id: META_ID,
     type: "paragraph",
@@ -90,38 +82,19 @@ function documentFor(guide: ExportableGuide): SchemaBlock[] {
 
 /**
  * Media is fetched straight from where it lives (Vercel Blob serves guide
- * uploads CORS-open) instead of through the exporters' default — BlockNote's
+ * uploads CORS-open) instead of through the exporter's default — BlockNote's
  * public CORS proxy — so our media URLs never reach a third party.
  */
 const resolveFileUrl = async (url: string) => url;
 
-/** Typst markup for the byline paragraph: 10pt, grey — the DOCX rendering's twin. */
-function metaTypst(guide: ExportableGuide, strLit: (s: string) => string) {
-  return `#text(size: 10pt, fill: rgb("#${META_COLOR}"))[#${strLit(metaLine(guide))}]`;
-}
-
-/**
- * Running footer: "<title> · Page N of M", centred, small and grey. Page
- * numbers are only known at layout time, hence `#context`; Typst tags the
- * footer as a pagination artifact so it stays out of the reading order.
- */
-function footerTypst(title: string, strLit: (s: string) => string) {
-  return (
-    `#align(center)[#text(size: 9pt, fill: rgb("#${META_COLOR}"))[` +
-    `#context [#${strLit(title)} · Page #counter(page).display() of #counter(page).final().first()]` +
-    `]]`
-  );
-}
-
 /**
  * Mermaid's config is page-global and `initialize` replaces it wholesale. The
  * guide page's MermaidDiagram applies the page theme (dark mode included) on
- * every mount, while the diagram block's exporters apply their own options
+ * every mount, while the diagram block's exporter applies its own options
  * only once per page load — so an export rendered after a later page
- * initialize would inherit the page's theme and, without SVG-text labels,
- * lose its labels in Typst. Re-applying the export options right before each
- * render keeps exports deterministic; the page re-initializes on its next
- * effect run.
+ * initialize would inherit the page's theme. Re-applying the export options
+ * right before each render keeps exports deterministic; the page
+ * re-initializes on its next effect run.
  */
 async function withExportMermaidConfig<T>(render: () => Promise<T>): Promise<T> {
   const [{ default: mermaid }, { defaultMermaidOptions }] = await Promise.all([
@@ -134,96 +107,6 @@ async function withExportMermaidConfig<T>(render: () => Promise<T>): Promise<T> 
     suppressErrorRendering: true,
   });
   return render();
-}
-
-/**
- * Everything the PDF export needs besides the compiler: the exporter module,
- * the guide schema's Typst mappings (the defaults plus our overrides) and the
- * per-document options — PDF metadata and the running footer.
- */
-async function typstSetup(guide: ExportableGuide) {
-  const [typst, { createDiagramBlockMapping }, { renderDiagramToSVG }] = await Promise.all([
-    import("@blocknote/xl-pdf-exporter"),
-    import("@blocknote/diagram-block/typst-exporter"),
-    import("@blocknote/diagram-block"),
-  ]);
-  const { typstDefaultSchemaMappings, strLit } = typst;
-  // What the package's default mapping does, minus the once-only Mermaid
-  // init: labels render in the exporter's own font list (body font, then the
-  // emoji font) so they match the document.
-  const diagram: ReturnType<typeof createDiagramBlockMapping> = (block, exporter) => {
-    const { fontFamilies } = exporter as unknown as { fontFamilies: string[] };
-    const fontFamily = `${fontFamilies.map((f) => `"${f}"`).join(", ")}, sans-serif`;
-    return createDiagramBlockMapping({
-      renderDiagram: (source) =>
-        withExportMermaidConfig(() => renderDiagramToSVG(source, { fontFamily })),
-    })(block, exporter);
-  };
-  const { paragraph } = typstDefaultSchemaMappings.blockMapping;
-  const metaParagraph: typeof paragraph = (block, ...rest) =>
-    block.id === META_ID ? metaTypst(guide, strLit) : paragraph(block, ...rest);
-  const mappings = {
-    ...typstDefaultSchemaMappings,
-    blockMapping: {
-      ...typstDefaultSchemaMappings.blockMapping,
-      paragraph: metaParagraph,
-      // Vector SVG in a tagged figure with the Mermaid source as alt text.
-      diagram,
-    },
-  };
-  const options = {
-    title: guide.title,
-    // Required alongside the title for the PDF/UA-1 claim; guides are English.
-    lang: "en",
-    author: guide.author,
-    footer: footerTypst(guide.title, strLit),
-  };
-  return { typst, mappings, options };
-}
-
-/**
- * The pure half of the PDF export — the Typst source the compiler is fed —
- * exposed so tests can check the document without loading the wasm engine.
- */
-export async function guideToTypst(guide: ExportableGuide): Promise<string> {
-  const { typst, mappings, options } = await typstSetup(guide);
-  const exporter = new typst.TypstExporter(guideSchema, mappings, { resolveFileUrl });
-  return exporter.toTypst(documentFor(guide), options);
-}
-
-async function toPdf(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {
-  const { typst, mappings, options } = await typstSetup(guide);
-  // Defaults for fonts and wasm: both load from the package's own files (the
-  // fonts as base64 chunks, the wasm as a bundler-emitted asset) on the first
-  // export and stay cached for the page's lifetime. A fresh exporter per
-  // export, as the package asks: an instance accumulates image assets.
-  const exporter = new typst.PDFExporter(guideSchema, mappings, { resolveFileUrl });
-  const result = await exporter.toPDF(doc, options);
-  if (result.error) {
-    // Our markup plus bundled fonts always compile, so a failure here is the
-    // environment (wasm/font load, an image that would not decode), never the
-    // author's content — Mermaid that does not parse renders a placeholder.
-    const [first] = result.compileErrors;
-    throw new Error(first ? `PDF compile failed: ${first.message}` : "PDF compile failed");
-  }
-  if (result.compileWarnings.length) {
-    // E.g. "image contains foreign object" when a diagram came out with HTML
-    // labels — a symptom worth seeing in the console when a PDF looks wrong.
-    console.info(
-      "PDF compiler warnings:",
-      result.compileWarnings.map((w) => w.message),
-    );
-  }
-  if (result.pdfUA.declared === false && result.pdfUA.reason === "nonconforming") {
-    // Still a tagged, accessible PDF — just without the PDF/UA-1 claim.
-    // Typical cause: a level-3 heading right after the level-1 title. Not
-    // surfaced to authors yet (plans/pdf-export-typst.md, Q2).
-    console.info(
-      "PDF exported without the PDF/UA-1 claim:",
-      result.pdfUA.violations.map((v) => v.message),
-    );
-  }
-  return result.blob;
 }
 
 async function toDocx(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob> {
@@ -254,7 +137,7 @@ async function toDocx(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob>
                 ],
               })
             : paragraph(block, ...rest),
-        // Rasterized PNG, rendered under the export config like the PDF's.
+        // Rasterized PNG, rendered under the export config.
         diagram: createDiagramBlockMapping({
           renderDiagram: (source) => withExportMermaidConfig(() => renderDiagramToImage(source)),
         }),
@@ -265,14 +148,6 @@ async function toDocx(doc: SchemaBlock[], guide: ExportableGuide): Promise<Blob>
   return exporter.toBlob(doc);
 }
 
-async function toMarkdown(doc: SchemaBlock[]): Promise<Blob> {
-  const { BlockNoteEditor } = await import("@blocknote/core");
-  // Never mounted: a headless editor exists only to run the conversion.
-  const editor = BlockNoteEditor.create({ schema: guideSchema });
-  const markdown = editor.blocksToMarkdownLossy(doc);
-  return new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-}
-
 /** Pure conversion — no DOM side effects — so tests can inspect the output. */
 export async function guideToBlob(
   format: ExportFormat,
@@ -280,12 +155,8 @@ export async function guideToBlob(
 ): Promise<Blob> {
   const doc = documentFor(guide);
   switch (format) {
-    case "pdf":
-      return toPdf(doc, guide);
     case "docx":
       return toDocx(doc, guide);
-    case "md":
-      return toMarkdown(doc);
   }
 }
 

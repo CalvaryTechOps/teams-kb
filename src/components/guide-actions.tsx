@@ -30,13 +30,13 @@ import {
 // Split button at the end of a guide's metadata row: "Copy link" as the main
 // action — it copies the permanent /a/{shortId} link, which survives moves
 // and renames (plans/guide-permalinks.md) — a chevron opening "Print guide"
-// first (the browser's print dialog; the page hides its chrome on paper, see
-// plans/print-guide-chrome.md, so this beats a PDF export for a paper copy),
-// then Download PDF / DOCX / Markdown, "Print QR code", and — for people who may edit — "Edit
+// first (the browser's print dialog, which is also the route to a PDF copy;
+// the page hides its chrome on paper, see plans/print-guide-chrome.md), then
+// "Download DOCX", "Print QR code", and — for people who may edit — "Edit
 // guide", the same target and permission as the header button, plus "Move
-// guide" for owners and admins. Hand-rolled menu (no menu primitive exists in the app yet) with the
-// usual keyboard contract: arrows move, Home/End jump, Escape closes and
-// returns focus, clicking or tabbing away closes.
+// guide" for owners and admins. Hand-rolled menu (no menu primitive exists in
+// the app yet) with the usual keyboard contract: arrows move, Home/End jump,
+// Escape closes and returns focus, clicking or tabbing away closes.
 //
 // The heavy export code lives in guide-export.tsx and is imported only when
 // a download is chosen, so the guide page's own bundle stays small.

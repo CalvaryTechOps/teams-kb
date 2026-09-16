@@ -6,9 +6,9 @@ import type { GuideBlock } from "@/lib/guide-content";
 
 // The split button's contract: what "Copy link" copies (the permalink), that
 // "Print guide" leads the menu and reaches window.print, that the QR label
-// item is always there, when "Edit guide" appears, and that choosing a download reaches the (lazily loaded) exporter
-// with the right format. The exporter itself is mocked here and covered by
-// guide-export.test.ts.
+// item is always there, when "Edit guide" appears, and that choosing
+// "Download DOCX" reaches the (lazily loaded) exporter with the right format.
+// The exporter itself is mocked here and covered by guide-export.test.ts.
 
 const exportGuide = vi.fn(async () => {});
 vi.mock("./guide-export", () => ({ exportGuide }));
@@ -147,15 +147,13 @@ describe("GuideActions", () => {
     expect(menu()).toBeNull();
   });
 
-  it("lists Print guide, the three downloads and the QR label, and Edit guide only for editors", () => {
+  it("lists Print guide, Download DOCX and the QR label, and Edit guide only for editors", () => {
     mount();
     click(chevron());
     expect(menu()).not.toBeNull();
     expect(items()).toEqual([
       "Print guide",
-      "Download PDF",
       "Download DOCX",
-      "Download Markdown",
       "Print QR code",
     ]);
     expect(byText("Print QR code")?.getAttribute("href")).toBe("/a/7kq4x/qr");
@@ -164,9 +162,7 @@ describe("GuideActions", () => {
     mount({ editHref: "/spaces/mp/guides/correct-an-email/edit" });
     expect(items()).toEqual([
       "Print guide",
-      "Download PDF",
       "Download DOCX",
-      "Download Markdown",
       "Print QR code",
       "Edit guide",
     ]);
@@ -180,9 +176,7 @@ describe("GuideActions", () => {
     click(chevron());
     expect(items()).toEqual([
       "Print guide",
-      "Download PDF",
       "Download DOCX",
-      "Download Markdown",
       "Print QR code",
       "Move guide",
     ]);
@@ -196,9 +190,7 @@ describe("GuideActions", () => {
     });
     expect(items()).toEqual([
       "Print guide",
-      "Download PDF",
       "Download DOCX",
-      "Download Markdown",
       "Print QR code",
       "Edit guide",
       "Move guide",
@@ -239,7 +231,7 @@ describe("GuideActions", () => {
     click(chevron());
     const m = menu()!;
     key(m, "ArrowDown");
-    expect(document.activeElement?.textContent?.trim()).toBe("Download PDF");
+    expect(document.activeElement?.textContent?.trim()).toBe("Download DOCX");
     key(m, "End");
     expect(document.activeElement?.textContent?.trim()).toBe("Edit guide");
     key(m, "ArrowDown");
@@ -269,11 +261,11 @@ describe("GuideActions", () => {
     mount();
     click(chevron());
     await act(async () => {
-      byText("Download PDF")!.click();
+      byText("Download DOCX")!.click();
     });
     expect(menu()).toBeNull();
     expect(container.querySelector('[role="alert"]')?.textContent).toContain(
-      "Couldn't prepare the PDF: fonts missing",
+      "Couldn't prepare the DOCX: fonts missing",
     );
   });
 });
