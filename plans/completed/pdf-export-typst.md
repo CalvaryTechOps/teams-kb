@@ -2,7 +2,9 @@
 
 **Status: complete — implemented on `feat/pdf-export-typst` (2026-09-12),
 tested by Chris locally and on staging, merged to `main` via PR #27
-(2026-09-12) and live in production.**
+(2026-09-12) and live in production. Superseded 2026-09-16 by
+plans/remove-pdf-markdown-export.md, which removed the PDF download
+altogether; kept for design rationale only.**
 Planned 2026-09-12, deferred from the dependency-audit-2026-09 plan. Lint,
 typecheck, tests and `next build` passed before the push. Spike results: Turbopack emits the compiler
 as `/_next/static/media/blocknote_typst_wasm_bg.<hash>.wasm` (25.9 MB) from

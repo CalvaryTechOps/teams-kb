@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 const SRC = fileURLToPath(new URL("..", import.meta.url));
 
 /**
- * PDF/DOCX exports and printed QR labels are ink on paper, never themed:
+ * DOCX exports and printed QR labels are ink on paper, never themed:
  * they may keep literal colors.
  */
 const ALLOW = new Set(["components/guide-export.tsx", "components/qr-label.tsx"]);

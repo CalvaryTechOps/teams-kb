@@ -1,12 +1,11 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import { parseGuideContent } from "@/lib/guide-content";
-import { exportFilename, guideToBlob, guideToTypst, metaLine } from "./guide-export";
+import { exportFilename, guideToBlob, metaLine } from "./guide-export";
 
-// Conversion contract for the downloads. Markdown and DOCX run headless here,
-// and so does the PDF's pure half — the Typst source the compiler is fed. The
-// compile itself (a 26 MB wasm engine) and the diagram rendering need a real
-// browser and are covered by the manual test plan in plans/pdf-export-typst.md.
+// Conversion contract for the DOCX download, which runs headless here. The
+// diagram rendering and image fetching need a real browser and are covered
+// by the manual test in plans/remove-pdf-markdown-export.md, step 7.
 
 let counter = 0;
 const id = () => `block-${++counter}`;
@@ -22,9 +21,8 @@ const block = (
   children: unknown[] = [],
 ) => ({ id: id(), type, props, content, children });
 
-// Every block type the editor can produce, except media and diagrams where
-// noted: DOCX would fetch the image and rasterize the diagram, which needs a
-// browser. Markdown handles all of them.
+// Every block type the editor can produce, except media and diagrams: DOCX
+// would fetch the image and rasterize the diagram, which needs a browser.
 const TEXT_BLOCKS = [
   block("heading", { level: 2 }, [text("Steps")]),
   block("paragraph", {}, [
@@ -50,12 +48,6 @@ const TEXT_BLOCKS = [
     ],
   }),
   block("divider"),
-];
-const DIAGRAM = block("diagram", {}, [text("graph TD; A-->B")]);
-const MEDIA = [
-  block("image", { url: "https://blob.example.org/guides/x.png", caption: "Screenshot" }),
-  block("video", { url: "https://blob.example.org/guides/x.mp4", name: "clip" }),
-  block("audio", { url: "https://blob.example.org/guides/x.mp3", name: "voice" }),
 ];
 
 const parse = (blocks: unknown[]) => parseGuideContent(JSON.stringify(blocks));
@@ -84,41 +76,14 @@ const META = { updatedAt: new Date("2026-09-03T12:00:00Z"), author: "Chris Adams
 
 describe("guide export", () => {
   it("names the file after the title", () => {
-    expect(exportFilename("How to correct an email address", "pdf")).toBe(
-      "how-to-correct-an-email-address.pdf",
+    expect(exportFilename("How to correct an email address", "docx")).toBe(
+      "how-to-correct-an-email-address.docx",
     );
-    expect(exportFilename("???", "md")).toBe("untitled.md");
+    expect(exportFilename("???", "docx")).toBe("untitled.docx");
   });
 
   it("formats the byline", () => {
     expect(metaLine(META)).toBe("Last edited Sep 3, 2026 by Chris Adams");
-  });
-
-  it("writes Markdown that opens with the title, byline, a rule, then every block", async () => {
-    const blob = await guideToBlob("md", {
-      title: "Fix an email",
-      blocks: parse([...TEXT_BLOCKS, DIAGRAM, ...MEDIA]),
-      ...META,
-    });
-    expect(blob.type).toContain("text/markdown");
-    const md = await blob.text();
-    expect(
-      md.startsWith("# Fix an email\n\n*Last edited Sep 3, 2026 by Chris Adams*\n\n***\n\n## Steps"),
-    ).toBe(true);
-    expect(md).toContain("## Steps");
-    expect(md).toContain("**Contacts**");
-    expect(md).toContain("[in MP](https://example.org/mp)");
-    expect(md).toContain("* first\n  * nested");
-    expect(md).toContain("3. three\n4. four");
-    expect(md).toContain("* [x] done");
-    expect(md).toContain("> Be kind.");
-    expect(md).toContain("```sql\nselect 1;\n```");
-    expect(md).toMatch(/\| Field\s+\| Value\s+\|/);
-    expect(md).toContain("\n***\n");
-    expect(md).toContain("```mermaid\ngraph TD; A-->B\n```");
-    expect(md).toContain('src="https://blob.example.org/guides/x.png"');
-    expect(md).toContain("![clip](https://blob.example.org/guides/x.mp4)");
-    expect(md).toContain('<audio src="https://blob.example.org/guides/x.mp3"');
   });
 
   it("produces a non-empty DOCX for the text blocks", async () => {
@@ -136,38 +101,5 @@ describe("guide export", () => {
     expect(xml).toContain("Last edited Sep 3, 2026 by Chris Adams");
     expect(xml).toMatch(/<w:sz w:val="20"\/>/);
     expect(xml).toMatch(/<w:color w:val="6b7b81"\/>/i);
-  });
-
-  it("writes Typst for the PDF with metadata, footer, title, byline and every text block", async () => {
-    const typst = await guideToTypst({
-      title: 'Fix an "email"',
-      blocks: parse(TEXT_BLOCKS),
-      ...META,
-    });
-    // PDF metadata and language (both needed for the PDF/UA-1 claim), and
-    // the running footer with a page counter. Quotes in the title are escaped.
-    expect(typst).toContain('#set document(title: "Fix an \\"email\\"", author: "Chris Adams")');
-    expect(typst).toMatch(/#set text\(.*lang: "en"\)/);
-    expect(typst).toContain(
-      'footer: [#align(center)[#text(size: 9pt, fill: rgb("#6b7b81"))[#context [#"Fix an \\"email\\"" · Page #counter(page).display() of #counter(page).final().first()]]]]',
-    );
-    // Body opens with the title as H1, the 10pt grey byline, then the rule.
-    const body = typst.slice(typst.indexOf("#heading(level: 1"));
-    expect(body).toContain('#heading(level: 1, outlined: true)[#"Fix an \\"email\\""]');
-    expect(body).toContain(
-      '#text(size: 10pt, fill: rgb("#6b7b81"))[#"Last edited Sep 3, 2026 by Chris Adams"]',
-    );
-    expect(body.indexOf("Last edited")).toBeLessThan(body.indexOf("#line(length: 100%"));
-    // Every text block made it through the default mappings.
-    expect(body).toContain('#heading(level: 2, outlined: true)[#"Steps"]');
-    expect(body).toContain('#strong("Contacts")');
-    expect(body).toContain('#link("https://example.org/mp")[#"in MP"]');
-    expect(body).toContain("#list(");
-    expect(body).toContain("#enum(\n  start: 3,");
-    expect(body).toContain("#list(marker: _cb-checked");
-    expect(body).toContain('#quote(block: true)[#"Be kind."]');
-    expect(body).toContain('#raw("select 1;", block: true, lang: "sql")');
-    expect(body).toContain("#table(");
-    expect(body).toContain('#strong[#"Field"]');
   });
 });

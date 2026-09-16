@@ -16,6 +16,14 @@ listed under **Upgrade notes** in each release.
   the block at the copy, keeping its size and alignment. Never automatic;
   SVGs are left as they are. New route `POST /api/upload/import`.
 
+### Removed
+
+- The "Download PDF" and "Download Markdown" items in the guide actions menu.
+  For a PDF copy, use "Print guide" and the browser's Save as PDF: printing
+  already hides the app chrome and adds the permanent link. Dropping the PDF
+  exporter also removes the Typst compiler, so the browser no longer downloads
+  a 26 MB wasm asset (plus fonts) on the first export. "Download DOCX" stays.
+
 ## [0.3.0] - 2026-09-15
 
 This release is the recommended baseline for new deployments.

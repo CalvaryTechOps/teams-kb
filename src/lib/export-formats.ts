@@ -1,15 +1,16 @@
 // The download formats a guide offers. Kept apart from the export code so the
-// menu can label its items without pulling the exporters into the page bundle.
+// menu can label its items without pulling the exporter into the page bundle.
+// DOCX is the only format today (PDF and Markdown downloads were removed in
+// favour of Print guide; see plans/remove-pdf-markdown-export.md); a future
+// format slots back in here without touching the menu.
 
-export type ExportFormat = "pdf" | "docx" | "md";
+export type ExportFormat = "docx";
 
 export const EXPORT_FORMATS: Record<
   ExportFormat,
   { label: string; extension: string }
 > = {
-  pdf: { label: "PDF", extension: "pdf" },
   docx: { label: "DOCX", extension: "docx" },
-  md: { label: "Markdown", extension: "md" },
 };
 
-export const EXPORT_FORMAT_ORDER: ExportFormat[] = ["pdf", "docx", "md"];
+export const EXPORT_FORMAT_ORDER: ExportFormat[] = ["docx"];
