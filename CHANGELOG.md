@@ -8,6 +8,14 @@ listed under **Upgrade notes** in each release.
 
 ## [Unreleased]
 
+### Added
+
+- The guide editor flags images that are hosted on other websites (typically
+  pasted along with another page's HTML) and offers a one-click "Copy images
+  to this site" that fetches each one server-side into Vercel Blob and points
+  the block at the copy, keeping its size and alignment. Never automatic;
+  SVGs are left as they are. New route `POST /api/upload/import`.
+
 ## [0.3.0] - 2026-09-15
 
 This release is the recommended baseline for new deployments.

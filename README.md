@@ -36,7 +36,10 @@ identity providers are not supported yet.
   (assigned users/groups, or the whole tenant if assignment is not required)
   with an email on `SAML_EMAIL_DOMAIN`. Control it in Entra.
 - **Media: Vercel Blob.** Guide images, audio and video upload from the
-  browser to a public Blob store (see Known tradeoffs).
+  browser to a public Blob store (see Known tradeoffs). Images pasted as
+  part of another website's HTML keep that site's URL; the editor flags
+  them and offers a one-click copy into Blob (fetched server-side by
+  `/api/upload/import`), never automatically.
 
 Stack: Next.js (App Router) · Tailwind · Drizzle + Neon Postgres · better-auth
 (SAML SSO) · Microsoft Graph · BlockNote editor (JSON blocks) · Vercel.
@@ -288,6 +291,10 @@ the toggle and forces light when off.
 - Guide media uploads go straight to Vercel Blob as public, unguessable URLs —
   anyone holding a URL can view the file. Upgrade path: serve through an
   auth-checked `/api/files/*` proxy (no schema change).
+- Externally hosted images stay external unless an author copies them, so a
+  guide can still break when another site removes a file. The copy route
+  fetches from the public internet on a signed-in author's behalf; it refuses
+  private and loopback addresses but does not defend against DNS rebinding.
 - Only Teams-enabled groups are synced. If a Team is deleted its space is
   orphaned (readable, not editable) until an admin re-homes it; see
   `plans/completed/handle-orphaned-spaces.md`.
