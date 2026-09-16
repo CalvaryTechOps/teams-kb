@@ -1,7 +1,8 @@
 # Plan: Preselect the current category on New Guide
 
-**Status: implemented on `feat/new-guide-category-default` (2026-09-15),
-awaiting Chris's local testing.** Open questions answered 2026-09-15, all
+**Status: complete — implemented on `feat/new-guide-category-default`
+(2026-09-15), tested by Chris locally and on staging; awaiting the PR to
+`main`.** Open questions answered 2026-09-15, all
 per the recommendations: Cancel returns to the category page, the category
 appears as a breadcrumb, and saving still lands on the new guide. Verified
 before the commit: lint, `tsc --noEmit`, tests and build.
