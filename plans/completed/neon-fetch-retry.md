@@ -1,7 +1,8 @@
 # Plan: Retry transient connection failures in the Neon HTTP driver
 
-**Status: implemented on `feat/neon-fetch-retry` (2026-09-24), awaiting
-Chris's local and staging test.** Verified locally: lint, `tsc --noEmit`,
+**Status: complete — implemented on `feat/neon-fetch-retry` (2026-09-24),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Verified locally: lint, `tsc --noEmit`,
 250 tests (18 new in `src/db/neon-fetch.test.ts`) and `next build` pass;
 a script against the Neon `development` branch confirmed the driver calls
 the wrapper — a `select` retried past a simulated `UND_ERR_SOCKET` failure
