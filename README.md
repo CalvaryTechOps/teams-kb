@@ -25,7 +25,9 @@ identity providers are not supported yet.
   within one request handler, and one kept open in a frozen Vercel function
   is dead by the next request. Interactive transactions go through
   `withTransaction` (`src/db/transaction.ts`), which opens a WebSocket
-  client for that call only.
+  client for that call only. The HTTP driver's own request is retried on
+  transient connection failures (`src/db/neon-fetch.ts`: reads on any
+  connection-level error, writes only when the connection never opened).
 - **Sign-in: Microsoft Entra ID via SAML** (an Enterprise application). There
   is no password login and no other identity provider.
 - **Directory: Microsoft Graph.** Groups and memberships are mirrored nightly
