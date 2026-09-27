@@ -1,10 +1,10 @@
 # Plan: Preview a guide pending deletion, reasons for deletion, author self-delete
 
-**Status: implemented on `feat/preview-pending-deletion` (2026-09-27);
-lint, typecheck, tests and build pass; awaiting Chris's local testing. All
-open questions answered; Q4–Q6 took the defaults. Migration
-`0012_deletion-request-reason-prior-status` is applied to the development
-DB branch.**
+**Status: complete — implemented on `feat/preview-pending-deletion` (2026-09-27),
+tested by Chris locally and on staging; awaiting the PR to `main`.** Lint,
+typecheck, tests and build passed before each push. All open questions
+answered; Q4–Q6 took the defaults. Ships migration
+`0012_deletion-request-reason-prior-status`.
 
 Three related changes, rolled into one plan because they share a migration
 and the same handful of files (the danger zone, the deletion actions, the
