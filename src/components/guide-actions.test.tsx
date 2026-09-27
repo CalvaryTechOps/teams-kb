@@ -90,7 +90,7 @@ beforeEach(() => {
   exportGuide.mockClear();
   Object.defineProperty(window, "location", {
     configurable: true,
-    value: new URL("https://kb.example.org/spaces/mp/guides/correct-an-email?rev=draft"),
+    value: new URL("https://kb.example.org/spaces/mp/guides/correct-an-email?rev=3"),
   });
 });
 

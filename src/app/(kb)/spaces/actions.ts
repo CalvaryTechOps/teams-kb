@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
-import { and, desc, eq, inArray, isNull, max, ne } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNull, lt, max, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { withTransaction } from "@/db/transaction";
 import {
@@ -445,36 +445,64 @@ export async function rejectRevision(revisionId: string, formData: FormData) {
   redirect(`/spaces/${spaceSlug}/queue`);
 }
 
-/** Owner/admin publishes the newest draft revision of a guide. */
-export async function publishLatestDraft(guideId: string) {
+/**
+ * Owner/admin publishes one specific revision — the one on screen, not "the
+ * latest" — so the guide page's Publish button can't land on content the
+ * approver hasn't read. A draft newer than the published revision publishes
+ * forward (the old one is superseded, other drafts are left alone). An
+ * older revision — a superseded one, or a draft behind the published one —
+ * is a revert: it becomes current and every later revision that was
+ * published (the current one and superseded ones) goes back to draft, so
+ * nothing newer is lost and any of them can be published again from its
+ * own view. Pending and rejected submissions keep their status.
+ */
+export async function publishRevision(revisionId: string) {
   const access = await requireAccess();
   const [row] = await db
-    .select({ g: guide, spaceSlug: space.slug, groupId: space.groupId })
-    .from(guide)
-    .innerJoin(space, eq(space.id, guide.spaceId))
-    .where(eq(guide.id, guideId));
-  if (!row) notFound();
-  if (!spacePermissions(access, row.groupId).canApprove) {
-    redirect(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
-  }
-  if (row.g.status === "deleted") redirect(`/spaces/${row.spaceSlug}`);
-
-  const [draft] = await db
-    .select()
+    .select({
+      rev: guideRevision,
+      g: guide,
+      spaceSlug: space.slug,
+      groupId: space.groupId,
+    })
     .from(guideRevision)
-    .where(
-      and(eq(guideRevision.guideId, guideId), eq(guideRevision.status, "draft")),
-    )
-    .orderBy(desc(guideRevision.version))
-    .limit(1);
-  if (!draft) redirect(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
+    .innerJoin(guide, eq(guide.id, guideRevision.guideId))
+    .innerJoin(space, eq(space.id, guide.spaceId))
+    .where(eq(guideRevision.id, revisionId));
+  if (!row) notFound();
+  const back = `/spaces/${row.spaceSlug}/guides/${row.g.slug}`;
+  if (!spacePermissions(access, row.groupId).canApprove) redirect(back);
+  if (row.g.status === "deleted") redirect(`/spaces/${row.spaceSlug}`);
+  // Already published, or decided since the page rendered: the guide page
+  // re-renders the truth.
+  if (row.rev.status !== "draft" && row.rev.status !== "superseded") {
+    redirect(back);
+  }
+  const target = row.rev;
 
   await withTransaction(async (tx) => {
+    // Later revisions that were once live go back to draft; the current one
+    // is among them when this is a revert, and is superseded otherwise.
+    await tx
+      .update(guideRevision)
+      .set({ status: "draft" })
+      .where(
+        and(
+          eq(guideRevision.guideId, row.g.id),
+          gt(guideRevision.version, target.version),
+          inArray(guideRevision.status, ["published", "superseded"]),
+        ),
+      );
     if (row.g.currentRevisionId) {
       await tx
         .update(guideRevision)
         .set({ status: "superseded" })
-        .where(eq(guideRevision.id, row.g.currentRevisionId));
+        .where(
+          and(
+            eq(guideRevision.id, row.g.currentRevisionId),
+            lt(guideRevision.version, target.version),
+          ),
+        );
     }
     await tx
       .update(guideRevision)
@@ -483,22 +511,89 @@ export async function publishLatestDraft(guideId: string) {
         reviewedBy: access.userId,
         reviewedAt: new Date(),
       })
-      .where(eq(guideRevision.id, draft.id));
+      .where(eq(guideRevision.id, target.id));
     await tx
       .update(guide)
       .set({
-        title: draft.title,
+        title: target.title,
         status: "published",
-        currentRevisionId: draft.id,
-        searchText: blocksToPlainText(draft.content),
+        currentRevisionId: target.id,
+        searchText: blocksToPlainText(target.content),
         publishedAt: row.g.publishedAt ?? new Date(),
       })
-      .where(eq(guide.id, guideId));
+      .where(eq(guide.id, row.g.id));
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/spaces/${row.spaceSlug}`);
+  revalidatePath(back);
+  redirect(back);
+}
+
+/**
+ * Delete one draft revision for good — the draft on screen turned out to be
+ * worthless. Owners/admins may delete any draft, an editor only their own;
+ * only `draft` rows qualify (submissions are rejected, not deleted, and
+ * published/superseded rows are history). A guide's last remaining revision
+ * stays: removing the whole guide is requestGuideDeletion's job.
+ */
+export async function deleteDraftRevision(revisionId: string) {
+  const access = await requireAccess();
+  const [row] = await db
+    .select({
+      rev: guideRevision,
+      g: guide,
+      spaceSlug: space.slug,
+      groupId: space.groupId,
+    })
+    .from(guideRevision)
+    .innerJoin(guide, eq(guide.id, guideRevision.guideId))
+    .innerJoin(space, eq(space.id, guide.spaceId))
+    .where(eq(guideRevision.id, revisionId));
+  if (!row) notFound();
+  const back = `/spaces/${row.spaceSlug}/guides/${row.g.slug}`;
+  if (row.g.status === "deleted") redirect(`/spaces/${row.spaceSlug}`);
+  const perms = resolveGuidePermissions(access, {
+    spaceGroupId: row.groupId,
+    status: row.g.status,
+    audience: row.g.audience,
+    createdBy: row.g.createdBy,
+  });
+  const mayDelete =
+    perms.canApprove || (perms.canEdit && row.rev.authorId === access.userId);
+  if (!mayDelete) redirect(back);
+  if (row.rev.status !== "draft" || row.rev.id === row.g.currentRevisionId) {
+    redirect(back);
+  }
+
+  await withTransaction(async (tx) => {
+    const [{ n }] = await tx
+      .select({ n: count() })
+      .from(guideRevision)
+      .where(eq(guideRevision.guideId, row.g.id));
+    if (n <= 1) return;
+    await tx.delete(guideRevision).where(eq(guideRevision.id, row.rev.id));
+    // A never-published guide carries its newest revision's title; keep
+    // that true when the newest one just went.
+    if (row.g.status === "draft") {
+      const [newest] = await tx
+        .select({ title: guideRevision.title })
+        .from(guideRevision)
+        .where(eq(guideRevision.guideId, row.g.id))
+        .orderBy(desc(guideRevision.version))
+        .limit(1);
+      if (newest && newest.title !== row.g.title) {
+        await tx
+          .update(guide)
+          .set({ title: newest.title })
+          .where(eq(guide.id, row.g.id));
+      }
+    }
   });
 
   revalidatePath(`/spaces/${row.spaceSlug}`);
-  revalidatePath(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
-  redirect(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
+  revalidatePath(back);
+  redirect(back);
 }
 
 // ---------------------------------------------------------------------------
