@@ -105,7 +105,7 @@ export default async function QueuePage({
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-6 py-4">
                   <div className="min-w-0 flex-1">
                     <Link
-                      href={`/spaces/${s.slug}/guides/${guideSlug}?rev=draft`}
+                      href={`/spaces/${s.slug}/guides/${guideSlug}?rev=${rev.version}`}
                       className="font-bold text-fg-strong hover:text-accent-text"
                     >
                       {rev.title}
@@ -122,7 +122,7 @@ export default async function QueuePage({
                   </div>
                   {!current && <Badge tone="brand">New guide</Badge>}
                   <ButtonLink
-                    href={`/spaces/${s.slug}/guides/${guideSlug}?rev=draft`}
+                    href={`/spaces/${s.slug}/guides/${guideSlug}?rev=${rev.version}`}
                     variant="ghost"
                     size="sm"
                   >

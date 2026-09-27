@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { APP_TITLE, APP_URL } from "@/lib/branding";
 import {
@@ -20,7 +20,15 @@ import { PencilIcon, QrCodeIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { GuideContent } from "@/components/guide-content";
 import { GuideActions } from "@/components/guide-actions";
+import { RevisionPicker } from "@/components/revision-picker";
 import { readingMinutes } from "@/lib/guide-content";
+import {
+  chooseRevision,
+  parseRevisionParam,
+  revisionHref,
+  visibleRevisions,
+  type RevisionMeta,
+} from "@/lib/guide-revisions";
 import {
   getSession,
   requireAccess,
@@ -33,7 +41,16 @@ import {
   GENERAL_CATEGORY_NAME,
   GENERAL_CATEGORY_SLUG,
 } from "@/lib/categories";
-import { publishLatestDraft } from "../../../actions";
+import { publishDraftRevision } from "../../../actions";
+
+// How the banner names a revision that isn't the one readers see.
+const REVISION_NOUN: Record<RevisionMeta["status"], string> = {
+  draft: "draft",
+  pending: "pending submission",
+  rejected: "rejected submission",
+  superseded: "superseded revision",
+  published: "published revision",
+};
 
 export default async function GuidePage({
   params,
@@ -57,6 +74,7 @@ export default async function GuidePage({
     .where(and(eq(space.slug, slug), eq(guide.slug, guideSlug)));
   if (!row) notFound();
   const { g, s } = row;
+  const basePath = `/spaces/${s.slug}/guides/${g.slug}`;
 
   const audienceGroups =
     g.audience === "groups"
@@ -77,51 +95,67 @@ export default async function GuidePage({
   });
   if (!perms.canRead) notFound();
 
-  // Unpublished work is visible only to approvers (owners/admins) and the
-  // revision's own author — fellow members must not read unapproved content.
-  const canSeeRevision = (r: { authorId: string }) =>
-    perms.canApprove || r.authorId === access.userId;
+  // Every revision's metadata (never the content), newest first. The
+  // picker, the banners and the choice of what to render all read this one
+  // list, narrowed to what the viewer may see: approvers (owners/admins)
+  // everything, editors their own work plus the published revision, readers
+  // the published revision only (plans/revision-picker.md).
+  const allRevisions = await db
+    .select({
+      id: guideRevision.id,
+      version: guideRevision.version,
+      status: guideRevision.status,
+      authorId: guideRevision.authorId,
+      authorName: user.name,
+      createdAt: guideRevision.createdAt,
+      reviewedAt: guideRevision.reviewedAt,
+      reviewNote: guideRevision.reviewNote,
+    })
+    .from(guideRevision)
+    .leftJoin(user, eq(user.id, guideRevision.authorId))
+    .where(eq(guideRevision.guideId, g.id))
+    .orderBy(desc(guideRevision.version));
+  const visible = visibleRevisions(
+    allRevisions,
+    {
+      userId: perms.canEdit ? access.userId : undefined,
+      canApprove: perms.canApprove,
+    },
+    g.currentRevisionId,
+  );
 
-  // Which revision to show: the published one, or — for those allowed — the
-  // newest unpublished one (draft or pending submission; always for
-  // never-published guides, on request via ?rev=draft for published ones).
-  const unpublishedRows = perms.canEdit
-    ? await db
-        .select()
-        .from(guideRevision)
-        .where(
-          and(
-            eq(guideRevision.guideId, g.id),
-            inArray(guideRevision.status, ["draft", "pending"]),
-          ),
-        )
-        .orderBy(desc(guideRevision.version))
-        .limit(1)
-    : [];
-  let latestUnpublished = unpublishedRows.at(0);
-  if (latestUnpublished && !canSeeRevision(latestUnpublished)) {
-    latestUnpublished = undefined;
-  }
+  // The bare URL renders the published revision (or, for a never-published
+  // guide, the newest revision the viewer may see); ?rev=<version> renders
+  // that revision when it's visible and is otherwise ignored.
+  const defaultRevision = chooseRevision(visible, undefined, g.currentRevisionId);
+  const chosen = chooseRevision(visible, parseRevisionParam(rev), g.currentRevisionId);
+  if (!chosen || !defaultRevision) notFound();
+  const [revision] = await db
+    .select()
+    .from(guideRevision)
+    .where(eq(guideRevision.id, chosen.id));
+  if (!revision) notFound();
 
-  // A rejection is worth surfacing until someone revises past it — but only
-  // to the rejected author and to approvers.
-  const rejectedRows = perms.canEdit
-    ? await db
-        .select()
-        .from(guideRevision)
-        .where(
-          and(
-            eq(guideRevision.guideId, g.id),
-            eq(guideRevision.status, "rejected"),
-          ),
-        )
-        .orderBy(desc(guideRevision.version))
-        .limit(1)
-    : [];
-  let latestRejected = rejectedRows.at(0);
-  if (latestRejected && !canSeeRevision(latestRejected)) {
-    latestRejected = undefined;
-  }
+  const published = g.currentRevisionId
+    ? visible.find((r) => r.id === g.currentRevisionId)
+    : undefined;
+  const viewingOther = chosen.id !== defaultRevision.id;
+  // Newest draft or pending submission, when it's newer than what's live.
+  const newest = visible.find((r) => r.status === "draft" || r.status === "pending");
+  const newerUnpublished =
+    newest !== undefined && (published === undefined || newest.version > published.version)
+      ? newest
+      : undefined;
+  const isPending = newerUnpublished?.status === "pending";
+  // A rejection is the guide's latest word only if nothing newer exists;
+  // it's surfaced on the default view (when viewing it, the banner above
+  // says so instead).
+  const latestRejected = visible.find((r) => r.status === "rejected");
+  const showRejected =
+    !viewingOther &&
+    latestRejected !== undefined &&
+    (published === undefined || latestRejected.version > published.version) &&
+    (newest === undefined || latestRejected.version > newest.version);
 
   // Owners see when their all-staff publish request is still awaiting an admin.
   const pendingAllStaff = perms.canApprove
@@ -136,48 +170,23 @@ export default async function GuidePage({
         )
     : [];
 
-  const [publishedRevision] = g.currentRevisionId
-    ? await db
-        .select()
-        .from(guideRevision)
-        .where(eq(guideRevision.id, g.currentRevisionId))
-    : [];
-
-  const viewingUnpublished =
-    latestUnpublished !== undefined &&
-    (publishedRevision === undefined ||
-      (rev === "draft" &&
-        latestUnpublished.version > publishedRevision.version));
-  const revision = viewingUnpublished ? latestUnpublished : publishedRevision;
-  if (!revision) notFound();
-
-  const [author] = await db
-    .select({ name: user.name })
-    .from(user)
-    .where(eq(user.id, revision.authorId));
-
   const tags = await db
     .select({ name: tag.name, slug: tag.slug })
     .from(guideTag)
     .innerJoin(tag, eq(tag.id, guideTag.tagId))
     .where(eq(guideTag.guideId, g.id));
 
-  const hasNewerUnpublished =
-    latestUnpublished !== undefined &&
-    publishedRevision !== undefined &&
-    latestUnpublished.version > publishedRevision.version;
-  // Pending v1 of a never-published guide has no version comparison to win,
-  // but editors still need to see that it's waiting on approval.
-  const pendingBeforeFirstPublish =
-    latestUnpublished?.status === "pending" && publishedRevision === undefined;
-  const isPending = latestUnpublished?.status === "pending";
-  // A rejection is the guide's latest word only if nothing newer exists.
-  const showRejected =
-    latestRejected !== undefined &&
-    (publishedRevision === undefined ||
-      latestRejected.version > publishedRevision.version) &&
-    (latestUnpublished === undefined ||
-      latestRejected.version > latestUnpublished.version);
+  const authorName = chosen.authorName ?? "Unknown";
+  const pickerRevisions: RevisionMeta[] = visible.map(
+    ({ id, version, status, authorId, authorName, createdAt }) => ({
+      id,
+      version,
+      status,
+      authorId,
+      authorName,
+      createdAt,
+    }),
+  );
 
   return (
     <>
@@ -194,11 +203,7 @@ export default async function GuidePage({
         userName={session?.user.name ?? "Staff"}
         actions={
           perms.canEdit ? (
-            <ButtonLink
-              href={`/spaces/${s.slug}/guides/${g.slug}/edit`}
-              variant="secondary"
-              size="sm"
-            >
+            <ButtonLink href={`${basePath}/edit`} variant="secondary" size="sm">
               <PencilIcon size={13} />
               Edit guide
             </ButtonLink>
@@ -207,60 +212,95 @@ export default async function GuidePage({
       />
       <main className="grid grid-cols-1 gap-10 px-12 py-10 lg:grid-cols-[minmax(0,720px)_232px] print:block print:p-0">
         <article>
-          {latestUnpublished &&
-            (hasNewerUnpublished || pendingBeforeFirstPublish) && (
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg print:hidden">
-                {pendingBeforeFirstPublish ? (
-                  <span>
-                    v{latestUnpublished.version} is awaiting owner approval
-                    before this guide goes live.
-                  </span>
-                ) : viewingUnpublished && publishedRevision ? (
-                  <>
-                    <span>
-                      You&apos;re previewing{" "}
-                      {isPending ? "pending submission" : "draft"} v
-                      {latestUnpublished.version}. The published version is v
-                      {publishedRevision.version}.
-                    </span>
-                    <ButtonLink
-                      href={`/spaces/${s.slug}/guides/${g.slug}`}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      View published
-                    </ButtonLink>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      {isPending
-                        ? `v${latestUnpublished.version} is awaiting approval.`
-                        : `A newer draft (v${latestUnpublished.version}) is waiting.`}
-                    </span>
-                    <ButtonLink
-                      href={`/spaces/${s.slug}/guides/${g.slug}?rev=draft`}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      {isPending ? "Preview submission" : "Preview draft"}
-                    </ButtonLink>
-                  </>
+          {viewingOther && (
+            <div className="mb-5 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg print:hidden">
+              <div className="flex flex-wrap items-center gap-3">
+                <span>
+                  You&apos;re viewing {REVISION_NOUN[chosen.status]} v
+                  {chosen.version}
+                  {chosen.status === "rejected" && chosen.reviewedAt
+                    ? ` (rejected ${timeAgo(chosen.reviewedAt)})`
+                    : ""}
+                  .{" "}
+                  {published
+                    ? `The published version is v${published.version}.`
+                    : `The newest revision is v${defaultRevision.version}.`}
+                </span>
+                <ButtonLink
+                  href={revisionHref(basePath, defaultRevision, g.currentRevisionId)}
+                  variant="secondary"
+                  size="sm"
+                >
+                  {published ? "View published" : "View newest"}
+                </ButtonLink>
+                {chosen.status === "rejected" && perms.canEdit && (
+                  <ButtonLink href={`${basePath}/edit`} variant="secondary" size="sm">
+                    Edit guide
+                  </ButtonLink>
                 )}
-                {perms.canApprove &&
-                  (isPending ? (
-                    <ButtonLink href={`/spaces/${s.slug}/queue`} size="sm">
-                      Review in queue
-                    </ButtonLink>
-                  ) : (
-                    <form action={publishLatestDraft.bind(null, g.id)}>
+                {perms.canApprove && chosen.status === "draft" && (
+                  <form action={publishDraftRevision.bind(null, chosen.id)}>
+                    <Button type="submit" size="sm">
+                      Publish this draft
+                    </Button>
+                  </form>
+                )}
+                {perms.canApprove && chosen.status === "pending" && (
+                  <ButtonLink href={`/spaces/${s.slug}/queue`} size="sm">
+                    Review in queue
+                  </ButtonLink>
+                )}
+              </div>
+              {chosen.status === "rejected" && chosen.reviewNote && (
+                <p className="mt-1.5 text-[13px] text-fg-muted">
+                  Reviewer note: “{chosen.reviewNote}”
+                </p>
+              )}
+            </div>
+          )}
+
+          {!viewingOther && newerUnpublished && (published || isPending) && (
+            <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg print:hidden">
+              {published ? (
+                <>
+                  <span>
+                    {isPending
+                      ? `v${newerUnpublished.version} is awaiting approval.`
+                      : `A newer draft (v${newerUnpublished.version}) is waiting.`}
+                  </span>
+                  <ButtonLink
+                    href={revisionHref(basePath, newerUnpublished, g.currentRevisionId)}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {isPending ? "Preview submission" : "Preview draft"}
+                  </ButtonLink>
+                </>
+              ) : (
+                // Never published, so the pending revision is on screen
+                // already (a never-published draft needs no banner: the
+                // Draft badge covers it).
+                <span>
+                  v{newerUnpublished.version} is awaiting owner approval
+                  before this guide goes live.
+                </span>
+              )}
+              {perms.canApprove &&
+                (isPending ? (
+                  <ButtonLink href={`/spaces/${s.slug}/queue`} size="sm">
+                    Review in queue
+                  </ButtonLink>
+                ) : (
+                  published && (
+                    <form action={publishDraftRevision.bind(null, newerUnpublished.id)}>
                       <Button type="submit" size="sm">
                         Publish draft
                       </Button>
                     </form>
-                  ))}
-              </div>
-            )}
+                  )
+                ))}
+            </div>
+          )}
 
           {showRejected && latestRejected && (
             <div className="mb-5 rounded-lg border border-danger-100 bg-danger-soft/50 px-4 py-3 text-sm text-fg print:hidden">
@@ -272,13 +312,20 @@ export default async function GuidePage({
                     : ""}
                   . Edit the guide to revise and resubmit.
                 </span>
-                <ButtonLink
-                  href={`/spaces/${s.slug}/guides/${g.slug}/edit`}
-                  variant="secondary"
-                  size="sm"
-                >
-                  Edit guide
-                </ButtonLink>
+                {chosen.id !== latestRejected.id && (
+                  <ButtonLink
+                    href={revisionHref(basePath, latestRejected, g.currentRevisionId)}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    View submission
+                  </ButtonLink>
+                )}
+                {perms.canEdit && (
+                  <ButtonLink href={`${basePath}/edit`} variant="secondary" size="sm">
+                    Edit guide
+                  </ButtonLink>
+                )}
               </div>
               {latestRejected.reviewNote && (
                 <p className="mt-1.5 text-[13px] text-fg-muted">
@@ -324,7 +371,7 @@ export default async function GuidePage({
               </span>
               <span aria-hidden>·</span>
               <span>
-                {author?.name ?? "Unknown"}, {s.name}
+                {authorName}, {s.name}
               </span>
               <span aria-hidden>·</span>
               <span>{readingMinutes(revision.content)} min read</span>
@@ -338,17 +385,9 @@ export default async function GuidePage({
               title={revision.title}
               blocks={revision.content}
               updatedAt={revision.createdAt}
-              author={author?.name ?? "Unknown"}
-              editHref={
-                perms.canEdit
-                  ? `/spaces/${s.slug}/guides/${g.slug}/edit`
-                  : undefined
-              }
-              moveHref={
-                perms.canApprove
-                  ? `/spaces/${s.slug}/guides/${g.slug}/move`
-                  : undefined
-              }
+              author={authorName}
+              editHref={perms.canEdit ? `${basePath}/edit` : undefined}
+              moveHref={perms.canApprove ? `${basePath}/move` : undefined}
             />
           </div>
 
@@ -402,6 +441,20 @@ export default async function GuidePage({
                 Print QR code
               </Link>
             </div>
+            {perms.canApprove && (
+              <div className="border-t border-border pt-5">
+                <MicroLabel className="mb-2.5">Revisions</MicroLabel>
+                <RevisionPicker
+                  basePath={basePath}
+                  revisions={pickerRevisions}
+                  currentRevisionId={g.currentRevisionId}
+                  selectedId={chosen.id}
+                />
+                <p className="mt-1.5 text-[12px] leading-relaxed text-fg-muted">
+                  Only the published revision is visible to readers.
+                </p>
+              </div>
+            )}
           </div>
         </aside>
       </main>

@@ -20,8 +20,8 @@ import { m365Group, space } from "./directory-schema";
 // ---------------------------------------------------------------------------
 // Knowledgebase content. A BlockNote JSON document (array of blocks) is the
 // single canonical format — see src/lib/guide-content.ts for the accepted
-// shape. Every edit is a guide_revision, so the schema is version-history-ready
-// even though v1 ships no history UI.
+// shape. Every edit is a guide_revision; owners and admins browse them from
+// the guide page's revision picker (src/lib/guide-revisions.ts).
 // ---------------------------------------------------------------------------
 
 // Postgres full-text search vector; drizzle has no built-in for it.

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
-import { and, desc, eq, inArray, isNull, max, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, max, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { withTransaction } from "@/db/transaction";
 import {
@@ -445,29 +445,32 @@ export async function rejectRevision(revisionId: string, formData: FormData) {
   redirect(`/spaces/${spaceSlug}/queue`);
 }
 
-/** Owner/admin publishes the newest draft revision of a guide. */
-export async function publishLatestDraft(guideId: string) {
+/**
+ * Owner/admin publishes one specific draft revision — the one on screen, not
+ * "the latest" — so the guide page's Publish button can't land on a draft
+ * the approver hasn't read. Any newer draft is left alone.
+ */
+export async function publishDraftRevision(revisionId: string) {
   const access = await requireAccess();
   const [row] = await db
-    .select({ g: guide, spaceSlug: space.slug, groupId: space.groupId })
-    .from(guide)
-    .innerJoin(space, eq(space.id, guide.spaceId))
-    .where(eq(guide.id, guideId));
-  if (!row) notFound();
-  if (!spacePermissions(access, row.groupId).canApprove) {
-    redirect(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
-  }
-  if (row.g.status === "deleted") redirect(`/spaces/${row.spaceSlug}`);
-
-  const [draft] = await db
-    .select()
+    .select({
+      rev: guideRevision,
+      g: guide,
+      spaceSlug: space.slug,
+      groupId: space.groupId,
+    })
     .from(guideRevision)
-    .where(
-      and(eq(guideRevision.guideId, guideId), eq(guideRevision.status, "draft")),
-    )
-    .orderBy(desc(guideRevision.version))
-    .limit(1);
-  if (!draft) redirect(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
+    .innerJoin(guide, eq(guide.id, guideRevision.guideId))
+    .innerJoin(space, eq(space.id, guide.spaceId))
+    .where(eq(guideRevision.id, revisionId));
+  if (!row) notFound();
+  const back = `/spaces/${row.spaceSlug}/guides/${row.g.slug}`;
+  if (!spacePermissions(access, row.groupId).canApprove) redirect(back);
+  if (row.g.status === "deleted") redirect(`/spaces/${row.spaceSlug}`);
+  // Already published or decided since the page rendered: the guide page
+  // re-renders the truth.
+  if (row.rev.status !== "draft") redirect(back);
+  const draft = row.rev;
 
   await withTransaction(async (tx) => {
     if (row.g.currentRevisionId) {
@@ -493,12 +496,13 @@ export async function publishLatestDraft(guideId: string) {
         searchText: blocksToPlainText(draft.content),
         publishedAt: row.g.publishedAt ?? new Date(),
       })
-      .where(eq(guide.id, guideId));
+      .where(eq(guide.id, row.g.id));
   });
 
+  revalidatePath("/");
   revalidatePath(`/spaces/${row.spaceSlug}`);
-  revalidatePath(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
-  redirect(`/spaces/${row.spaceSlug}/guides/${row.g.slug}`);
+  revalidatePath(back);
+  redirect(back);
 }
 
 // ---------------------------------------------------------------------------
