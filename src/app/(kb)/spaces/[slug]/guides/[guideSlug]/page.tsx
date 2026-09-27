@@ -306,20 +306,13 @@ export default async function GuidePage({
                   before this guide goes live.
                 </span>
               )}
-              {perms.canApprove &&
-                (isPending ? (
-                  <ButtonLink href={`/spaces/${s.slug}/queue`} size="sm">
-                    Review in queue
-                  </ButtonLink>
-                ) : (
-                  published && (
-                    <form action={publishDraftRevision.bind(null, newerUnpublished.id)}>
-                      <Button type="submit" size="sm">
-                        Publish draft
-                      </Button>
-                    </form>
-                  )
-                ))}
+              {/* No Publish button here: an approver publishes only from the
+                  draft's own view, so they never publish unread content. */}
+              {perms.canApprove && isPending && (
+                <ButtonLink href={`/spaces/${s.slug}/queue`} size="sm">
+                  Review in queue
+                </ButtonLink>
+              )}
             </div>
           )}
 

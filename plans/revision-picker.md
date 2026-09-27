@@ -145,7 +145,10 @@ Keep the existing warning-toned banner above the badges, generalised from
   "awaiting owner approval before this guide goes live" wording stays.
 
 The "A newer draft (vN) is waiting" banner still shows on the current
-revision when a newer draft/pending exists, linking to `?rev=N`. The red
+revision when a newer draft/pending exists, linking to `?rev=N` — with
+**no Publish button** (changed 2026-09-27 after staging): an approver
+publishes only from the draft's own view, so what gets published is always
+what they are looking at. The red
 "Submission vN was rejected" banner still shows on the current revision
 when the rejection is the guide's latest word, and now links to `?rev=N`
 as well as to Edit.
@@ -157,7 +160,7 @@ same permission gate, but it verifies the row is a `draft` of a
 non-deleted guide and publishes exactly that row (superseding the current
 published one), mirroring `approveRevision`. The banner's Publish button
 binds the id of the draft being viewed; the "newer draft is waiting"
-banner binds the newest draft's id. Publishing an older draft while a
+banner offers no publish at all. Publishing an older draft while a
 newer one exists is allowed and leaves the newer draft untouched (Q4).
 
 Restoring a superseded revision (re-publishing old content) is **not** in
