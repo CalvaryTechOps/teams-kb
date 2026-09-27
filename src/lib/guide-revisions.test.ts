@@ -4,6 +4,7 @@ import {
   chooseRevision,
   parseRevisionParam,
   revisionHref,
+  revertDemotions,
   revisionOptionLabel,
   revisionStatusLabel,
   visibleRevisions,
@@ -185,5 +186,34 @@ describe("canDeleteRevision", () => {
 
   it("refuses a guide's last revision", () => {
     expect(canDeleteRevision(draft, approver, 1)).toBe(false);
+  });
+});
+
+describe("revertDemotions", () => {
+  // v1 superseded, v2 superseded, v3 published, v4 rejected, v5 draft, v6 pending.
+  const history: RevisionMeta[] = [
+    rev({ version: 6, status: "pending" }),
+    rev({ version: 5, status: "draft" }),
+    rev({ version: 4, status: "rejected" }),
+    rev({ version: 3, status: "published" }),
+    rev({ version: 2, status: "superseded" }),
+    rev({ version: 1, status: "superseded" }),
+  ];
+
+  it("demotes the published and superseded revisions after the target, oldest first", () => {
+    expect(revertDemotions(history, history[5]!).map((r) => r.version)).toEqual([2, 3]);
+  });
+
+  it("leaves drafts, pending and rejected revisions alone", () => {
+    expect(revertDemotions(history, history[4]!).map((r) => r.version)).toEqual([3]);
+  });
+
+  it("demotes nothing for a forward publish", () => {
+    expect(revertDemotions(history, history[1]!)).toEqual([]);
+  });
+
+  it("demotes nothing for a revision that cannot be published this way", () => {
+    expect(revertDemotions(history, history[2]!)).toEqual([]);
+    expect(revertDemotions(history, history[0]!)).toEqual([]);
   });
 });

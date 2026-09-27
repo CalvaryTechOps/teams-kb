@@ -163,8 +163,17 @@ binds the id of the draft being viewed; the "newer draft is waiting"
 banner offers no publish at all. Publishing an older draft while a
 newer one exists is allowed and leaves the newer draft untouched (Q4).
 
-Restoring a superseded revision (re-publishing old content) is **not** in
-scope; it needs a copy-as-new-revision step and belongs in a later plan.
+**Reverting (added 2026-09-27 after staging).** `publishDraftRevision`
+became `publishRevision`, which also accepts a `superseded` revision. When
+the target is older than the published revision the banner's button reads
+**Revert to this version** (native confirm naming what changes); the
+target becomes current and every later revision that was published (the
+current one and superseded ones) goes back to `draft`, so nothing newer is
+lost and any of them can be published again from its own view. Pending and
+rejected submissions keep their status. A draft newer than the published
+revision still publishes forward as **Publish this draft**, superseding
+the old one. `revertDemotions` in `src/lib/guide-revisions.ts` computes
+the affected list for the label and confirm.
 
 ### 5. Deleting a draft (added 2026-09-27 after the first round)
 

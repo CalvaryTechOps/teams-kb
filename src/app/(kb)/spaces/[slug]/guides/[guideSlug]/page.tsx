@@ -27,6 +27,7 @@ import {
   canDeleteRevision,
   chooseRevision,
   parseRevisionParam,
+  revertDemotions,
   revisionHref,
   visibleRevisions,
   type RevisionMeta,
@@ -43,7 +44,7 @@ import {
   GENERAL_CATEGORY_NAME,
   GENERAL_CATEGORY_SLUG,
 } from "@/lib/categories";
-import { deleteDraftRevision, publishDraftRevision } from "../../../actions";
+import { deleteDraftRevision, publishRevision } from "../../../actions";
 
 // How the banner names a revision that isn't the one readers see.
 const REVISION_NOUN: Record<RevisionMeta["status"], string> = {
@@ -142,6 +143,15 @@ export default async function GuidePage({
     ? visible.find((r) => r.id === g.currentRevisionId)
     : undefined;
   const viewingOther = chosen.id !== defaultRevision.id;
+  // Owners/admins may publish the draft or superseded revision on screen.
+  // Publishing an older one is a revert: later published revisions become
+  // drafts, and the confirm names them.
+  const canPublishChosen =
+    perms.canApprove &&
+    viewingOther &&
+    (chosen.status === "draft" || chosen.status === "superseded");
+  const demoted = revertDemotions(allRevisions, chosen);
+  const isRevert = demoted.length > 0;
   const canDeleteChosen = canDeleteRevision(
     chosen,
     { userId: perms.canEdit ? access.userId : undefined, canApprove: perms.canApprove },
@@ -245,13 +255,27 @@ export default async function GuidePage({
                     Edit guide
                   </ButtonLink>
                 )}
-                {perms.canApprove && chosen.status === "draft" && (
-                  <form action={publishDraftRevision.bind(null, chosen.id)}>
-                    <Button type="submit" size="sm">
-                      Publish this draft
-                    </Button>
-                  </form>
-                )}
+                {canPublishChosen &&
+                  (isRevert ? (
+                    <ConfirmForm
+                      action={publishRevision.bind(null, chosen.id)}
+                      message={`Make v${chosen.version} the published version? ${
+                        demoted.length === 1
+                          ? `v${demoted[0]!.version} becomes a draft`
+                          : `${demoted.map((r) => `v${r.version}`).join(", ")} become drafts`
+                      } and can be published again later.`}
+                    >
+                      <Button type="submit" size="sm">
+                        Revert to this version
+                      </Button>
+                    </ConfirmForm>
+                  ) : (
+                    <form action={publishRevision.bind(null, chosen.id)}>
+                      <Button type="submit" size="sm">
+                        Publish this draft
+                      </Button>
+                    </form>
+                  ))}
                 {perms.canApprove && chosen.status === "pending" && (
                   <ButtonLink href={`/spaces/${s.slug}/queue`} size="sm">
                     Review in queue

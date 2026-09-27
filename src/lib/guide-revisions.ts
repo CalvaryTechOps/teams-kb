@@ -155,3 +155,25 @@ export function canDeleteRevision(
     (viewer.userId !== undefined && rev.authorId === viewer.userId)
   );
 }
+
+/**
+ * Publishing `target` from the guide page: is it a revert (an older
+ * revision going back live), and which later revisions lose their
+ * published/superseded status and become drafts? Only drafts and
+ * superseded revisions can be published this way; anything else, or a
+ * forward publish of the newest draft, demotes nothing. Mirrors what
+ * publishRevision does on the server, for the button label and confirm.
+ */
+export function revertDemotions<T extends RevisionMeta>(
+  all: readonly T[],
+  target: Pick<RevisionMeta, "id" | "version" | "status">,
+): T[] {
+  if (target.status !== "draft" && target.status !== "superseded") return [];
+  return all
+    .filter(
+      (r) =>
+        r.version > target.version &&
+        (r.status === "published" || r.status === "superseded"),
+    )
+    .sort((a, b) => a.version - b.version);
+}

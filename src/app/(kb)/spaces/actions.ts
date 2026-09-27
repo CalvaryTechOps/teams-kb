@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
-import { and, count, desc, eq, inArray, isNull, max, ne } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNull, lt, max, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { withTransaction } from "@/db/transaction";
 import {
@@ -446,11 +446,17 @@ export async function rejectRevision(revisionId: string, formData: FormData) {
 }
 
 /**
- * Owner/admin publishes one specific draft revision — the one on screen, not
- * "the latest" — so the guide page's Publish button can't land on a draft
- * the approver hasn't read. Any newer draft is left alone.
+ * Owner/admin publishes one specific revision — the one on screen, not "the
+ * latest" — so the guide page's Publish button can't land on content the
+ * approver hasn't read. A draft newer than the published revision publishes
+ * forward (the old one is superseded, other drafts are left alone). An
+ * older revision — a superseded one, or a draft behind the published one —
+ * is a revert: it becomes current and every later revision that was
+ * published (the current one and superseded ones) goes back to draft, so
+ * nothing newer is lost and any of them can be published again from its
+ * own view. Pending and rejected submissions keep their status.
  */
-export async function publishDraftRevision(revisionId: string) {
+export async function publishRevision(revisionId: string) {
   const access = await requireAccess();
   const [row] = await db
     .select({
@@ -467,17 +473,36 @@ export async function publishDraftRevision(revisionId: string) {
   const back = `/spaces/${row.spaceSlug}/guides/${row.g.slug}`;
   if (!spacePermissions(access, row.groupId).canApprove) redirect(back);
   if (row.g.status === "deleted") redirect(`/spaces/${row.spaceSlug}`);
-  // Already published or decided since the page rendered: the guide page
+  // Already published, or decided since the page rendered: the guide page
   // re-renders the truth.
-  if (row.rev.status !== "draft") redirect(back);
-  const draft = row.rev;
+  if (row.rev.status !== "draft" && row.rev.status !== "superseded") {
+    redirect(back);
+  }
+  const target = row.rev;
 
   await withTransaction(async (tx) => {
+    // Later revisions that were once live go back to draft; the current one
+    // is among them when this is a revert, and is superseded otherwise.
+    await tx
+      .update(guideRevision)
+      .set({ status: "draft" })
+      .where(
+        and(
+          eq(guideRevision.guideId, row.g.id),
+          gt(guideRevision.version, target.version),
+          inArray(guideRevision.status, ["published", "superseded"]),
+        ),
+      );
     if (row.g.currentRevisionId) {
       await tx
         .update(guideRevision)
         .set({ status: "superseded" })
-        .where(eq(guideRevision.id, row.g.currentRevisionId));
+        .where(
+          and(
+            eq(guideRevision.id, row.g.currentRevisionId),
+            lt(guideRevision.version, target.version),
+          ),
+        );
     }
     await tx
       .update(guideRevision)
@@ -486,14 +511,14 @@ export async function publishDraftRevision(revisionId: string) {
         reviewedBy: access.userId,
         reviewedAt: new Date(),
       })
-      .where(eq(guideRevision.id, draft.id));
+      .where(eq(guideRevision.id, target.id));
     await tx
       .update(guide)
       .set({
-        title: draft.title,
+        title: target.title,
         status: "published",
-        currentRevisionId: draft.id,
-        searchText: blocksToPlainText(draft.content),
+        currentRevisionId: target.id,
+        searchText: blocksToPlainText(target.content),
         publishedAt: row.g.publishedAt ?? new Date(),
       })
       .where(eq(guide.id, row.g.id));
