@@ -1,8 +1,9 @@
 # Plan: Always show the current revision, pick others from the sidebar
 
-**Status: implemented 2026-09-27 on `feat/revision-picker` (revision
-picker, then draft deletion in a second commit), awaiting local testing by
-Chris. Open questions below are answered.** Notes from
+**Status: complete — implemented on `feat/revision-picker` (2026-09-27),
+tested by Chris locally and on staging; awaiting the PR to `main`.** Open
+questions below are answered; lint, typecheck, tests and build passed
+before each push. Notes from
 implementation: the never-published-draft case renders no banner at all (the
 Draft badge covers it), and the red "was rejected" banner gained a "View
 submission" button so the rejected content is one click away even without
