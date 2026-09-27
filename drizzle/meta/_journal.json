@@ -85,6 +85,13 @@
       "when": 1789231744930,
       "tag": "0011_account-issuer-optional",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790543596222,
+      "tag": "0012_deletion-request-reason-prior-status",
+      "breakpoints": true
     }
   ]
 }

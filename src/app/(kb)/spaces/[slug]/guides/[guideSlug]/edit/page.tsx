@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { and, asc, desc, eq, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { APP_TITLE } from "@/lib/branding";
 import {
@@ -23,6 +23,7 @@ import {
   GENERAL_CATEGORY_SLUG,
 } from "@/lib/categories";
 import {
+  canDeleteGuideOutright,
   getSession,
   requireAccess,
   resolveGuidePermissions,
@@ -30,8 +31,10 @@ import {
 
 export default async function EditGuidePage({
   params,
+  searchParams,
 }: PageProps<"/spaces/[slug]/guides/[guideSlug]/edit">) {
   const { slug, guideSlug } = await params;
+  const query = await searchParams;
   const access = await requireAccess();
   const session = await getSession();
 
@@ -56,6 +59,15 @@ export default async function EditGuidePage({
     createdBy: g.createdBy,
   });
   if (!perms.canEdit) redirect(`/spaces/${s.slug}/guides/${g.slug}`);
+  // The author of a never-published guide may delete it outright; owners
+  // and admins otherwise request deletion (plans/preview-pending-deletion.md).
+  const deleteOutright = canDeleteGuideOutright(access, {
+    spaceGroupId: s.groupId,
+    status: g.status,
+    audience: g.audience,
+    createdBy: g.createdBy,
+    publishedAt: g.publishedAt,
+  });
 
   // Start from the newest revision this user may see: approvers see them
   // all; everyone else starts from their own work or the published version —
@@ -87,6 +99,7 @@ export default async function EditGuidePage({
     targetGroups,
     audienceGroupIds,
     pendingAllStaff,
+    [{ revisionCount }],
   ] = await Promise.all([
       db
         .select({ id: category.id, name: category.name })
@@ -117,6 +130,10 @@ export default async function EditGuidePage({
               ),
             )
         : Promise.resolve([]),
+      db
+        .select({ revisionCount: count() })
+        .from(guideRevision)
+        .where(eq(guideRevision.guideId, g.id)),
     ]);
 
   return (
@@ -180,14 +197,22 @@ export default async function EditGuidePage({
               : undefined
           }
         />
-        {perms.canApprove && (
+        {(perms.canApprove || deleteOutright) && (
           <GuideDangerZone
             spaceSlug={s.slug}
             guideId={g.id}
+            mode={deleteOutright ? "outright" : "request"}
             isPublished={g.status === "published"}
+            everPublished={g.publishedAt !== null}
+            revisionCount={revisionCount ?? 0}
+            error={first(query.error)}
           />
         )}
       </main>
     </>
   );
+}
+
+function first(v: string | string[] | undefined): string | undefined {
+  return Array.isArray(v) ? v[0] : v;
 }

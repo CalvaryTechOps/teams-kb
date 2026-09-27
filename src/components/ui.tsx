@@ -86,6 +86,10 @@ const badgeTones = {
     light: "bg-success-soft text-success",
     dark: "bg-success/20 text-success",
   },
+  danger: {
+    light: "bg-danger-soft text-danger",
+    dark: "bg-danger/20 text-danger",
+  },
 } as const;
 
 const badgeSizes = {

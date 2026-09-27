@@ -26,6 +26,7 @@ import {
   type GuideBlock,
 } from "@/lib/guide-content";
 import {
+  canDeleteGuideOutright,
   requireAccess,
   requireAdmin,
   resolveGuidePermissions,
@@ -567,6 +568,9 @@ export async function deleteDraftRevision(revisionId: string) {
   }
 
   await withTransaction(async (tx) => {
+    // The last revision stays: removing the whole guide is
+    // deleteUnpublishedGuide's job (its author, never published) or
+    // requestGuideDeletion's (everything else).
     const [{ n }] = await tx
       .select({ n: count() })
       .from(guideRevision)
@@ -597,9 +601,11 @@ export async function deleteDraftRevision(revisionId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Unpublish / delete. Both owner-or-admin only. Deletion is a *request*: the
-// guide vanishes immediately but its rows survive until an admin approves
-// (see /admin/deletion-requests); a rejection restores it as a draft.
+// Unpublish / delete. Owner-or-admin only, except that a never-published
+// guide's own author may delete it outright. Otherwise deletion is a
+// *request*: the guide vanishes immediately but its rows survive until an
+// admin approves (see /admin/deletion-requests); a rejection restores it
+// to the status it had (plans/preview-pending-deletion.md).
 // ---------------------------------------------------------------------------
 
 type GuideRef = { spaceSlug: string; guideId: string };
@@ -641,10 +647,23 @@ export async function convertGuideToDraft(input: GuideRef) {
   redirect(editHref);
 }
 
-/** Owner/admin hides a guide and queues it for an admin to hard-delete. */
-export async function requestGuideDeletion(input: GuideRef) {
+/**
+ * Owner/admin hides a guide and queues it for an admin to hard-delete. A
+ * guide that has ever been published needs a reason (the admin decides
+ * with the guide open, and the why is most of the decision); for one that
+ * never went live the reason is optional. The status at request time is
+ * recorded so a rejection can put the guide back exactly as it was.
+ */
+export async function requestGuideDeletion(
+  input: GuideRef,
+  formData: FormData,
+) {
   const { access, s, g } = await ownedGuideOrBounce(input);
   if (g.status === "deleted") redirect(`/spaces/${s.slug}`);
+  const reason = String(formData.get("reason") ?? "").trim() || null;
+  if (!reason && g.publishedAt !== null) {
+    redirect(`/spaces/${s.slug}/guides/${g.slug}/edit?error=reason`);
+  }
 
   await withTransaction(async (tx) => {
     await tx
@@ -683,6 +702,8 @@ export async function requestGuideDeletion(input: GuideRef) {
         spaceId: s.id,
         spaceName: s.name,
         requestedBy: access.userId,
+        priorStatus: g.status,
+        reason,
       });
     }
   });
@@ -690,6 +711,50 @@ export async function requestGuideDeletion(input: GuideRef) {
   revalidateGuide(s.slug, g.slug);
   revalidatePath("/admin");
   revalidatePath("/admin/deletion-requests");
+  revalidatePath("/admin/guides");
+  redirect(`/spaces/${s.slug}`);
+}
+
+/**
+ * The author of a never-published guide removes it for good, no review:
+ * nobody outside the author and the space's owners has ever read it. The
+ * guide row goes (revisions, tags, audience rows and all-staff requests
+ * cascade), guarded in SQL against a publish or deletion request that
+ * landed since the page rendered. Leaves no admin-side record, like
+ * deleteDraftRevision.
+ */
+export async function deleteUnpublishedGuide(input: GuideRef) {
+  const access = await requireAccess();
+  const s = await spaceBySlugOr404(input.spaceSlug);
+  const [g] = await db
+    .select()
+    .from(guide)
+    .where(and(eq(guide.id, input.guideId), eq(guide.spaceId, s.id)));
+  if (!g) notFound();
+  const back = `/spaces/${s.slug}/guides/${g.slug}`;
+  const allowed = canDeleteGuideOutright(access, {
+    spaceGroupId: s.groupId,
+    status: g.status,
+    audience: g.audience,
+    createdBy: g.createdBy,
+    publishedAt: g.publishedAt,
+  });
+  if (!allowed) redirect(back);
+
+  await db
+    .delete(guide)
+    .where(
+      and(
+        eq(guide.id, g.id),
+        eq(guide.createdBy, access.userId),
+        isNull(guide.publishedAt),
+        ne(guide.status, "deleted"),
+      ),
+    );
+  // The guide's guide_tag rows cascaded away; drop any tag it was the last user of.
+  await pruneUnusedTags();
+
+  revalidateGuide(s.slug, g.slug);
   revalidatePath("/admin/guides");
   redirect(`/spaces/${s.slug}`);
 }

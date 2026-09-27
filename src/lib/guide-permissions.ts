@@ -37,15 +37,17 @@ export type GuidePermissions = {
  * and admins — never to other space members — so unapproved content can't be
  * read and followed by staff before an owner signs off.
  *
- * A guide awaiting deletion approval is invisible to everyone, admins
- * included — the admin queue is the only window into it.
+ * A guide awaiting deletion approval is invisible to everyone except
+ * admins, who may only read it — to decide the request from its page
+ * (plans/preview-pending-deletion.md). It stays out of every list and
+ * search for admins too (visibleGuidesWhere); the queue's link is the way in.
  */
 export function resolveGuidePermissions(
   access: GroupAccess,
   g: GuideForPermissions,
 ): GuidePermissions {
   if (g.status === "deleted") {
-    return { canRead: false, canEdit: false, canApprove: false };
+    return { canRead: access.isAdmin, canEdit: false, canApprove: false };
   }
   if (access.isAdmin) {
     return { canRead: true, canEdit: true, canApprove: true };
@@ -94,4 +96,22 @@ export function canAuthorInSpace(
     status: "published",
     audience: "department",
   }).canEdit;
+}
+
+/**
+ * "May this user delete this guide outright, with no admin review": only
+ * its creator, only while they may still edit it, and only if it has never
+ * been published — nobody outside its author (and the space's owners) has
+ * ever read it, so there is nothing for an admin to weigh. Once a guide
+ * has gone live, even if since converted back to draft, deletion is a
+ * request (requestGuideDeletion). A guide already awaiting deletion
+ * cannot be deleted again.
+ */
+export function canDeleteGuideOutright(
+  access: GroupAccess,
+  g: GuideForPermissions & { publishedAt: Date | null },
+): boolean {
+  if (g.status === "deleted" || g.publishedAt !== null) return false;
+  if (g.createdBy === undefined || access.userId !== g.createdBy) return false;
+  return resolveGuidePermissions(access, g).canEdit;
 }

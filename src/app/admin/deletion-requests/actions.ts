@@ -5,13 +5,16 @@ import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { withTransaction } from "@/db/transaction";
-import { guide, guideDeletionRequest, space } from "@/db/schema";
+import { guide, guideDeletionRequest, guideRevision, space } from "@/db/schema";
+import { blocksToPlainText } from "@/lib/guide-content";
 import { requireAdmin } from "@/lib/permissions";
 import { pruneUnusedTags } from "@/lib/tags";
 
-// Admin decisions on owners' guide deletion requests. Keyed to the request
-// id and re-checked as pending inside the write, so a stale form can't
-// double-decide — approving after a reject must not delete the restored guide.
+// Admin decisions on owners' guide deletion requests, made from the queue or
+// from the guide's own page (plans/preview-pending-deletion.md). Keyed to the
+// request id and re-checked as pending inside the write, so a stale form
+// can't double-decide — approving after a reject must not delete the
+// restored guide.
 
 const QUEUE_PATH = "/admin/deletion-requests";
 
@@ -85,7 +88,13 @@ export async function approveGuideDeletion(requestId: string) {
   redirect(QUEUE_PATH);
 }
 
-/** Decline the deletion; the guide comes back as a draft for rework. */
+/**
+ * Decline the deletion; the guide goes back to the status it had when the
+ * request was made (draft for requests older than that column). A guide
+ * restored as published gets its search text back, which the request
+ * cleared. Lands on the restored guide so the admin can revert to an
+ * older revision or edit right away.
+ */
 export async function rejectGuideDeletion(
   requestId: string,
   formData: FormData,
@@ -93,6 +102,7 @@ export async function rejectGuideDeletion(
   const access = await requireAdmin();
   const row = await pendingRequestOrBounce(requestId);
   const note = String(formData.get("note") ?? "").trim() || null;
+  const restoreTo = row.req.priorStatus ?? "draft";
 
   await withTransaction(async (tx) => {
     const decided = await tx
@@ -112,14 +122,32 @@ export async function rejectGuideDeletion(
       .returning({ guideId: guideDeletionRequest.guideId });
     if (decided.length === 0) return;
     const guideId = decided[0]!.guideId;
-    if (guideId) {
-      await tx
-        .update(guide)
-        .set({ status: "draft" })
-        .where(and(eq(guide.id, guideId), eq(guide.status, "deleted")));
+    if (!guideId) return;
+    let searchText: string | null = null;
+    if (restoreTo === "published") {
+      const [current] = await tx
+        .select({ content: guideRevision.content })
+        .from(guideRevision)
+        .innerJoin(guide, eq(guide.currentRevisionId, guideRevision.id))
+        .where(eq(guide.id, guideId));
+      if (current) searchText = blocksToPlainText(current.content);
     }
+    await tx
+      .update(guide)
+      .set({
+        // A "published" guide with no current revision can't exist; fall
+        // back to draft rather than publish nothing.
+        status:
+          restoreTo === "published" && searchText === null ? "draft" : restoreTo,
+        searchText,
+      })
+      .where(and(eq(guide.id, guideId), eq(guide.status, "deleted")));
   });
 
   revalidateAfterDecision(row);
-  redirect(QUEUE_PATH);
+  redirect(
+    row.spaceSlug && row.guideSlug
+      ? `/spaces/${row.spaceSlug}/guides/${row.guideSlug}`
+      : QUEUE_PATH,
+  );
 }
