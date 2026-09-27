@@ -21,8 +21,10 @@ import { TopBar } from "@/components/shell/top-bar";
 import { GuideContent } from "@/components/guide-content";
 import { GuideActions } from "@/components/guide-actions";
 import { RevisionPicker } from "@/components/revision-picker";
+import { ConfirmForm } from "@/components/confirm-form";
 import { readingMinutes } from "@/lib/guide-content";
 import {
+  canDeleteRevision,
   chooseRevision,
   parseRevisionParam,
   revisionHref,
@@ -41,7 +43,7 @@ import {
   GENERAL_CATEGORY_NAME,
   GENERAL_CATEGORY_SLUG,
 } from "@/lib/categories";
-import { publishDraftRevision } from "../../../actions";
+import { deleteDraftRevision, publishDraftRevision } from "../../../actions";
 
 // How the banner names a revision that isn't the one readers see.
 const REVISION_NOUN: Record<RevisionMeta["status"], string> = {
@@ -140,6 +142,11 @@ export default async function GuidePage({
     ? visible.find((r) => r.id === g.currentRevisionId)
     : undefined;
   const viewingOther = chosen.id !== defaultRevision.id;
+  const canDeleteChosen = canDeleteRevision(
+    chosen,
+    { userId: perms.canEdit ? access.userId : undefined, canApprove: perms.canApprove },
+    allRevisions.length,
+  );
   // Newest draft or pending submission, when it's newer than what's live.
   const newest = visible.find((r) => r.status === "draft" || r.status === "pending");
   const newerUnpublished =
@@ -249,6 +256,20 @@ export default async function GuidePage({
                   <ButtonLink href={`/spaces/${s.slug}/queue`} size="sm">
                     Review in queue
                   </ButtonLink>
+                )}
+                {canDeleteChosen && (
+                  <ConfirmForm
+                    action={deleteDraftRevision.bind(null, chosen.id)}
+                    message={`Delete draft v${chosen.version}? This removes it permanently. ${
+                      published
+                        ? `The published version (v${published.version}) is not affected.`
+                        : "Other revisions of this guide are not affected."
+                    }`}
+                  >
+                    <Button type="submit" variant="danger" size="sm">
+                      Delete draft
+                    </Button>
+                  </ConfirmForm>
                 )}
               </div>
               {chosen.status === "rejected" && chosen.reviewNote && (

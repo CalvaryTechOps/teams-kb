@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
-import { and, eq, inArray, isNull, max, ne } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, max, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { withTransaction } from "@/db/transaction";
 import {
@@ -500,6 +500,72 @@ export async function publishDraftRevision(revisionId: string) {
   });
 
   revalidatePath("/");
+  revalidatePath(`/spaces/${row.spaceSlug}`);
+  revalidatePath(back);
+  redirect(back);
+}
+
+/**
+ * Delete one draft revision for good — the draft on screen turned out to be
+ * worthless. Owners/admins may delete any draft, an editor only their own;
+ * only `draft` rows qualify (submissions are rejected, not deleted, and
+ * published/superseded rows are history). A guide's last remaining revision
+ * stays: removing the whole guide is requestGuideDeletion's job.
+ */
+export async function deleteDraftRevision(revisionId: string) {
+  const access = await requireAccess();
+  const [row] = await db
+    .select({
+      rev: guideRevision,
+      g: guide,
+      spaceSlug: space.slug,
+      groupId: space.groupId,
+    })
+    .from(guideRevision)
+    .innerJoin(guide, eq(guide.id, guideRevision.guideId))
+    .innerJoin(space, eq(space.id, guide.spaceId))
+    .where(eq(guideRevision.id, revisionId));
+  if (!row) notFound();
+  const back = `/spaces/${row.spaceSlug}/guides/${row.g.slug}`;
+  if (row.g.status === "deleted") redirect(`/spaces/${row.spaceSlug}`);
+  const perms = resolveGuidePermissions(access, {
+    spaceGroupId: row.groupId,
+    status: row.g.status,
+    audience: row.g.audience,
+    createdBy: row.g.createdBy,
+  });
+  const mayDelete =
+    perms.canApprove || (perms.canEdit && row.rev.authorId === access.userId);
+  if (!mayDelete) redirect(back);
+  if (row.rev.status !== "draft" || row.rev.id === row.g.currentRevisionId) {
+    redirect(back);
+  }
+
+  await withTransaction(async (tx) => {
+    const [{ n }] = await tx
+      .select({ n: count() })
+      .from(guideRevision)
+      .where(eq(guideRevision.guideId, row.g.id));
+    if (n <= 1) return;
+    await tx.delete(guideRevision).where(eq(guideRevision.id, row.rev.id));
+    // A never-published guide carries its newest revision's title; keep
+    // that true when the newest one just went.
+    if (row.g.status === "draft") {
+      const [newest] = await tx
+        .select({ title: guideRevision.title })
+        .from(guideRevision)
+        .where(eq(guideRevision.guideId, row.g.id))
+        .orderBy(desc(guideRevision.version))
+        .limit(1);
+      if (newest && newest.title !== row.g.title) {
+        await tx
+          .update(guide)
+          .set({ title: newest.title })
+          .where(eq(guide.id, row.g.id));
+      }
+    }
+  });
+
   revalidatePath(`/spaces/${row.spaceSlug}`);
   revalidatePath(back);
   redirect(back);

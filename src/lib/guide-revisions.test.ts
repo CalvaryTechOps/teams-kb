@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canDeleteRevision,
   chooseRevision,
   parseRevisionParam,
   revisionHref,
@@ -160,5 +161,29 @@ describe("revisionOptionLabel", () => {
     expect(revisionOptionLabel(rev({ version: 4, authorName: null }), CURRENT)).toBe(
       "v4 · Draft · Sep 1, 2026",
     );
+  });
+});
+
+describe("canDeleteRevision", () => {
+  const draft = { status: "draft" as const, authorId: MEMBER };
+
+  it("lets approvers delete any draft", () => {
+    expect(canDeleteRevision(draft, approver, 2)).toBe(true);
+  });
+
+  it("lets an editor delete only their own draft", () => {
+    expect(canDeleteRevision(draft, member, 2)).toBe(true);
+    expect(canDeleteRevision({ ...draft, authorId: OTHER }, member, 2)).toBe(false);
+    expect(canDeleteRevision(draft, { canApprove: false }, 2)).toBe(false);
+  });
+
+  it("refuses anything that is not a draft", () => {
+    for (const status of ["pending", "published", "rejected", "superseded"] as const) {
+      expect(canDeleteRevision({ status, authorId: MEMBER }, approver, 2)).toBe(false);
+    }
+  });
+
+  it("refuses a guide's last revision", () => {
+    expect(canDeleteRevision(draft, approver, 1)).toBe(false);
   });
 });

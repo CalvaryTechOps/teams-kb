@@ -137,3 +137,21 @@ export function revisionOptionLabel(
   if (rev.authorName) parts.push(rev.authorName);
   return parts.join(" · ");
 }
+
+/**
+ * May this viewer delete this revision from the guide page? Only drafts, by
+ * approvers or the draft's own author, and never a guide's last revision
+ * (deleting the guide itself is a separate, admin-reviewed request). The
+ * server action re-checks all of this.
+ */
+export function canDeleteRevision(
+  rev: Pick<RevisionMeta, "status" | "authorId">,
+  viewer: RevisionViewer,
+  revisionCount: number,
+): boolean {
+  if (rev.status !== "draft" || revisionCount <= 1) return false;
+  return (
+    viewer.canApprove ||
+    (viewer.userId !== undefined && rev.authorId === viewer.userId)
+  );
+}

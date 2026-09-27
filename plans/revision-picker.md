@@ -1,7 +1,8 @@
 # Plan: Always show the current revision, pick others from the sidebar
 
-**Status: implemented 2026-09-27 on `feat/revision-picker`, awaiting local
-testing by Chris. Open questions below are answered.** Notes from
+**Status: implemented 2026-09-27 on `feat/revision-picker` (revision
+picker, then draft deletion in a second commit), awaiting local testing by
+Chris. Open questions below are answered.** Notes from
 implementation: the never-published-draft case renders no banner at all (the
 Draft badge covers it), and the red "was rejected" banner gained a "View
 submission" button so the rejected content is one click away even without
@@ -162,7 +163,28 @@ newer one exists is allowed and leaves the newer draft untouched (Q4).
 Restoring a superseded revision (re-publishing old content) is **not** in
 scope; it needs a copy-as-new-revision step and belongs in a later plan.
 
-### 5. Out of scope
+### 5. Deleting a draft (added 2026-09-27 after the first round)
+
+Looking at a draft from the picker is often how one finds out it is
+worthless. The "You're viewing draft vN" banner gets a **Delete draft**
+button (danger style, native confirm via `ConfirmForm`) that calls a new
+`deleteDraftRevision(revisionId)` action:
+
+- Only `draft` rows qualify. Pending submissions are rejected from the
+  queue, not deleted; published, superseded and rejected rows are history.
+- Owners and admins may delete any draft; an editor only a draft they
+  wrote. `canDeleteRevision` in `src/lib/guide-revisions.ts` decides for
+  the button, the action re-checks.
+- A guide's last remaining revision is never deleted: removing the guide is
+  `requestGuideDeletion`'s admin-reviewed job. The button stays hidden in
+  that case (a never-published guide's newest draft is its default view
+  and shows no banner anyway).
+- The row is hard-deleted; version numbers keep their gap. When a
+  never-published guide loses its newest draft, `guide.title` is reset to
+  the newest remaining revision's title so lists stay truthful.
+- Afterwards the page redirects to the bare guide URL.
+
+### 6. Out of scope
 
 - Diffing two arbitrary revisions (the queue's `ContentDiff` stays as is).
 - Starting the editor from a chosen revision (`/edit?rev=n`).
@@ -200,6 +222,11 @@ scope; it needs a copy-as-new-revision step and belongs in a later plan.
    (renders instead of 404); a member account sees no picker and gets the
    published revision for a colleague's `?rev=n`.
 9. Commit on the feature branch. No push.
+10. (Second round) Add `deleteDraftRevision` and `canDeleteRevision` with
+    tests, the Delete draft button on the viewing banner, and re-run the
+    checks in step 8 plus: delete a draft from the banner, confirm the
+    published version is untouched and the picker no longer lists it; a
+    guide whose only revision is a draft offers no delete.
 
 ## Open questions
 
