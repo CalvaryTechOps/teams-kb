@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canDeleteGuideOutright,
   resolveGuidePermissions,
   type GroupAccess,
   type GuideForPermissions,
@@ -172,10 +173,78 @@ describe("resolveGuidePermissions", () => {
       ).toEqual(nothing);
     });
 
-    it("are hidden even from admins", () => {
+    it("are readable by admins, who may neither edit nor approve", () => {
       expect(
         resolveGuidePermissions(access({ isAdmin: true }), deleted),
-      ).toEqual(nothing);
+      ).toEqual({ canRead: true, canEdit: false, canApprove: false });
     });
+  });
+});
+
+describe("canDeleteGuideOutright", () => {
+  const creator = access({ userId: "user-a", memberGroupIds: new Set([DEPT_A]) });
+  const neverPublished = {
+    ...guide({ status: "draft", createdBy: "user-a" }),
+    publishedAt: null,
+  };
+
+  it("lets the creator delete their never-published draft", () => {
+    expect(canDeleteGuideOutright(creator, neverPublished)).toBe(true);
+  });
+
+  it("refuses once the guide has ever been published", () => {
+    expect(
+      canDeleteGuideOutright(creator, {
+        ...neverPublished,
+        publishedAt: new Date("2026-01-01"),
+      }),
+    ).toBe(false);
+    // Converted back to draft after publishing: staff may have read it.
+    expect(
+      canDeleteGuideOutright(creator, {
+        ...neverPublished,
+        status: "draft",
+        publishedAt: new Date("2026-01-01"),
+      }),
+    ).toBe(false);
+  });
+
+  it("refuses a creator who is no longer a member of the space", () => {
+    expect(
+      canDeleteGuideOutright(access({ userId: "user-a" }), neverPublished),
+    ).toBe(false);
+  });
+
+  it("refuses an owner on a colleague's draft", () => {
+    expect(
+      canDeleteGuideOutright(
+        access({ userId: "user-b", ownerGroupIds: new Set([DEPT_A]) }),
+        neverPublished,
+      ),
+    ).toBe(false);
+  });
+
+  it("lets an admin delete a never-published draft they created", () => {
+    expect(
+      canDeleteGuideOutright(
+        access({ userId: "user-a", isAdmin: true }),
+        neverPublished,
+      ),
+    ).toBe(true);
+  });
+
+  it("refuses a guide already awaiting deletion", () => {
+    expect(
+      canDeleteGuideOutright(creator, { ...neverPublished, status: "deleted" }),
+    ).toBe(false);
+  });
+
+  it("refuses when the creator is unknown", () => {
+    expect(
+      canDeleteGuideOutright(creator, {
+        ...neverPublished,
+        createdBy: undefined,
+      }),
+    ).toBe(false);
   });
 });

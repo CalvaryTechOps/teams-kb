@@ -80,6 +80,7 @@ export async function requireAdmin(): Promise<UserAccess> {
 
 export {
   canAuthorInSpace,
+  canDeleteGuideOutright,
   resolveGuidePermissions,
   type GuideForPermissions,
   type GuidePermissions,

@@ -235,8 +235,15 @@ export const guideDeletionRequest = pgTable(
     requestedBy: text("requested_by")
       .notNull()
       .references(() => user.id),
+    // The guide's status when the request was made; a rejection restores it
+    // (null on rows from before this column existed: restored as draft).
+    priorStatus: guideStatus("prior_status"),
+    // Why the owner wants it gone. Required when the guide has ever been
+    // published, optional otherwise (plans/preview-pending-deletion.md).
+    reason: text("reason"),
     status: allStaffRequestStatus("status").default("pending").notNull(),
     decidedBy: text("decided_by").references(() => user.id),
+    // The admin's decision note.
     note: text("note"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     decidedAt: timestamp("decided_at"),

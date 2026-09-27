@@ -8,6 +8,7 @@ import {
   category,
   guide,
   guideAudienceGroup,
+  guideDeletionRequest,
   guideRevision,
   guideTag,
   m365Group,
@@ -22,6 +23,7 @@ import { GuideContent } from "@/components/guide-content";
 import { GuideActions } from "@/components/guide-actions";
 import { RevisionPicker } from "@/components/revision-picker";
 import { ConfirmForm } from "@/components/confirm-form";
+import { DeletionRequestBanner } from "@/components/deletion-request-banner";
 import { readingMinutes } from "@/lib/guide-content";
 import {
   canDeleteRevision,
@@ -97,6 +99,11 @@ export default async function GuidePage({
     createdBy: g.createdBy,
   });
   if (!perms.canRead) notFound();
+  // Only an admin gets this far on a deleted guide: they're previewing it to
+  // decide its deletion request (plans/preview-pending-deletion.md). They
+  // see every revision, as an owner would, but every write control is off
+  // because perms.canEdit/canApprove are false.
+  const pendingDeletion = g.status === "deleted";
 
   // Every revision's metadata (never the content), newest first. The
   // picker, the banners and the choice of what to render all read this one
@@ -122,7 +129,7 @@ export default async function GuidePage({
     allRevisions,
     {
       userId: perms.canEdit ? access.userId : undefined,
-      canApprove: perms.canApprove,
+      canApprove: perms.canApprove || pendingDeletion,
     },
     g.currentRevisionId,
   );
@@ -193,6 +200,26 @@ export default async function GuidePage({
     .innerJoin(tag, eq(tag.id, guideTag.tagId))
     .where(eq(guideTag.guideId, g.id));
 
+  const deletionRequest = pendingDeletion
+    ? ((
+        await db
+          .select({
+            id: guideDeletionRequest.id,
+            requesterName: user.name,
+            createdAt: guideDeletionRequest.createdAt,
+            reason: guideDeletionRequest.reason,
+          })
+          .from(guideDeletionRequest)
+          .leftJoin(user, eq(user.id, guideDeletionRequest.requestedBy))
+          .where(
+            and(
+              eq(guideDeletionRequest.guideId, g.id),
+              eq(guideDeletionRequest.status, "pending"),
+            ),
+          )
+      )[0] ?? null)
+    : null;
+
   const authorName = chosen.authorName ?? "Unknown";
   const pickerRevisions: RevisionMeta[] = visible.map(
     ({ id, version, status, authorId, authorName, createdAt }) => ({
@@ -229,6 +256,14 @@ export default async function GuidePage({
       />
       <main className="grid grid-cols-1 gap-10 px-12 py-10 lg:grid-cols-[minmax(0,720px)_232px] print:block print:p-0">
         <article>
+          {pendingDeletion && (
+            <DeletionRequestBanner
+              request={deletionRequest}
+              guideTitle={g.title}
+              revisionCount={allRevisions.length}
+            />
+          )}
+
           {viewingOther && (
             <div className="mb-5 rounded-lg border border-warning-100 bg-warning-soft/50 px-4 py-3 text-sm text-fg print:hidden">
               <div className="flex flex-wrap items-center gap-3">
@@ -388,10 +423,14 @@ export default async function GuidePage({
             {g.audience === "all_staff" && (
               <Badge className="print:hidden">All staff</Badge>
             )}
-            {g.status !== "published" && (
-              <Badge tone="warning">
-                {isPending ? "Pending approval" : "Draft"}
-              </Badge>
+            {pendingDeletion ? (
+              <Badge tone="danger">Pending deletion</Badge>
+            ) : (
+              g.status !== "published" && (
+                <Badge tone="warning">
+                  {isPending ? "Pending approval" : "Draft"}
+                </Badge>
+              )
             )}
           </div>
           <h1 className="text-4xl font-black leading-[1.15] tracking-tight text-fg-strong">
@@ -479,7 +518,7 @@ export default async function GuidePage({
                 Print QR code
               </Link>
             </div>
-            {perms.canApprove && (
+            {(perms.canApprove || pendingDeletion) && (
               <div className="border-t border-border pt-5">
                 <MicroLabel className="mb-2.5">Revisions</MicroLabel>
                 <RevisionPicker
@@ -489,7 +528,9 @@ export default async function GuidePage({
                   selectedId={chosen.id}
                 />
                 <p className="mt-1.5 text-[12px] leading-relaxed text-fg-muted">
-                  Only the published revision is visible to readers.
+                  {pendingDeletion
+                    ? "Hidden from everyone while the deletion request is open."
+                    : "Only the published revision is visible to readers."}
                 </p>
               </div>
             )}

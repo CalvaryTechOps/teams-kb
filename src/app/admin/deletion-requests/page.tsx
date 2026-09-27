@@ -3,11 +3,14 @@ import { asc, desc, eq, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
 import { guide, guideDeletionRequest, space, user } from "@/db/schema";
+import { ButtonLink } from "@/components/ui";
+import { ConfirmForm } from "@/components/confirm-form";
 import { approveGuideDeletion, rejectGuideDeletion } from "./actions";
 
 // Admin queue for owners' guide deletion requests. Titles and space names
 // come from the request's snapshot: the guide is hidden while pending and gone
-// once approved, so there is nothing to link to except after a rejection.
+// once approved. While pending, admins alone may open the guide's page to
+// read it (and decide from a banner there); after a rejection everyone can.
 
 export default async function DeletionRequestsPage() {
   const decider = alias(user, "decider");
@@ -17,9 +20,13 @@ export default async function DeletionRequestsPage() {
       .select({
         req: guideDeletionRequest,
         requesterName: user.name,
+        guideSlug: guide.slug,
+        spaceSlug: space.slug,
       })
       .from(guideDeletionRequest)
       .innerJoin(user, eq(user.id, guideDeletionRequest.requestedBy))
+      .leftJoin(guide, eq(guide.id, guideDeletionRequest.guideId))
+      .leftJoin(space, eq(space.id, guideDeletionRequest.spaceId))
       .where(eq(guideDeletionRequest.status, "pending"))
       .orderBy(asc(guideDeletionRequest.createdAt)),
     db
@@ -43,8 +50,8 @@ export default async function DeletionRequestsPage() {
       <h2 className="text-lg font-semibold">Guide deletion requests</h2>
       <p className="text-sm text-fg-muted">
         Owners asking for a guide to be removed. The guide is already hidden
-        from everyone. Approving deletes it and its history permanently;
-        rejecting restores it as a draft in its space.
+        from everyone; preview it to read what would go. Approving deletes it
+        and its history permanently; rejecting puts it back the way it was.
       </p>
 
       {pending.length === 0 ? (
@@ -55,20 +62,41 @@ export default async function DeletionRequestsPage() {
         <div className="mt-6 space-y-4">
           {pending.map((r) => (
             <div key={r.req.id} className="rounded-lg border border-border p-4">
-              <div className="font-medium">{r.req.guideTitle}</div>
-              <div className="text-xs text-fg-muted">
-                {r.req.spaceName} · requested by {r.requesterName} on{" "}
-                {r.req.createdAt.toLocaleDateString()}
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium">{r.req.guideTitle}</div>
+                  <div className="text-xs text-fg-muted">
+                    {r.req.spaceName} · requested by {r.requesterName} on{" "}
+                    {r.req.createdAt.toLocaleDateString()}
+                  </div>
+                </div>
+                {r.guideSlug && r.spaceSlug && (
+                  <ButtonLink
+                    href={`/spaces/${r.spaceSlug}/guides/${r.guideSlug}`}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    Preview guide
+                  </ButtonLink>
+                )}
               </div>
+              {r.req.reason && (
+                <p className="mt-2 text-sm text-fg-muted">
+                  Reason: “{r.req.reason}”
+                </p>
+              )}
               <div className="mt-3 flex flex-wrap items-center gap-3">
-                <form action={approveGuideDeletion.bind(null, r.req.id)}>
+                <ConfirmForm
+                  action={approveGuideDeletion.bind(null, r.req.id)}
+                  message={`Delete "${r.req.guideTitle}" and all of its revisions permanently? This cannot be undone.`}
+                >
                   <button
                     type="submit"
                     className="rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-surface-raised hover:bg-danger/90"
                   >
                     Approve — delete permanently
                   </button>
-                </form>
+                </ConfirmForm>
                 <form
                   action={rejectGuideDeletion.bind(null, r.req.id)}
                   className="flex flex-1 items-center gap-2"
@@ -82,7 +110,7 @@ export default async function DeletionRequestsPage() {
                     type="submit"
                     className="rounded-md border border-border px-3 py-1.5 text-sm text-fg hover:bg-surface"
                   >
-                    Reject — restore as draft
+                    Reject — restore guide
                   </button>
                 </form>
               </div>
@@ -103,7 +131,7 @@ export default async function DeletionRequestsPage() {
                 <th className="py-1 pr-4">Space</th>
                 <th className="py-1 pr-4">Decision</th>
                 <th className="py-1 pr-4">By</th>
-                <th className="py-1">Note</th>
+                <th className="py-1">Reason · Note</th>
               </tr>
             </thead>
             <tbody>
@@ -133,7 +161,9 @@ export default async function DeletionRequestsPage() {
                     </span>
                   </td>
                   <td className="py-1.5 pr-4">{r.deciderName ?? "—"}</td>
-                  <td className="py-1.5 text-fg-muted">{r.req.note ?? "—"}</td>
+                  <td className="py-1.5 text-fg-muted">
+                    {r.req.reason ?? "—"} · {r.req.note ?? "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
