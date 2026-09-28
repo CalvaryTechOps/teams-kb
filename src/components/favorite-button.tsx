@@ -2,7 +2,6 @@
 
 import { startTransition, useState } from "react";
 import { StarIcon } from "@/components/icons";
-import { buttonClasses } from "@/components/ui";
 import { favoriteLabel } from "@/lib/favorites";
 import { toggleFavorite } from "@/app/(kb)/actions";
 
@@ -10,7 +9,8 @@ import { toggleFavorite } from "@/app/(kb)/actions";
 // not one of the viewer's favorites, filled when it is. Flips optimistically
 // on click and reverts with a small inline error if the server disagrees.
 // `aria-pressed` carries the state for assistive tech; the label says what a
-// click will do.
+// click will do. Deliberately quieter than the "Copy link" button beside it:
+// a bare icon that only gains a wash on hover.
 export function FavoriteButton({
   guideId,
   initialIsFavorite,
@@ -48,11 +48,11 @@ export function FavoriteButton({
         aria-pressed={isFavorite}
         aria-label={label}
         title={label}
-        className={`${buttonClasses({ variant: "secondary", size: "sm" })} px-2.5 ${
-          isFavorite ? "text-accent" : ""
+        className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-surface-sunken focus-visible:outline-none focus-visible:shadow-focus ${
+          isFavorite ? "text-accent" : "text-fg-muted hover:text-fg"
         }`}
       >
-        <StarIcon size={14} filled={isFavorite} />
+        <StarIcon size={16} filled={isFavorite} />
       </button>
       {error && (
         <p
