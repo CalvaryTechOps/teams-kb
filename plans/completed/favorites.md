@@ -1,7 +1,8 @@
 # Plan: Favorite guides and a /favorites page
 
-**Status: implemented on `feat/favorites` (2026-09-28); awaiting Chris's
-local test and staging.** Lint, typecheck, tests and build pass. All open
+**Status: complete — implemented on `feat/favorites` (2026-09-28),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Lint, typecheck, tests and build pass. All open
 questions answered (each with its recommendation). Migration
 `drizzle/0013_guide-favorite.sql` applied to the `development` branch.
 Signed-in UI paths need SAML SSO and were not clicked through; the
