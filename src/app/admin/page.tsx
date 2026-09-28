@@ -1,48 +1,50 @@
 import Link from "next/link";
-import { count, desc, eq, isNotNull, or } from "drizzle-orm";
+import { count, desc } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  allStaffRequest,
-  guideDeletionRequest,
-  m365Group,
-  oauthClient,
-  space,
-  syncRun,
-  tag,
-} from "@/db/schema";
+import { oauthClient, syncRun, tag } from "@/db/schema";
+import { attentionCounts } from "@/lib/admin-attention";
+import { attentionTiles } from "@/lib/admin-attention-tiles";
+
+// Admin home: what is waiting on an admin (as tiles, first), the pages to
+// manage things from, and the recent directory syncs.
 
 export default async function AdminDashboard() {
-  const [
-    recentRuns,
-    [pendingRequests],
-    [pendingDeletions],
-    [tagCount],
-    [orphanCount],
-    [mcpClientCount],
-  ] = await Promise.all([
-    db.select().from(syncRun).orderBy(desc(syncRun.startedAt)).limit(10),
-    db
-      .select({ n: count() })
-      .from(allStaffRequest)
-      .where(eq(allStaffRequest.status, "pending")),
-    db
-      .select({ n: count() })
-      .from(guideDeletionRequest)
-      .where(eq(guideDeletionRequest.status, "pending")),
-    db.select({ n: count() }).from(tag),
-    // Spaces nobody can author in: Team deleted or group un-flagged.
-    db
-      .select({ n: count() })
-      .from(space)
-      .innerJoin(m365Group, eq(m365Group.id, space.groupId))
-      .where(
-        or(isNotNull(m365Group.deletedAt), eq(m365Group.isDepartment, false)),
-      ),
-    db.select({ n: count() }).from(oauthClient),
-  ]);
+  const [attention, recentRuns, [tagCount], [mcpClientCount]] =
+    await Promise.all([
+      attentionCounts(),
+      db.select().from(syncRun).orderBy(desc(syncRun.startedAt)).limit(10),
+      db.select({ n: count() }).from(tag),
+      db.select({ n: count() }).from(oauthClient),
+    ]);
+  const tiles = attentionTiles(attention);
 
   return (
     <div className="space-y-8">
+      <section>
+        <h2 className="text-lg font-semibold">Needs attention</h2>
+        <div className="mt-2 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {tiles.map((t) => (
+            <Link
+              key={t.key}
+              href={t.href}
+              className="rounded-xl border border-border bg-surface-raised p-5 shadow-xs transition-shadow hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:shadow-focus"
+            >
+              <div className="text-sm font-medium text-fg-muted">{t.label}</div>
+              {/* The number and caption carry the state; colour only
+                  reinforces it, so zero reads as quiet without a badge. */}
+              <div
+                className={`mt-1 text-3xl font-semibold ${
+                  t.count > 0 ? "text-fg-strong" : "text-fg-muted"
+                }`}
+              >
+                {t.count}
+              </div>
+              <div className="mt-1 text-xs text-fg-muted">{t.caption}</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section>
         <h2 className="text-lg font-semibold">Manage</h2>
         <ul className="mt-2 list-disc pl-6 text-sm">
@@ -54,8 +56,6 @@ export default async function AdminDashboard() {
           <li>
             <Link href="/admin/spaces" className="text-accent-text hover:underline">
               Spaces — inventory, re-home or merge orphaned departments
-              {(orphanCount?.n ?? 0) > 0 &&
-                ` — ${orphanCount!.n} orphaned`}
             </Link>
           </li>
           <li>
@@ -64,7 +64,6 @@ export default async function AdminDashboard() {
               className="text-accent-text hover:underline"
             >
               All-staff publish requests
-              {(pendingRequests?.n ?? 0) > 0 && ` — ${pendingRequests!.n} pending`}
             </Link>
           </li>
           <li>
@@ -73,7 +72,6 @@ export default async function AdminDashboard() {
               className="text-accent-text hover:underline"
             >
               Guide deletion requests
-              {(pendingDeletions?.n ?? 0) > 0 && ` — ${pendingDeletions!.n} pending`}
             </Link>
           </li>
           <li>
