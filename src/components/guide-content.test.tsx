@@ -176,6 +176,30 @@ describe("GuideContent", () => {
     expect(html).toBe("<p>a</p><p>\u00a0</p><p>b</p>");
   });
 
+  it("renders columns as a flex row with each column's ratio, and full blocks inside", () => {
+    const column = (width: number, children: unknown[]) =>
+      block("column", { width }, undefined, children);
+    const html = render([
+      block("heading", { level: 2 }, [text("Setup")]),
+      block("columnList", {}, undefined, [
+        column(2, [
+          block("heading", { level: 2 }, [text("Setup")]),
+          block("bulletListItem", {}, [text("a")]),
+          block("bulletListItem", {}, [text("b")]),
+        ]),
+        column(1, [block("paragraph", {}, [text("aside")])]),
+      ]),
+    ]);
+    expect(html).toContain('<div class="columns">');
+    expect(html).toContain('<div class="column" style="flex-grow:2">');
+    expect(html).toContain('<div class="column" style="flex-grow:1"><p>aside</p></div>');
+    // Consecutive list items inside a column still form one list.
+    expect(html).toContain("<ul><li>a</li><li>b</li></ul>");
+    // Heading ids stay unique across the whole document, columns included.
+    expect(html).toContain('<h2 id="setup">Setup</h2>');
+    expect(html).toContain('<h2 id="setup-2">Setup</h2>');
+  });
+
   it("never emits scripts or unsafe URLs from a tampered document", () => {
     const html = render([
       block("paragraph", {}, [
