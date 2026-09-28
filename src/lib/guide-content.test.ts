@@ -219,6 +219,84 @@ describe("parseGuideContent", () => {
   });
 });
 
+// Layout blocks, in the shape @blocknote/xl-multi-column emits: a columnList
+// whose children are columns, each column holding ordinary blocks.
+const column = (width: unknown, children: unknown[]) =>
+  block("column", width === undefined ? {} : { width }, undefined, children);
+const columns = (...cols: unknown[]) => block("columnList", {}, undefined, cols);
+
+describe("parseGuideContent: columns", () => {
+  it("accepts a column list and keeps each column's width", () => {
+    const [list] = parse([
+      columns(
+        column(2, [block("heading", { level: 2 }, [text("Left")])]),
+        column(undefined, [block("paragraph", {}, [text("Right")])]),
+      ),
+    ]);
+    if (list!.type !== "columnList") throw new Error("unreachable");
+    expect(list.props).toEqual({});
+    expect(list.content).toBeUndefined();
+    expect(list.children.map((c) => c.type)).toEqual(["column", "column"]);
+    const [left, right] = list.children;
+    if (left!.type !== "column" || right!.type !== "column") throw new Error("unreachable");
+    expect(left.props.width).toBe(2);
+    expect(right.props.width).toBe(1);
+    expect(left.children[0]!.type).toBe("heading");
+  });
+
+  it("coerces a bad width to 1", () => {
+    for (const width of [0, -3, "wide", Number.NaN, 1e9]) {
+      const [list] = parse([columns(column(width, [block("paragraph")]), column(1, [block("paragraph")]))]);
+      const first = list!.children[0]!;
+      if (first.type !== "column") throw new Error("unreachable");
+      expect(first.props.width).toBe(1);
+    }
+  });
+
+  it("rejects a column list with fewer than two columns", () => {
+    expect(() => parse([columns(column(1, [block("paragraph")]))])).toThrow(
+      /at least two columns/,
+    );
+  });
+
+  it("rejects a non-column child of a column list", () => {
+    expect(() =>
+      parse([columns(column(1, [block("paragraph")]), block("paragraph"))]),
+    ).toThrow(/may only contain columns/);
+  });
+
+  it("rejects a column outside a column list", () => {
+    expect(() => parse([column(1, [block("paragraph")])])).toThrow(
+      /directly inside a columnList/,
+    );
+    expect(() =>
+      parse([block("paragraph", {}, [], [column(1, [block("paragraph")])])]),
+    ).toThrow(/directly inside a columnList/);
+  });
+
+  it("rejects an empty column", () => {
+    expect(() => parse([columns(column(1, []), column(1, [block("paragraph")]))])).toThrow(
+      /at least one block/,
+    );
+  });
+
+  it("rejects a column list nested inside a column, at any depth", () => {
+    const inner = columns(column(1, [block("paragraph")]), column(1, [block("paragraph")]));
+    expect(() => parse([columns(column(1, [inner]), column(1, [block("paragraph")]))])).toThrow(
+      /cannot be nested/,
+    );
+    const deep = block("bulletListItem", {}, [text("x")], [inner]);
+    expect(() => parse([columns(column(1, [deep]), column(1, [block("paragraph")]))])).toThrow(
+      /cannot be nested/,
+    );
+  });
+
+  it("counts a column list as content", () => {
+    const doc = parse([columns(column(1, [block("paragraph")]), column(1, [block("paragraph")]))]);
+    expect(isEmptyDocument(doc)).toBe(false);
+  });
+});
+
 describe("isEmptyDocument", () => {
   it("treats BlockNote's default empty paragraph(s) as empty", () => {
     expect(isEmptyDocument(parse([block("paragraph")]))).toBe(true);
@@ -263,6 +341,41 @@ describe("text projections", () => {
       "[video] clip.mp4",
       "[audio]",
     ]);
+  });
+
+  it("blocksToLines marks each column and indents its content", () => {
+    const doc = parse([
+      block("paragraph", {}, [text("intro")]),
+      columns(
+        column(1, [
+          block("heading", { level: 2 }, [text("Steps")]),
+          block("numberedListItem", {}, [text("one")]),
+          block("numberedListItem", {}, [text("two")]),
+        ]),
+        column(1, [block("image", { url: "https://blob.example.com/a.png", caption: "Shot" })]),
+      ),
+      block("paragraph", {}, [text("outro")]),
+    ]);
+    expect(blocksToLines(doc)).toEqual([
+      "intro",
+      "[column 1 of 2]",
+      "  ## Steps",
+      "  1. one",
+      "  2. two",
+      "[column 2 of 2]",
+      "  [image] Shot",
+      "outro",
+    ]);
+  });
+
+  it("blocksToPlainText includes column text once", () => {
+    const doc = parse([
+      columns(
+        column(1, [block("paragraph", {}, [text("left words")])]),
+        column(1, [block("paragraph", {}, [text("right words")])]),
+      ),
+    ]);
+    expect(blocksToPlainText(doc)).toBe("left words right words");
   });
 
   it("blocksToLines ignores styles and colors, so formatting-only edits diff as unchanged", () => {

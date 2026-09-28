@@ -361,6 +361,31 @@ body {
 .prose-guide .guide-diagram-source figcaption {
   color: var(--color-danger);
 }
+/* Columns (columnList/column blocks). Each column carries an inline
+   flex-grow matching the editor's ratio; min-width: 0 lets long words, code
+   and tables shrink instead of overflowing. Phones read the columns top to
+   bottom in document order. */
+.prose-guide .columns {
+  display: flex;
+  gap: 24px;
+  margin: 0 0 20px;
+}
+.prose-guide .column {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.prose-guide .column > :first-child {
+  margin-top: 0;
+}
+@media (max-width: 639px) {
+  .prose-guide .columns {
+    flex-direction: column;
+    gap: 0;
+  }
+  .prose-guide .column {
+    flex-grow: 0 !important;
+  }
+}
 
 /* ── BlockNote guide editor ──
    BlockNote brings its own block styling (the Mantine theme CSS is imported by
@@ -404,6 +429,16 @@ body {
 }
 .guide-editor .bn-inline-content a {
   color: var(--color-accent-text);
+}
+/* Column boundaries: BlockNote hard-codes light/dark greys for the 4px
+   shadow between columns; use the theme's border tokens instead. */
+.guide-editor .bn-block-column:not(:last-child),
+.guide-editor .bn-block-column:not(:last-child):where(.dark, .dark *) {
+  box-shadow: 4px 0 var(--color-border);
+}
+.guide-editor .bn-block-column.bn-column-resize-border,
+.guide-editor .bn-block-column.bn-column-resize-border:where(.dark, .dark *) {
+  box-shadow: 4px 0 var(--color-border-strong);
 }
 
 /* ── Print ──

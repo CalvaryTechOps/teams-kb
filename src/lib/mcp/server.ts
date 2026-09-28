@@ -121,7 +121,7 @@ export function buildKbServer(ctx: McpToolContext): McpServer {
     {
       title: "Get a guide",
       description:
-        "One published guide with its metadata and raw content. Identify it by `id`, or by `space` + `slug`. `content` is a BlockNote document (JSON array of blocks); `url` is the page to cite.",
+        "One published guide with its metadata and raw content. Identify it by `id`, or by `space` + `slug`. `content` is a BlockNote document (JSON array of blocks; a `columnList` block lays its `column` children out side by side, and each column's text is in its own `children`); `url` is the page to cite.",
       inputSchema: z.object({
         id: z.string().trim().min(1).max(100).optional().describe("Guide id"),
         space: slug.optional().describe("Department slug (with slug)"),

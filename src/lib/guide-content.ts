@@ -146,6 +146,12 @@ export type GuideBlock = BlockBase &
     | { type: "image"; props: MediaProps; content: undefined }
     | { type: "video"; props: MediaProps; content: undefined }
     | { type: "audio"; props: MediaProps; content: undefined }
+    // Layout: a columnList holds two or more columns side by side; a column
+    // holds ordinary blocks and only ever sits directly inside a columnList.
+    // `width` is a flex-grow ratio (BlockNote's own convention), not a
+    // percentage. See plans/multi-column-layout.md.
+    | { type: "columnList"; props: Record<string, never>; content: undefined }
+    | { type: "column"; props: { width: number }; content: undefined }
   );
 
 export type GuideBlockType = GuideBlock["type"];
@@ -165,7 +171,12 @@ export const BLOCK_TYPES: readonly GuideBlockType[] = [
   "image",
   "video",
   "audio",
+  "columnList",
+  "column",
 ];
+
+/** Largest column `width` (flex-grow ratio) accepted; anything else becomes 1. */
+export const MAX_COLUMN_WIDTH = 100;
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -374,7 +385,20 @@ function parseTableContent(raw: unknown, path: string): TableContent {
   return table;
 }
 
-function parseBlock(raw: unknown, path: string, depth: number): GuideBlock {
+/** Where a block sits, for the rules that depend on its ancestors. */
+type Position = {
+  /** Type of the block this one is a direct child of. */
+  parent: GuideBlockType | undefined;
+  /** True anywhere inside a column, at any depth. */
+  inColumn: boolean;
+};
+
+function parseBlock(
+  raw: unknown,
+  path: string,
+  depth: number,
+  position: Position,
+): GuideBlock {
   if (depth > MAX_DEPTH) fail(`${path}: nested too deeply`);
   if (!isObject(raw)) fail(`${path}: expected a block`);
   const type = raw.type;
@@ -384,18 +408,31 @@ function parseBlock(raw: unknown, path: string, depth: number): GuideBlock {
   if (typeof raw.id !== "string" || raw.id.length === 0 || raw.id.length > 100) {
     fail(`${path}: block id must be a string`);
   }
+  const blockType = type as GuideBlockType;
+  // Structural rules for the layout blocks, checked before descending so the
+  // error names the block that is out of place rather than one of its
+  // children. The editor never produces these shapes; this guards the API.
+  if (blockType === "column" && position.parent !== "columnList") {
+    fail(`${path}: a column must sit directly inside a columnList`);
+  }
+  if (blockType === "columnList" && position.inColumn) {
+    fail(`${path}: column lists cannot be nested inside a column`);
+  }
   const p = isObject(raw.props) ? raw.props : {};
   const rawChildren = raw.children ?? [];
   if (!Array.isArray(rawChildren)) fail(`${path}: children must be an array`);
+  const childPosition: Position = {
+    parent: blockType,
+    inColumn: position.inColumn || blockType === "column",
+  };
   const base = {
     id: raw.id,
     children: rawChildren.map((c, i) =>
-      parseBlock(c, `${path}.children[${i}]`, depth + 1),
+      parseBlock(c, `${path}.children[${i}]`, depth + 1, childPosition),
     ),
   };
   const inline = () => parseInlineContent(raw.content ?? [], `${path}.content`);
   const plain = () => parsePlainContent(raw.content ?? [], `${path}.content`);
-  const blockType = type as GuideBlockType;
 
   switch (blockType) {
     case "paragraph":
@@ -463,6 +500,22 @@ function parseBlock(raw: unknown, path: string, depth: number): GuideBlock {
       return { ...base, type: blockType, props: mediaProps(p, true), content: undefined };
     case "audio":
       return { ...base, type: "audio", props: mediaProps(p, false), content: undefined };
+    case "columnList":
+      if (base.children.length < 2) fail(`${path}: a columnList needs at least two columns`);
+      base.children.forEach((c, i) => {
+        if (c.type !== "column") {
+          fail(`${path}.children[${i}]: a columnList may only contain columns`);
+        }
+      });
+      return { ...base, type: "columnList", props: {}, content: undefined };
+    case "column":
+      if (base.children.length === 0) fail(`${path}: a column needs at least one block`);
+      return {
+        ...base,
+        type: "column",
+        props: { width: positiveNumber(p.width, MAX_COLUMN_WIDTH) ?? 1 },
+        content: undefined,
+      };
   }
 }
 
@@ -486,7 +539,8 @@ export function parseGuideContent(raw: string): GuideBlock[] {
 export function parseGuideContentJson(json: unknown): GuideBlock[] {
   if (!Array.isArray(json)) fail("content must be an array of blocks");
   if (json.length > 10000) fail("too many blocks");
-  return json.map((b, i) => parseBlock(b, `blocks[${i}]`, 0));
+  const top: Position = { parent: undefined, inColumn: false };
+  return json.map((b, i) => parseBlock(b, `blocks[${i}]`, 0, top));
 }
 
 // ---------------------------------------------------------------------------
@@ -597,6 +651,18 @@ export function blocksToLines(blocks: GuideBlock[], depth = 0): string[] {
       case "audio":
         push(mediaLine(block));
         break;
+      case "columnList":
+        // One marker per column, its content indented beneath, so moving
+        // text into columns reads as a layout change and a text edit inside
+        // a column still diffs line by line.
+        block.children.forEach((column, i) => {
+          push(`[column ${i + 1} of ${block.children.length}]`);
+          lines.push(...blocksToLines(column.children, depth + 1));
+        });
+        continue;
+      case "column":
+        // Only reachable inside a columnList, which lists its columns itself.
+        break;
     }
     if (block.children.length > 0) {
       lines.push(...blocksToLines(block.children, depth + 1));
@@ -636,6 +702,8 @@ export function blocksToPlainText(blocks: GuideBlock[]): string {
         case "codeBlock":
         case "diagram":
         case "divider":
+        case "columnList":
+        case "column":
           break;
       }
       walk(block.children);

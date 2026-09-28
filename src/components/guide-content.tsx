@@ -327,6 +327,28 @@ function renderBlock(block: GuideBlock, ctx: Ctx): ReactNode {
     case "checkListItem":
       // Grouped by renderBlocks; a lone item still renders as a one-item list.
       return renderList([block], ctx);
+    case "columnList":
+      // A flex row; each column's flex-grow reproduces the editor's
+      // proportions (.prose-guide .columns stacks them on narrow screens).
+      return (
+        <div key={block.id} className="columns">
+          {block.children.map((column) =>
+            column.type === "column" ? (
+              <div
+                key={column.id}
+                className="column"
+                style={{ flexGrow: column.props.width }}
+              >
+                {renderBlocks(column.children, ctx)}
+              </div>
+            ) : null,
+          )}
+        </div>
+      );
+    case "column":
+      // Validation only allows a column inside a columnList, which renders
+      // its own columns above.
+      return null;
   }
 }
 

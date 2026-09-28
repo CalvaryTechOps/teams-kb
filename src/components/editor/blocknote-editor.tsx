@@ -16,6 +16,12 @@ import {
   getDiagramBlockTypeSelectItems,
   getDiagramSlashMenuItems,
 } from "@blocknote/diagram-block";
+import { en as baseDictionary } from "@blocknote/core/locales";
+import {
+  getMultiColumnSlashMenuItems,
+  locales as multiColumnLocales,
+  multiColumnDropCursor,
+} from "@blocknote/xl-multi-column";
 import type { GuideBlock } from "@/lib/guide-content";
 import { externalImageBlocks, type ExternalImage } from "@/lib/external-media";
 import { useThemeMode } from "@/components/theme-provider";
@@ -78,6 +84,12 @@ export function BlockNoteGuideEditor({
       cellBackgroundColor: true,
       cellTextColor: true,
     },
+    // Columns: the slash items read their labels from `dictionary.multi_column`,
+    // and the drop-cursor hooks turn a drag to a block's left or right edge
+    // into "put these side by side". Column creation, resizing and merging
+    // are wired by the block specs themselves (schema.ts).
+    dictionary: { ...baseDictionary, multi_column: multiColumnLocales.en },
+    dropCursor: multiColumnDropCursor,
   });
 
   const serialize = () => JSON.stringify(editor.document);
@@ -153,13 +165,14 @@ export function BlockNoteGuideEditor({
             />
           )}
         />
-        {/* Default slash menu plus the diagram item, grouped like the rest. */}
+        {/* Default slash menu plus the column and diagram items, grouped like the rest. */}
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) =>
             filterSuggestionItems(
               combineByGroup(
                 getDefaultReactSlashMenuItems(editor),
+                getMultiColumnSlashMenuItems(editor),
                 getDiagramSlashMenuItems(editor),
               ),
               query,
