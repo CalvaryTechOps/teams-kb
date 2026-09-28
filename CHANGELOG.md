@@ -8,21 +8,89 @@ listed under **Upgrade notes** in each release.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-28
+
+### Upgrade notes
+
+- Migrations 0012 and 0013 run automatically during the Vercel build
+  (`drizzle-kit migrate`). They add the `reason` and `prior_status` columns
+  to guide deletion requests and create the `guide_favorite` table. Run
+  `npx drizzle-kit migrate` yourself if you deploy another way. No new
+  environment variables.
+- Run `npm install` after pulling: `@blocknote/xl-pdf-exporter` and the
+  Typst compiler packages are gone and `@blocknote/xl-multi-column` is now a
+  direct dependency.
+- The "Download PDF" and "Download Markdown" exports were removed. For a PDF
+  copy, use "Print guide" and the browser's Save as PDF.
+- Guide links that used `?rev=draft` now show the published revision; open
+  a specific revision with `?rev=<version>` or the new Revisions picker.
+
 ### Added
 
-- The guide editor flags images that are hosted on other websites (typically
-  pasted along with another page's HTML) and offers a one-click "Copy images
-  to this site" that fetches each one server-side into Vercel Blob and points
-  the block at the copy, keeping its size and alignment. Never automatic;
-  SVGs are left as they are. New route `POST /api/upload/import`.
+- **Favorites.** A star on the guide page (beside "Copy link") adds or
+  removes the guide from the viewer's favorites, and a Favorites row at the
+  top of the sidebar leads to `/favorites`, a filterable list with a
+  department column and a per-row star to unstar. Favorites follow a guide
+  when it moves, go away when it is deleted, and are hidden (not deleted)
+  while the viewer can no longer read the guide. (#40)
+- **"Needs attention" row on the admin dashboard.** Four stat tiles above
+  Manage, for orphaned spaces, all-staff requests, deletion requests and
+  guides pending review, each linking to the page where it is handled.
+  Admin → Guides gains a status filter (all, pending review, draft,
+  published, archived, pending deletion) with counts. (#39)
+- **Two- and three-column layouts** in the guide editor, from the slash
+  menu. Columns render side by side and stack on phones, the approval diff
+  marks them, and the MCP `get_guide` description mentions them. (#38)
+- **Revision picker.** A guide's URL always shows its published revision,
+  and owners and admins get a "Revisions" drop-down in the right column
+  listing every revision newest first; `?rev=<version>` opens one. A
+  never-published guide shows its newest revision instead of a 404. (#36)
+- **Revert to an older revision.** Publishing a superseded revision from its
+  banner makes it live again and turns every later published revision back
+  into a draft, so nothing is lost and any of them can be published again
+  from its own view. (#36)
+- **Delete a draft** from its banner: owners and admins for any draft,
+  editors for their own, never a guide's last revision. (#36)
+- **Preview a guide pending deletion.** Admins open the guide, walk its
+  revisions and approve or reject from a red banner on the page; rejecting
+  restores the guide to the status it had when deletion was requested.
+  Owners must give a reason when deleting a guide that has ever been
+  published, shown on the queue card and in the banner, and the queue's
+  Approve button asks for confirmation. The author of a never-published
+  guide can delete it outright from the edit page's danger zone. (#37)
+- **Copy external images.** The guide editor flags images that are hosted
+  on other websites (typically pasted along with another page's HTML) and
+  offers a one-click "Copy images to this site" that fetches each one
+  server-side into Vercel Blob and points the block at the copy, keeping
+  its size and alignment. Never automatic; SVGs are left as they are. New
+  route `POST /api/upload/import`. (#32)
+- A category page's "New guide" button preselects that category on the New
+  Guide form, adds it to the breadcrumb and points Cancel back at the
+  category page. (#31)
+
+### Changed
+
+- A draft is published only from its own view. The "a newer draft is
+  waiting" banner on the published view no longer has a Publish button, so
+  what gets published is always what the approver is looking at. (#36)
+
+### Fixed
+
+- Production renders failed in short bursts with "Error connecting to
+  database: TypeError: fetch failed" when the HTTPS request to Neon's proxy
+  was rejected before any Postgres error. The Neon HTTP driver now retries
+  transient connection failures twice (150 ms, then 500 ms): any statement
+  when the connection never opened, read-only statements also when the
+  socket died mid-flight, and never a write Neon may have received. Each
+  retried failure logs the underlying error code. (#35)
 
 ### Removed
 
-- The "Download PDF" and "Download Markdown" items in the guide actions menu.
-  For a PDF copy, use "Print guide" and the browser's Save as PDF: printing
-  already hides the app chrome and adds the permanent link. Dropping the PDF
-  exporter also removes the Typst compiler, so the browser no longer downloads
-  a 26 MB wasm asset (plus fonts) on the first export. "Download DOCX" stays.
+- The "Download PDF" and "Download Markdown" items in the guide actions
+  menu. Printing already hides the app chrome and adds the permanent link.
+  Dropping the PDF exporter also removes the Typst compiler, so the browser
+  no longer downloads a 26 MB wasm asset (plus fonts) on the first export
+  and the install is about 72 MB smaller. "Download DOCX" stays. (#34)
 
 ## [0.3.0] - 2026-09-15
 
@@ -148,7 +216,8 @@ This release is the recommended baseline for new deployments.
 
 Initial public release.
 
-[Unreleased]: https://github.com/CalvaryTechOps/teams-kb/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/CalvaryTechOps/teams-kb/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/CalvaryTechOps/teams-kb/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/CalvaryTechOps/teams-kb/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/CalvaryTechOps/teams-kb/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/CalvaryTechOps/teams-kb/releases/tag/v0.1.0
