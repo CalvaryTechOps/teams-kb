@@ -1,8 +1,9 @@
 # Plan: Multi-column layout in the guide editor
 
-**Status: implemented on `feat/multi-column` (2026-09-27), awaiting
-Chris's local testing (step 9). Open questions answered with the defaults;
-tests, lint, typecheck and build pass.** Notes from implementation: no
+**Status: complete — implemented on `feat/multi-column` (2026-09-27),
+tested by Chris locally and on staging; awaiting the PR to `main`.** Open
+questions answered with the defaults; tests, lint, typecheck and build
+passed before the push. Notes from implementation: no
 DOCX changes were needed (the default mapping covers the blocks); the
 editor's base dictionary comes from `@blocknote/core/locales`, and the
 column-boundary shadow is re-coloured with the theme's border tokens.
