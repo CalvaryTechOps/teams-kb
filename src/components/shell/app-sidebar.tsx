@@ -6,6 +6,7 @@ import { Avatar, MicroLabel } from "@/components/ui";
 import { BrandMark } from "@/components/brand-mark";
 import { requireAccess } from "@/lib/permissions";
 import { visibleArticleCountsBySpace } from "@/lib/space-counts";
+import { favoriteCount } from "@/lib/favorites.server";
 import { getShowEmptyPreference } from "@/lib/space-visibility.server";
 import { getSiteSettings } from "@/lib/site-settings.server";
 import { SearchIcon, SettingsIcon } from "@/components/icons";
@@ -27,7 +28,7 @@ export async function AppSidebar({
 }) {
   // Cached per request (the layout already resolved it), so this is free.
   const access = await requireAccess();
-  const [spaces, showEmpty, settings, categories] = await Promise.all([
+  const [spaces, showEmpty, settings, categories, favorites] = await Promise.all([
     visibleArticleCountsBySpace(access),
     getShowEmptyPreference(),
     getSiteSettings(),
@@ -39,6 +40,7 @@ export async function AppSidebar({
       })
       .from(category)
       .orderBy(asc(category.sortOrder), asc(category.name)),
+    favoriteCount(access),
   ]);
 
   const navSpaces: SidebarSpace[] = spaces.map((s) => ({
@@ -101,7 +103,11 @@ export async function AppSidebar({
       <MicroLabel className="px-5 pb-1.5 pt-2 !text-sidebar-fg-subtle">
         Departments
       </MicroLabel>
-      <SidebarNav spaces={navSpaces} initialShowEmpty={showEmpty} />
+      <SidebarNav
+        spaces={navSpaces}
+        initialShowEmpty={showEmpty}
+        favoriteCount={favorites}
+      />
 
       <div className="mt-auto flex items-center gap-2.5 border-t border-sidebar-fg/10 px-5 pt-4">
         <Avatar name={userName} onDark />

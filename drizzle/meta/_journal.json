@@ -92,6 +92,13 @@
       "when": 1790543596222,
       "tag": "0012_deletion-request-reason-prior-status",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790627274053,
+      "tag": "0013_guide-favorite",
+      "breakpoints": true
     }
   ]
 }

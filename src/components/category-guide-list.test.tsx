@@ -39,3 +39,37 @@ describe("CategoryGuideList", () => {
     expect(html).toContain('aria-label="Shared with other teams"');
   });
 });
+
+describe("CategoryGuideList on the favorites page", () => {
+  it("takes a placeholder, shows the department cell and an unstar per row", () => {
+    const html = renderToStaticMarkup(
+      <CategoryGuideList
+        placeholder="Search your favorites"
+        showDepartment
+        onUnfavorite={() => {}}
+        guides={[
+          row({ id: "a", title: "Projector setup", spaceName: "Facilities", categoryName: "Rooms" }),
+          row({ id: "b", title: "Sound check", spaceName: "Worship", categoryName: null }),
+        ]}
+      />,
+    );
+    expect(html).toContain('placeholder="Search your favorites"');
+    expect(html).toContain('aria-label="Search your favorites"');
+    expect(html).toContain(">Facilities<");
+    expect(html).toContain(">Rooms<");
+    expect(html).toContain(">Worship<");
+    expect(html).toContain(">General<");
+    expect(html.match(/aria-label="Remove from favorites: /g)).toHaveLength(2);
+    expect(html).toContain('aria-label="Remove from favorites: Sound check"');
+  });
+
+  it("hides the department cell and the star by default", () => {
+    const html = renderToStaticMarkup(
+      <CategoryGuideList
+        guides={[row({ id: "a", spaceName: "Facilities", categoryName: "Rooms" })]}
+      />,
+    );
+    expect(html).not.toContain(">Facilities<");
+    expect(html).not.toContain("Remove from favorites");
+  });
+});

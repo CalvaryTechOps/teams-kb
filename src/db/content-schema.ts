@@ -255,3 +255,25 @@ export const guideDeletionRequest = pgTable(
       .where(sql`${t.status} = 'pending'`),
   ],
 );
+
+// A person's starred guides (plans/favorites.md). Keyed on guide id so a
+// move or re-slug keeps the favorite; both cascades so an approved deletion
+// or a removed user takes the rows along. The favorites page derives the
+// department from guide.space_id at read time, never stored here.
+export const guideFavorite = pgTable(
+  "guide_favorite",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    guideId: uuid("guide_id")
+      .notNull()
+      .references(() => guide.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.guideId] }),
+    // The favorites page and the sidebar pill read one user's rows.
+    index("guide_favorite_user_idx").on(t.userId),
+  ],
+);

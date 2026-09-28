@@ -7,6 +7,7 @@ import { category, guide, guideRevision, guideTag, space, tag, user } from "@/db
 import { ButtonLink } from "@/components/ui";
 import { PencilIcon, PlusIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
+import { PageNotice } from "@/components/page-notice";
 import {
   CategoryGuideList,
   type CategoryGuideRow,
@@ -25,6 +26,7 @@ import {
   newGuidePath,
 } from "@/lib/categories";
 import { guidePath } from "@/lib/moves";
+import { shortDate } from "@/lib/time";
 
 // One category on its own: every guide the viewer may see in it, with when it
 // was created, when it last changed and who changed it, behind a filter box
@@ -63,11 +65,11 @@ export default async function CategoryPage({
           ]}
           userName={userName}
         />
-        <CategoryNotice
+        <PageNotice
           title="Category Not Found"
           text="Please update your bookmarks."
-          spaceSlug={s.slug}
-          spaceName={s.name}
+          href={`/spaces/${s.slug}`}
+          linkLabel={`Back to ${s.name}`}
         />
       </>
     );
@@ -175,11 +177,11 @@ export default async function CategoryPage({
     return (
       <>
         <TopBar crumbs={crumbs} userName={userName} actions={actions} />
-        <CategoryNotice
+        <PageNotice
           title="No General Guides"
           text="Nothing in this department is filed outside a category yet."
-          spaceSlug={s.slug}
-          spaceName={s.name}
+          href={`/spaces/${s.slug}`}
+          linkLabel={`Back to ${s.name}`}
         />
       </>
     );
@@ -204,37 +206,5 @@ export default async function CategoryPage({
         </div>
       </main>
     </>
-  );
-}
-
-function shortDate(d: Date): string {
-  return d.toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function CategoryNotice({
-  title,
-  text,
-  spaceSlug,
-  spaceName,
-}: {
-  title: string;
-  text: string;
-  spaceSlug: string;
-  spaceName: string;
-}) {
-  return (
-    <main className="px-14 py-10">
-      <div className="mx-auto mt-10 max-w-md rounded-xl border border-border bg-surface-raised px-8 py-10 text-center shadow-xs">
-        <h1 className="text-2xl font-black tracking-tight text-fg-strong">{title}</h1>
-        <p className="mt-2 text-sm text-fg-muted">{text}</p>
-        <ButtonLink href={`/spaces/${spaceSlug}`} variant="secondary" className="mt-6">
-          Back to {spaceName}
-        </ButtonLink>
-      </div>
-    </main>
   );
 }

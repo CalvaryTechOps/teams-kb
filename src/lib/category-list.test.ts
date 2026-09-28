@@ -17,6 +17,17 @@ describe("filterGuides", () => {
     expect(filterGuides(guides, "sunday").map((g) => g.id)).toEqual(["a"]);
   });
 
+  it("matches extra per-row fields when given, without touching tags", () => {
+    const withSpace = guides.map((g, i) => ({
+      ...g,
+      spaceName: i === 0 ? "Facilities" : "Worship",
+    }));
+    const byDept = (g: { spaceName: string }) => [g.spaceName];
+    expect(filterGuides(withSpace, "facil", byDept).map((g) => g.id)).toEqual(["a"]);
+    expect(filterGuides(withSpace, "worship", byDept).map((g) => g.id)).toEqual(["b", "c"]);
+    expect(filterGuides(withSpace, "facil").map((g) => g.id)).toEqual([]);
+  });
+
   it("keeps everything for an empty query and nothing for a miss", () => {
     expect(filterGuides(guides, "")).toEqual(guides);
     expect(filterGuides(guides, "   ")).toEqual(guides);
