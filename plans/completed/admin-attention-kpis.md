@@ -1,7 +1,8 @@
 # Plan: "Needs attention" KPI row on the Admin page
 
-**Status: implemented on `feat/admin-attention-kpis` (2026-09-28), awaiting
-Chris's local testing.** Tests, lint, typecheck and build passed. All open
+**Status: complete — implemented on `feat/admin-attention-kpis` (2026-09-28),
+tested by Chris locally and on staging; awaiting the PR to `main`.**
+Tests, lint, typecheck and build passed. All open
 questions answered; Q2 added a status filter UI to `/admin/guides` beyond
 the tile's own `?filter=pending` link. No migration.
 
