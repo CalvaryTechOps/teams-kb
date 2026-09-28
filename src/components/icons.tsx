@@ -242,3 +242,20 @@ export function QrCodeIcon({ size, className }: IconProps) {
     </svg>
   );
 }
+
+/**
+ * Five-point star for favorites. `filled` paints the interior in
+ * currentColor; the outline is identical either way so toggling never
+ * shifts the glyph.
+ */
+export function StarIcon({
+  size,
+  className,
+  filled = false,
+}: IconProps & { filled?: boolean }) {
+  return (
+    <svg {...base(size, className)} fill={filled ? "currentColor" : "none"}>
+      <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 16.9l-5.3 2.8 1.1-5.9-4.3-4.1 5.9-.8z" />
+    </svg>
+  );
+}

@@ -3,10 +3,11 @@
 import { startTransition, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDownIcon, ChevronRightIcon } from "@/components/icons";
+import { ChevronDownIcon, ChevronRightIcon, StarIcon } from "@/components/icons";
 import { Badge, Switch } from "@/components/ui";
 import { isSpaceShown } from "@/lib/space-visibility";
 import { categoryPath } from "@/lib/categories";
+import { FAVORITES_PATH } from "@/lib/favorites";
 import { setShowEmptyDepartments } from "@/app/(kb)/actions";
 
 export type SidebarSpace = {
@@ -28,15 +29,23 @@ export type SidebarSpace = {
 // is on (or the user belongs to them). The switch flips locally for an
 // instant response and persists through a cookie-setting Server Action,
 // which also re-renders the home page grid that shares the preference.
+//
+// The first row under the switch is the viewer's Favorites (plans/
+// favorites.md): dressed like a department, a star where the chevron would
+// be, and a pill counting the favorites they can open. It ignores "Show
+// empty" and shows at 0 — it is how the feature is found.
 export function SidebarNav({
   spaces,
   initialShowEmpty,
+  favoriteCount,
 }: {
   spaces: SidebarSpace[];
   initialShowEmpty: boolean;
+  favoriteCount: number;
 }) {
   const pathname = usePathname();
   const activeSlug = pathname.match(/^\/spaces\/([^/]+)/)?.[1] ?? null;
+  const favoritesActive = pathname === FAVORITES_PATH;
   const [open, setOpen] = useState<Record<string, boolean>>(() =>
     activeSlug ? { [activeSlug]: true } : {},
   );
@@ -62,6 +71,40 @@ export function SidebarNav({
         onDark
         className="flex w-full justify-between px-3 pb-2"
       />
+      <div
+        className={`flex items-center gap-1 rounded-lg pr-2 text-sm font-medium ${
+          favoritesActive
+            ? "bg-accent/15 text-sidebar-fg"
+            : "text-sidebar-fg/85 hover:bg-sidebar-fg/5"
+        }`}
+      >
+        <span
+          aria-hidden
+          className="flex h-9 w-8 shrink-0 items-center justify-center text-accent"
+        >
+          <StarIcon size={14} filled />
+        </span>
+        <Link
+          href={FAVORITES_PATH}
+          aria-current={favoritesActive ? "page" : undefined}
+          className="min-w-0 flex-1 truncate py-2"
+        >
+          Favorites
+        </Link>
+        <Badge
+          size="sm"
+          onDark
+          tone={
+            favoriteCount === 0 ? "muted" : favoritesActive ? "brand" : "neutral"
+          }
+          className="shrink-0"
+        >
+          {favoriteCount}
+          <span className="sr-only">
+            {favoriteCount === 1 ? " favorite" : " favorites"}
+          </span>
+        </Badge>
+      </div>
       {shown.map((s) => {
         const isActive = s.slug === activeSlug;
         const isOpen = open[s.slug] ?? isActive;

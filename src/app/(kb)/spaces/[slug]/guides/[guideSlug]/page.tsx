@@ -21,6 +21,7 @@ import { PencilIcon, QrCodeIcon } from "@/components/icons";
 import { TopBar } from "@/components/shell/top-bar";
 import { GuideContent } from "@/components/guide-content";
 import { GuideActions } from "@/components/guide-actions";
+import { FavoriteButton } from "@/components/favorite-button";
 import { RevisionPicker } from "@/components/revision-picker";
 import { ConfirmForm } from "@/components/confirm-form";
 import { DeletionRequestBanner } from "@/components/deletion-request-banner";
@@ -40,6 +41,7 @@ import {
   resolveGuidePermissions,
 } from "@/lib/permissions";
 import { permalinkPath, permalinkUrl, qrLabelPath } from "@/lib/short-id";
+import { isFavorite } from "@/lib/favorites.server";
 import { timeAgo } from "@/lib/time";
 import {
   categoryPath,
@@ -194,11 +196,14 @@ export default async function GuidePage({
         )
     : [];
 
-  const tags = await db
-    .select({ name: tag.name, slug: tag.slug })
-    .from(guideTag)
-    .innerJoin(tag, eq(tag.id, guideTag.tagId))
-    .where(eq(guideTag.guideId, g.id));
+  const [tags, starred] = await Promise.all([
+    db
+      .select({ name: tag.name, slug: tag.slug })
+      .from(guideTag)
+      .innerJoin(tag, eq(tag.id, guideTag.tagId))
+      .where(eq(guideTag.guideId, g.id)),
+    isFavorite(access.userId, g.id),
+  ]);
 
   const deletionRequest = pendingDeletion
     ? ((
@@ -456,16 +461,19 @@ export default async function GuidePage({
                 Permanent link: {permalinkUrl(APP_URL, g.shortId)}
               </span>
             </div>
-            <GuideActions
-              permalinkPath={permalinkPath(g.shortId)}
-              qrHref={qrLabelPath(g.shortId)}
-              title={revision.title}
-              blocks={revision.content}
-              updatedAt={revision.createdAt}
-              author={authorName}
-              editHref={perms.canEdit ? `${basePath}/edit` : undefined}
-              moveHref={perms.canApprove ? `${basePath}/move` : undefined}
-            />
+            <div className="flex shrink-0 items-center gap-2">
+              <FavoriteButton guideId={g.id} initialIsFavorite={starred} />
+              <GuideActions
+                permalinkPath={permalinkPath(g.shortId)}
+                qrHref={qrLabelPath(g.shortId)}
+                title={revision.title}
+                blocks={revision.content}
+                updatedAt={revision.createdAt}
+                author={authorName}
+                editHref={perms.canEdit ? `${basePath}/edit` : undefined}
+                moveHref={perms.canApprove ? `${basePath}/move` : undefined}
+              />
+            </div>
           </div>
 
           <div className="prose-guide pt-6">

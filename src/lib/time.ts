@@ -12,3 +12,12 @@ export function timeAgo(date: Date): string {
     year: "numeric",
   });
 }
+
+/** Absolute short date for list rows ("Mar 4, 2026"); format them on the server. */
+export function shortDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}

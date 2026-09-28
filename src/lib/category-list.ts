@@ -10,17 +10,24 @@ export const CATEGORY_CARD_LIMIT = 5;
  * Case-insensitive substring match on the title or any tag name. Only those
  * two fields: the box on the category page deliberately never searches body
  * text (that is what /search is for). Empty query keeps everything.
+ *
+ * `extraFields` lets a list that spans departments (the favorites page) add
+ * per-row strings to match — the department name — without pretending they
+ * are tags.
  */
 export function filterGuides<T extends { title: string; tags: readonly string[] }>(
   guides: readonly T[],
   query: string,
+  extraFields?: (guide: T) => readonly string[],
 ): T[] {
   const q = query.trim().toLowerCase();
   if (!q) return [...guides];
+  const hit = (s: string) => s.toLowerCase().includes(q);
   return guides.filter(
     (g) =>
-      g.title.toLowerCase().includes(q) ||
-      g.tags.some((t) => t.toLowerCase().includes(q)),
+      hit(g.title) ||
+      g.tags.some(hit) ||
+      (extraFields !== undefined && extraFields(g).some(hit)),
   );
 }
 
